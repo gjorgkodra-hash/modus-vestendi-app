@@ -167,6 +167,7 @@ const T = {
   sales_reservations:['Vendite e prenotazioni','Sales and reservations','Shitjet dhe rezervimet'], no_sales_yet:['Ancora nessuna vendita','No sales yet','Ende pa shitje'],
   sizes_qty:['Taglie e quantità (es. S:1, M:2 — oppure U:1)','Sizes and quantity (e.g. S:1, M:2 — or U:1)','Masat dhe sasia (p.sh. S:1, M:2 — ose U:1)'],
   to_do:['Da fare','To do','Për t\'u bërë'], to_deliver_own:['Da consegnare (noi)','To deliver (us)','Për t\'u dorëzuar (ne)'], to_ship_choose:['Da spedire','To ship','Për t\'u dërguar'],
+  received_add_hint:['Acquisto già ricevuto: i pezzi che aggiungi entrano subito in magazzino.','Purchase already received: items you add go straight into stock.','Blerja është marrë: copët që shton hyjnë menjëherë në magazinë.'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -694,10 +695,14 @@ async function viewPurchase(main, id){
   main.innerHTML = `<p><a href="#/acquisti">← ${t('purchases')}</a></p>
   <div class="row spread"><div><h1>${t('purchases')} #${p.id}</h1><div class="muted">${fdate(p.purchase_date)} · ${esc(p.suppliers?.name || '')} ${p.trips ? '· ' + esc(p.trips.title) : ''}</div></div>
   <div class="row">${statusPill('purchase_status', p.status)}<button onclick="editPurchaseStatus(${p.id})">${t('edit')}</button>${p.status !== 'ricevuto' ? `<button class="accent" onclick="receivePurchase(${p.id})">${t('receive')}</button>` : ''}</div></div>
-  <div class="card"><div class="row spread"><h3>${t('lines')}</h3>${p.status !== 'ricevuto' ? `<button onclick="addPurchaseLine(${p.id})">+ ${t('add_line')}</button>` : ''}</div>
-  <div class="table-wrap"><table><tr><th>${t('items')}</th><th class="right">${t('qty')}</th><th class="right">${t('purchase_price')}</th><th class="right">+ ${t('costs')}/pz</th><th class="right">${t('landed_cost')}</th><th></th></tr>
-  ${p.purchase_lines.map(l => `<tr><td>${esc(brandName(l.variants.models.brand_id))} · ${esc(l.variants.models.name)} <span class="muted small">${esc(l.variants.size || '')} ${esc(l.variants.color || '')}</span></td><td class="right">${l.qty}</td><td class="right">${eur(l.unit_price)}</td><td class="right">${eur(l.allocated_unit_cost)}</td><td class="right"><b>${eur(Number(l.unit_price) + Number(l.allocated_unit_cost))}</b></td><td class="right">${p.status !== 'ricevuto' ? `<button class="link" onclick="delRow('purchase_lines',${l.id})">${t('delete')}</button>` : ''}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">${t('no_data')}</td></tr>`}
-  <tr><td><b>${t('total')}</b></td><td></td><td class="right"><b>${eur(tot)}</b></td><td class="right"><b>${eur(ctot)}</b></td><td></td><td></td></tr></table></div></div>
+  <div class="card"><div class="row spread"><h3>${t('lines')}</h3><button class="primary" onclick="addPurchaseLine(${p.id})">+ ${t('add_line')}</button></div>
+  ${p.status === 'ricevuto' ? `<p class="small muted" style="margin:0 0 6px">${t('received_add_hint')}</p>` : ''}
+  ${p.purchase_lines.map(l => `<div class="row" style="flex-wrap:nowrap;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)">
+    <div style="flex:1;min-width:0"><b>${esc(brandName(l.variants.models.brand_id))} ${esc(l.variants.models.name)}</b>
+    <div class="small muted">${esc([l.variants.size, l.variants.color].filter(Boolean).join(' · '))} · ${l.qty} × ${eur(l.unit_price)}${Number(l.allocated_unit_cost) ? ` + ${eur(l.allocated_unit_cost)} ${t('costs').toLowerCase()}` : ''}</div>
+    ${p.status !== 'ricevuto' ? `<button class="link small" onclick="delRow('purchase_lines',${l.id})">${t('delete')}</button>` : ''}</div>
+    <div class="right" style="flex:none"><div class="small muted">${t('landed_cost')}</div><b>${eur(Number(l.unit_price) + Number(l.allocated_unit_cost))}</b></div></div>`).join('') || `<div class="empty">${t('no_data')}</div>`}
+  <div class="row spread" style="padding-top:10px;border-top:1px solid var(--line)"><b>${t('total')}</b><span><b>${eur(tot)}</b>${ctot ? ` <span class="small muted">+ ${eur(ctot)} ${t('costs').toLowerCase()}</span>` : ''}</span></div></div>
   <div class="card"><div class="row spread"><h3>${t('costs')}</h3><button onclick="addCost({purchase_id:${p.id}})">+ ${t('add')}</button></div>
   <table>${p.purchase_costs.map(c => `<tr><td>${esc(ev('cost_kind', c.kind))}</td><td>${esc(c.notes || '')}</td><td class="small muted">${c.allocation === 'valore' ? t('by_value') : t('by_pieces')}</td><td class="right">${eur(c.amount)}</td><td class="right"><button class="link" onclick="delRow('purchase_costs',${c.id})">${t('delete')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table>
   ${p.trip_id ? `<p class="small muted">${t('trip')}: <button class="link" onclick="tripCosts(${p.trip_id})">${t('costs')} ${esc(p.trips.title)}</button></p>` : ''}</div>
@@ -737,7 +742,12 @@ async function addPurchaseLine(pid){
       const nv = check(await sb.from('variants').insert({model_id: m.id, size: v.size, color: v.color, sale_price: v.sale_price, status:'ordinato', sku: skuFor(m, v.size, v.color)}).select().single());
       vid = nv.id;
     }
-    check(await sb.from('purchase_lines').insert({variant_id: vid, qty: v.qty, unit_price: v.unit_price, purchase_id: pid})); route(); }});
+    check(await sb.from('purchase_lines').insert({variant_id: vid, qty: v.qty, unit_price: v.unit_price, purchase_id: pid}));
+    if (window._purchase?.status === 'ricevuto'){
+      check(await sb.from('stock_movements').insert({variant_id: vid, kind:'carico', qty: v.qty, reference:'acquisto #' + pid}));
+      await sb.from('variants').update({status:'in_magazzino'}).eq('id', vid);
+    }
+    route(); }});
 }
 async function receivePurchase(id){ if (!confirmBox()) return; check(await sb.rpc('ricevi_acquisto', {p_purchase_id: id})); toast(t('saved')); route(); }
 function addCost(target){
