@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f1b18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Modus Vestendi">
+<title>Modus Vestendi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --bg:#f7f4f0; --surface:#ffffff; --ink:#1f1b18; --muted:#6f665e; --line:#e6dfd6;
+  --accent:#8a5a3b; --accent-soft:#f1e6dc; --good:#2f7a4f; --warn:#b7791f; --bad:#b23b3b;
+  --radius:12px; --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.04);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,sans-serif}
+a{color:var(--accent)}
+h1,h2,h3{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;margin:0 0 .5em}
+h1{font-size:28px} h2{font-size:23px} h3{font-size:19px}
+header.top{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;padding:calc(env(safe-area-inset-top) + 10px) 16px 0}
+.top-row{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.brand{font-family:"Cormorant Garamond",serif;font-size:22px;letter-spacing:.04em}
+.top-row select{background:transparent;color:#fff;border:1px solid #555;border-radius:8px;padding:4px 6px}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;padding:10px 0 0;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs a{color:#d9cfc6;text-decoration:none;padding:8px 12px;border-radius:10px 10px 0 0;white-space:nowrap;font-size:14px}
+nav.tabs a.on{background:var(--bg);color:var(--ink);font-weight:600}
+main{max-width:1100px;margin:0 auto;padding:16px 16px 80px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.kpi .v{font-size:24px;font-weight:600}
+.kpi .l{color:var(--muted);font-size:13px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.spread{justify-content:space-between}
+.muted{color:var(--muted)} .small{font-size:13px}
+button,.btn{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:10px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+button.primary,.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+button.accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.danger{color:var(--bad);border-color:#e9c6c6}
+button.link{border:none;background:none;color:var(--accent);padding:4px}
+button:disabled{opacity:.5;cursor:default}
+input,select,textarea{font:inherit;width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+textarea{min-height:90px}
+label{display:block;font-size:13px;color:var(--muted);margin:0 0 4px}
+.field{margin-bottom:12px}
+.search{max-width:340px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+tr.click{cursor:pointer} tr.click:hover{background:#faf7f3}
+.table-wrap{overflow-x:auto}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pill.good{background:#e3f1e8;color:var(--good)} .pill.warn{background:#fbf0dc;color:var(--warn)} .pill.bad{background:#f7e1e1;color:var(--bad)} .pill.grey{background:#eee;color:#666}
+.models{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(165px,1fr))}
+.model{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer}
+.model .ph{aspect-ratio:3/4;background:#eee6dd center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#b5a796;font-size:13px}
+.model .b{padding:10px}
+.model .n{font-weight:600;font-size:14px}
+.photos{display:flex;gap:8px;flex-wrap:wrap}
+.photos .p{width:96px;height:128px;border-radius:10px;background:#eee center/cover;position:relative;border:2px solid transparent}
+.photos .p.main{border-color:var(--accent)}
+.photos .p button{position:absolute;bottom:4px;right:4px;padding:2px 6px;font-size:11px}
+.matrix td,.matrix th{text-align:center}
+.matrix td.q{font-weight:600}
+.modal-bg{position:fixed;inset:0;background:rgba(20,16,12,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:var(--surface);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom))}
+@media(min-width:700px){.modal-bg{align-items:center}.modal{border-radius:16px}}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;z-index:60;max-width:90vw}
+.toast.err{background:var(--bad)}
+.center{min-height:80vh;display:flex;align-items:center;justify-content:center}
+.login{max-width:380px;width:100%}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.msg{border-left:3px solid var(--line);padding:6px 10px;margin:8px 0;white-space:pre-wrap}
+.msg.out{border-color:var(--accent)}
+.right{text-align:right}
+.empty{color:var(--muted);padding:18px 0;text-align:center}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ====== Configurazione ======
+const SUPABASE_URL = 'https://xmdbknlmdzodilvcbpwj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_nJQfqCvShsVCkDknNhfb6w_O5aJLvAL';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ====== Traduzioni IT / EN / SQ ======
+const T = {
+  dashboard:['Panoramica','Overview','Përmbledhje'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
+  customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
+  reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
+  login:['Accedi','Log in','Hyr'], signup:['Registrati','Sign up','Regjistrohu'], email:['Email','Email','Email'], password:['Password','Password','Fjalëkalimi'],
+  name:['Nome','Name','Emri'], save:['Salva','Save','Ruaj'], cancel:['Annulla','Cancel','Anulo'], add:['Aggiungi','Add','Shto'], edit:['Modifica','Edit','Ndrysho'],
+  delete:['Elimina','Delete','Fshi'], search:['Cerca…','Search…','Kërko…'], brand:['Marca','Brand','Marka'], category:['Categoria','Category','Kategoria'],
+  season:['Stagione','Season','Sezoni'], description:['Descrizione','Description','Përshkrimi'], list_price:['Prezzo di listino','List price','Çmimi i listës'],
+  sale_price:['Prezzo di vendita','Sale price','Çmimi i shitjes'], purchase_price:['Prezzo d\'acquisto','Purchase price','Çmimi i blerjes'],
+  landed_cost:['Costo reale','Landed cost','Kosto reale'], qty:['Quantità','Quantity','Sasia'], size:['Taglia','Size','Masa'], color:['Colore','Colour','Ngjyra'],
+  status:['Stato','Status','Statusi'], location:['Posizione','Location','Vendndodhja'], condition:['Condizione','Condition','Gjendja'], photos:['Foto','Photos','Foto'],
+  variants:['Varianti','Variants','Variantet'], phone:['Telefono','Phone','Telefoni'], country:['Paese','Country','Shteti'], currency:['Valuta','Currency','Monedha'],
+  source:['Fonte','Source','Burimi'], notes:['Note','Notes','Shënime'], measurements:['Misure','Measurements','Masat'], bust:['Busto (cm)','Bust (cm)','Gjoksi (cm)'],
+  waist:['Vita (cm)','Waist (cm)','Beli (cm)'], hips:['Fianchi (cm)','Hips (cm)','Vithet (cm)'], height:['Altezza (cm)','Height (cm)','Gjatësia (cm)'],
+  shoe:['Scarpe','Shoes','Këpucët'], usual_size:['Taglia abituale','Usual size','Masa e zakonshme'], addresses:['Indirizzi','Addresses','Adresat'],
+  address:['Indirizzo','Address','Adresa'], city:['Città','City','Qyteti'], zip:['CAP','Postcode','Kodi postar'], messages:['Messaggi Instagram','Instagram messages','Mesazhet në Instagram'],
+  new_order:['Nuovo ordine','New order','Porosi e re'], confirm:['Conferma','Confirm','Konfirmo'], payments:['Pagamenti','Payments','Pagesat'], shipments:['Spedizioni','Shipments','Dërgesat'],
+  carrier:['Corriere','Courier','Korrieri'], tracking:['Numero di tracking','Tracking number','Numri i gjurmimit'], track:['Traccia','Track','Gjurmo'],
+  total:['Totale','Total','Totali'], paid:['Incassato','Collected','Arkëtuar'], to_collect:['Da incassare','To collect','Për t\'u arkëtuar'], discount:['Sconto','Discount','Zbritje'],
+  margin:['Margine','Margin','Marzhi'], date:['Data','Date','Data'], amount:['Importo','Amount','Shuma'], method:['Metodo','Method','Mënyra'], kind:['Tipo','Type','Lloji'],
+  in_stock:['Pezzi in magazzino','Items in stock','Artikuj në magazinë'], stock_value:['Valore magazzino (costo)','Stock value (cost)','Vlera e magazinës (kosto)'],
+  to_ship:['Ordini da spedire','Orders to ship','Porosi për t\'u dërguar'], low_stock:['Scorta bassa','Low stock','Stok i ulët'], recent_orders:['Ultimi ordini','Latest orders','Porositë e fundit'],
+  waiting_role:['Account creato. Un amministratore deve assegnarti un ruolo prima che tu possa usare l\'app.','Account created. An administrator must assign you a role before you can use the app.','Llogaria u krijua. Një administrator duhet t\'ju caktojë një rol përpara se të përdorni aplikacionin.'],
+  check_email:['Controlla la tua email per confermare l\'account, poi accedi.','Check your email to confirm the account, then log in.','Kontrolloni email-in për të konfirmuar llogarinë, pastaj hyni.'],
+  new_model:['Nuovo articolo','New item','Artikull i ri'], add_variant:['Aggiungi variante','Add variant','Shto variant'], add_photo:['Aggiungi foto','Add photo','Shto foto'],
+  set_main:['Principale','Main','Kryesore'], instagram:['Instagram','Instagram','Instagram'], trips:['Viaggi','Trips','Udhëtimet'], trip:['Viaggio','Trip','Udhëtimi'],
+  supplier:['Punto d\'acquisto','Store','Pika e blerjes'], suppliers:['Punti d\'acquisto','Stores','Pikat e blerjes'], new_purchase:['Nuovo acquisto','New purchase','Blerje e re'],
+  lines:['Pezzi','Items','Artikujt'], costs:['Costi','Costs','Kostot'], receive:['Segna come ricevuto (carica magazzino)','Mark received (add to stock)','Shëno si të marrë (shto në magazinë)'],
+  allocation:['Ripartizione','Allocation','Shpërndarja'], by_value:['per valore','by value','sipas vlerës'], by_pieces:['per pezzi','by pieces','sipas copëve'],
+  new_customer:['Nuovo cliente','New customer','Klient i ri'], history:['Storico acquisti','Purchase history','Historiku i blerjeve'], requests:['Richieste "cerco per te"','"Find it for me" requests','Kërkesa "ma gjej"'],
+  paste_dm:['Incolla la conversazione dal DM','Paste the DM conversation','Ngjit bisedën nga DM'], analyze:['Analizza e salva','Analyse and save','Analizo dhe ruaj'],
+  extracted:['Dati trovati','Data found','Të dhëna të gjetura'], apply:['Applica al profilo','Apply to profile','Apliko në profil'],
+  cancel_order:['Annulla ordine','Cancel order','Anulo porosinë'], return_item:['Reso / cambio','Return / exchange','Kthim / ndërrim'], reason:['Motivo','Reason','Arsyeja'],
+  back_to_stock:['Rientra in magazzino','Back to stock','Kthehet në magazinë'], users:['Utenti','Users','Përdoruesit'], role:['Ruolo','Role','Roli'], language:['Lingua','Language','Gjuha'],
+  carriers:['Corrieri','Couriers','Korrierët'], tracking_template:['Link tracking (usa {n} per il numero)','Tracking link (use {n} for the number)','Lidhja e gjurmimit (përdor {n} për numrin)'],
+  backup:['Backup (CSV)','Backup (CSV)','Kopje rezervë (CSV)'], export:['Esporta','Export','Eksporto'], campaigns:['Campagne','Campaigns','Fushatat'], spend:['Spesa','Spend','Shpenzimi'],
+  by_month:['Per mese','By month','Sipas muajit'], by_brand:['Per marca','By brand','Sipas markës'], by_country:['Per paese','By country','Sipas shtetit'], revenue:['Fatturato','Revenue','Të ardhurat'],
+  goods_cost:['Costo merce','Cost of goods','Kosto e mallit'], shipping_cost:['Spedizione e dazi','Shipping and duties','Dërgesa dhe doganat'], net:['Utile dopo spese','Profit after expenses','Fitimi pas shpenzimeve'],
+  all:['Tutti','All','Të gjitha'], customer:['Cliente','Customer','Klienti'], items:['Articoli','Items','Artikuj'], price:['Prezzo','Price','Çmimi'], available:['disp.','avail.','gjendje'],
+  reserve:['Riserva','Reserve','Rezervo'], reservations:['Prenotazioni','Reservations','Rezervimet'], until:['Fino al','Until','Deri më'], movements:['Movimenti','Movements','Lëvizjet'],
+  archive:['Archivia','Archive','Arkivo'], sku:['Codice (SKU)','Code (SKU)','Kodi (SKU)'], no_data:['Nessun dato','No data','Nuk ka të dhëna'], close:['Chiudi','Close','Mbyll'],
+  saved:['Salvato','Saved','U ruajt'], sure:['Sei sicuro?','Are you sure?','Jeni i sigurt?'], privacy:['Consenso privacy','Privacy consent','Pëlqimi për privatësinë'],
+  sizes_by_brand:['Taglie per marca (es. Sandro: 2, Furla: M)','Sizes by brand (e.g. Sandro: 2, Furla: M)','Masat sipas markës (p.sh. Sandro: 2, Furla: M)'],
+  fx_rate:['Cambio (valuta per 1 €)','Rate (currency per €1)','Kursi (monedhë për 1 €)'], channel:['Canale','Channel','Kanali'], order:['Ordine','Order','Porosia'], cod:['Contrassegno da incassare','Cash on delivery','Para në dorëzim'],
+  duties:['Dazi','Duties','Doganat'], cost:['Costo','Cost','Kosto'], add_line:['Aggiungi pezzo','Add item','Shto artikull'], forgot_template:['Imposta il link di tracking del corriere in Impostazioni','Set the courier tracking link in Settings','Vendosni lidhjen e gjurmimit të korrierit te Cilësimet']
+};
+const LANGS = {it:0,en:1,sq:2};
+let LANG = localStorage.getItem('mv_lang') || 'it';
+const t = k => (T[k] ? T[k][LANGS[LANG]] : k);
+
+// valori enumerati tradotti
+const E = {
+  variant_status:{da_ordinare:['Da ordinare','To order','Për t\'u porositur'],ordinato:['Ordinato','Ordered','Porositur'],in_arrivo:['In arrivo','Incoming','Në ardhje'],in_magazzino:['In magazzino','In stock','Në magazinë'],riservato:['Riservato','Reserved','Rezervuar'],venduto:['Venduto','Sold','Shitur']},
+  location:{italia:['Italia','Italy','Itali'],spagna:['Spagna','Spain','Spanjë'],in_viaggio:['In viaggio','In transit','Në rrugë'],albania:['Albania','Albania','Shqipëri'],kosovo:['Kosovo','Kosovo','Kosovë'],macedonia:['Macedonia del Nord','North Macedonia','Maqedoni e Veriut'],uk:['Regno Unito','UK','Mbretëri e Bashkuar']},
+  condition:{nuovo_cartellino:['Nuovo con cartellino','New with tags','I ri me etiketë'],nuovo:['Nuovo','New','I ri'],outlet:['Outlet','Outlet','Outlet'],difetto:['Con difetto','Flawed','Me defekt']},
+  instagram_status:{non_pubblicato:['Non pubblicato','Not posted','Pa publikuar'],post:['Post','Post','Postim'],storia:['Storia','Story','Story'],highlight:['Highlight','Highlight','Highlight']},
+  purchase_status:{da_ordinare:['Da ordinare','To order','Për t\'u porositur'],ordinato:['Ordinato','Ordered','Porositur'],in_arrivo:['In arrivo','Incoming','Në ardhje'],ricevuto:['Ricevuto','Received','Marrë']},
+  cost_kind:{trasporto:['Trasporto','Transport','Transporti'],carburante:['Carburante','Fuel','Karburanti'],pedaggi:['Pedaggi','Tolls','Pagesat rrugore'],alloggio:['Alloggio','Accommodation','Akomodimi'],spedizione:['Spedizione','Shipping','Dërgesa'],dazi:['Dazi','Duties','Doganat'],altro:['Altro','Other','Tjetër']},
+  supplier_kind:{boutique:['Boutique','Boutique','Butik'],outlet:['Outlet','Outlet','Outlet'],online:['Online','Online','Online'],grossista:['Grossista','Wholesaler','Shumicë'],altro:['Altro','Other','Tjetër']},
+  country:{AL:['Albania','Albania','Shqipëri'],XK:['Kosovo','Kosovo','Kosovë'],MK:['Macedonia del Nord','North Macedonia','Maqedoni e Veriut'],UK:['Regno Unito','UK','Mbretëri e Bashkuar'],IT:['Italia','Italy','Itali'],ES:['Spagna','Spain','Spanjë'],altro:['Altro','Other','Tjetër']},
+  currency:{EUR:['EUR','EUR','EUR'],ALL:['Lek (ALL)','Lek (ALL)','Lek (ALL)'],MKD:['Denar (MKD)','Denar (MKD)','Denar (MKD)'],GBP:['Sterlina (GBP)','Pound (GBP)','Paund (GBP)']},
+  source:{instagram_organico:['Instagram organico','Instagram organic','Instagram organik'],instagram_ads:['Instagram ads','Instagram ads','Reklama në Instagram'],passaparola:['Passaparola','Word of mouth','Nga goja në gojë'],facebook:['Facebook','Facebook','Facebook'],altro:['Altro','Other','Tjetër']},
+  order_status:{bozza:['Bozza','Draft','Draft'],confermato:['Confermato','Confirmed','Konfirmuar'],spedito:['Spedito','Shipped','Dërguar'],consegnato:['Consegnato','Delivered','Dorëzuar'],reso:['Reso','Returned','Kthyer'],annullato:['Annullato','Cancelled','Anuluar']},
+  channel:{instagram:['Instagram','Instagram','Instagram'],facebook:['Facebook','Facebook','Facebook'],whatsapp:['WhatsApp','WhatsApp','WhatsApp'],di_persona:['Di persona','In person','Personalisht'],altro:['Altro','Other','Tjetër']},
+  pay_method:{contanti:['Contanti','Cash','Para në dorë'],contanti_alla_consegna:['Contanti alla consegna (corriere)','Cash on delivery (courier)','Para në dorëzim (korrieri)'],bonifico:['Bonifico','Bank transfer','Transfertë bankare'],carta:['Carta','Card','Kartë'],altro:['Altro','Other','Tjetër']},
+  pay_kind:{acconto:['Acconto','Deposit','Kapar'],saldo:['Saldo','Balance','Saldo'],rimborso:['Rimborso','Refund','Rimbursim']},
+  pay_status:{da_incassare:['Da incassare','To collect','Për t\'u arkëtuar'],incassato:['Incassato','Collected','Arkëtuar'],consegnato_dal_corriere:['Versato dal corriere','Remitted by courier','Derdhur nga korrieri']},
+  ship_status:{da_spedire:['Da spedire','To ship','Për t\'u dërguar'],spedito:['Spedito','Shipped','Dërguar'],in_transito:['In transito','In transit','Në tranzit'],in_dogana:['In dogana','At customs','Në doganë'],consegnato:['Consegnato','Delivered','Dorëzuar'],problema:['Problema','Problem','Problem'],reso:['Reso','Returned','Kthyer']},
+  return_reason:{taglia:['Taglia sbagliata','Wrong size','Masë e gabuar'],difetto:['Difetto','Defect','Defekt'],ripensamento:['Ripensamento','Changed mind','Ndryshoi mendje'],altro:['Altro','Other','Tjetër']},
+  return_outcome:{rimborso:['Rimborso','Refund','Rimbursim'],cambio:['Cambio','Exchange','Ndërrim'],credito:['Credito','Store credit','Kredi']},
+  expense_cat:{tasse:['Tasse','Taxes','Taksat'],gestione:['Gestione','Operations','Menaxhimi'],marketing:['Marketing','Marketing','Marketing'],packaging:['Packaging','Packaging','Paketimi'],abbonamenti:['Abbonamenti','Subscriptions','Abonimet'],altro:['Altro','Other','Tjetër']},
+  role:{admin:['Amministratore','Administrator','Administrator'],vendite:['Vendite','Sales','Shitje'],magazzino:['Magazzino / acquisti','Warehouse / buying','Magazina / blerje']},
+  req_status:{aperta:['Aperta','Open','E hapur'],trovata:['Trovata','Found','U gjet'],chiusa:['Chiusa','Closed','E mbyllur']}
+};
+const ev = (group, v) => v == null ? '' : (E[group] && E[group][v] ? E[group][v][LANGS[LANG]] : v);
+const opts = group => Object.keys(E[group]).map(k => [k, ev(group, k)]);
+
+// ====== Utilità ======
+const $ = s => document.querySelector(s);
+const esc = s => s == null ? '' : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur = v => v == null || v === '' ? '—' : new Intl.NumberFormat(LANG === 'en' ? 'en-GB' : LANG === 'sq' ? 'sq-AL' : 'it-IT', {style:'currency', currency:'EUR'}).format(Number(v));
+const num = v => v == null || v === '' ? null : Number(v);
+const today = () => new Date().toISOString().slice(0,10);
+const fdate = d => d ? new Date(d).toLocaleDateString(LANG === 'en' ? 'en-GB' : LANG === 'sq' ? 'sq-AL' : 'it-IT') : '';
+function toast(msg, err){ const el = document.createElement('div'); el.className = 'toast' + (err ? ' err' : ''); el.textContent = msg; document.body.appendChild(el); setTimeout(() => el.remove(), err ? 5000 : 2200); }
+function check(res){ if (res.error){ toast(res.error.message, true); throw res.error; } return res.data; }
+const S = {user:null, profile:null, brands:[], categories:[], carriers:[], suppliers:[], trips:[]};
+const can = {
+  catalogWrite: () => ['admin','magazzino'].includes(S.profile?.role),
+  costs: () => ['admin','magazzino'].includes(S.profile?.role),
+  sales: () => ['admin','vendite'].includes(S.profile?.role),
+  admin: () => S.profile?.role === 'admin'
+};
+function statusPill(group, v){
+  const good = ['in_magazzino','consegnato','incassato','consegnato_dal_corriere','ricevuto','trovata'];
+  const warn = ['bozza','da_incassare','da_spedire','in_arrivo','ordinato','riservato','in_dogana','aperta','da_ordinare'];
+  const bad = ['annullato','problema','reso','venduto'];
+  const cls = good.includes(v) ? 'good' : warn.includes(v) ? 'warn' : bad.includes(v) ? 'bad' : '';
+  return `<span class="pill ${cls}">${esc(ev(group, v))}</span>`;
+}
+
+// ====== Modale con form ======
+function modal(html){ const bg = document.createElement('div'); bg.className = 'modal-bg'; bg.innerHTML = `<div class="modal">${html}</div>`; bg.addEventListener('click', e => { if (e.target === bg) bg.remove(); }); document.body.appendChild(bg); return bg; }
+function form({title, fields, values = {}, onSubmit, submitLabel, extra = ''}){
+  const html = `<h2>${esc(title)}</h2><form>${fields.map(f => {
+    const v = values[f.name] ?? f.value ?? '';
+    let input;
+    if (f.type === 'select') input = `<select name="${f.name}" ${f.required ? 'required' : ''}>${f.empty !== false ? '<option value="">—</option>' : ''}${f.options.map(([k, l]) => `<option value="${esc(k)}" ${String(k) === String(v) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+    else if (f.type === 'textarea') input = `<textarea name="${f.name}">${esc(v)}</textarea>`;
+    else if (f.type === 'checkbox') input = `<input type="checkbox" name="${f.name}" style="width:auto" ${v ? 'checked' : ''}>`;
+    else input = `<input name="${f.name}" type="${f.type || 'text'}" ${f.type === 'number' ? 'step="any"' : ''} value="${esc(v)}" ${f.required ? 'required' : ''}>`;
+    return `<div class="field"><label>${esc(f.label)}</label>${input}</div>`;
+  }).join('')}${extra}<div class="row" style="justify-content:flex-end;margin-top:8px"><button type="button" data-x>${t('cancel')}</button><button class="primary" type="submit">${esc(submitLabel || t('save'))}</button></div></form>`;
+  const m = modal(html);
+  m.querySelector('[data-x]').onclick = () => m.remove();
+  m.querySelector('form').onsubmit = async e => {
+    e.preventDefault();
+    const out = {};
+    fields.forEach(f => {
+      const el = e.target.elements[f.name];
+      if (f.type === 'checkbox') out[f.name] = el.checked;
+      else if (f.type === 'number') out[f.name] = num(el.value);
+      else out[f.name] = el.value === '' ? null : el.value;
+    });
+    const btn = e.target.querySelector('button[type=submit]'); btn.disabled = true;
+    try { await onSubmit(out, m); m.remove(); } catch (err) { console.error(err); btn.disabled = false; }
+  };
+  return m;
+}
+function confirmBox(msg){ return confirm(msg || t('sure')); }
+
+// ====== Foto ======
+async function resizeImage(file, max = 1600){
+  const img = await createImageBitmap(file);
+  const r = Math.min(1, max / Math.max(img.width, img.height));
+  const c = document.createElement('canvas'); c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return await new Promise(res => c.toBlob(res, 'image/jpeg', 0.85));
+}
+const urlCache = {};
+async function signedUrls(paths){
+  const need = [...new Set(paths.filter(p => p && !urlCache[p]))];
+  if (need.length){
+    const { data } = await sb.storage.from('foto').createSignedUrls(need, 3600);
+    (data || []).forEach(d => { if (d.signedUrl) urlCache[d.path] = d.signedUrl; });
+  }
+  return urlCache;
+}
+
+// ====== Avvio e login ======
+async function boot(){
+  const { data: { session } } = await sb.auth.getSession();
+  S.user = session?.user || null;
+  if (!S.user) return renderLogin();
+  const p = await sb.from('profiles').select('*').eq('id', S.user.id).maybeSingle();
+  S.profile = p.data;
+  if (S.profile?.lang && !localStorage.getItem('mv_lang')) LANG = S.profile.lang;
+  document.documentElement.lang = LANG;
+  if (!S.profile?.role) return renderWaiting();
+  await loadRefs();
+  renderShell();
+  route();
+}
+async function loadRefs(){
+  const [b, c, k] = await Promise.all([
+    sb.from('brands').select('*').order('name'),
+    sb.from('categories').select('*').order('name'),
+    sb.from('carriers').select('*').order('name')
+  ]);
+  S.brands = b.data || []; S.categories = c.data || []; S.carriers = k.data || [];
+  if (can.costs()){
+    const [s, tr] = await Promise.all([sb.from('suppliers').select('*').order('name'), sb.from('trips').select('*').order('start_date', {ascending:false})]);
+    S.suppliers = s.data || []; S.trips = tr.data || [];
+  }
+}
+const catLabel = id => { const c = S.categories.find(x => x.id === id); if (!c) return ''; const p = S.categories.find(x => x.id === c.parent_id); return p ? `${p.name} › ${c.name}` : c.name; };
+const catOptions = () => S.categories.map(c => [c.id, catLabel(c.id)]).sort((a, b) => a[1].localeCompare(b[1]));
+const brandName = id => S.brands.find(b => b.id === id)?.name || '';
+
+function langSelect(){ return `<select onchange="setLang(this.value)">${['it','en','sq'].map(l => `<option value="${l}" ${l === LANG ? 'selected' : ''}>${l.toUpperCase()}</option>`).join('')}</select>`; }
+async function setLang(l){ LANG = l; localStorage.setItem('mv_lang', l); if (S.profile) await sb.from('profiles').update({lang: l}).eq('id', S.user.id); location.reload(); }
+
+function renderLogin(mode = 'login'){
+  $('#app').innerHTML = `<div class="center"><div class="card login">
+    <div class="row spread"><h1>Modus Vestendi</h1>${langSelect()}</div>
+    <form id="lf">
+      ${mode === 'signup' ? `<div class="field"><label>${t('name')}</label><input name="name" required></div>` : ''}
+      <div class="field"><label>${t('email')}</label><input name="email" type="email" required autocomplete="email"></div>
+      <div class="field"><label>${t('password')}</label><input name="password" type="password" minlength="8" required autocomplete="${mode === 'signup' ? 'new-password' : 'current-password'}"></div>
+      <button class="primary" style="width:100%;justify-content:center">${mode === 'signup' ? t('signup') : t('login')}</button>
+    </form>
+    <p class="small muted" style="text-align:center;margin-top:14px"><button class="link" id="sw">${mode === 'signup' ? t('login') : t('signup')}</button></p>
+  </div></div>`;
+  $('#sw').onclick = () => renderLogin(mode === 'signup' ? 'login' : 'signup');
+  $('#lf').onsubmit = async e => {
+    e.preventDefault(); const f = e.target.elements;
+    if (mode === 'signup'){
+      const r = await sb.auth.signUp({email: f.email.value, password: f.password.value, options: {data: {full_name: f.name.value}, emailRedirectTo: location.href.split('#')[0]}});
+      if (r.error) return toast(r.error.message, true);
+      if (!r.data.session) return toast(t('check_email'));
+      boot();
+    } else {
+      const r = await sb.auth.signInWithPassword({email: f.email.value, password: f.password.value});
+      if (r.error) return toast(r.error.message, true);
+      boot();
+    }
+  };
+}
+function renderWaiting(){
+  $('#app').innerHTML = `<div class="center"><div class="card login"><h2>Modus Vestendi</h2><p>${t('waiting_role')}</p><button onclick="logout()">${t('logout')}</button></div></div>`;
+}
+async function logout(){ await sb.auth.signOut(); location.hash = ''; boot(); }
+
+// ====== Struttura e navigazione ======
+function navItems(){
+  const r = S.profile.role;
+  const all = [['dashboard','#/'],['catalog','#/catalogo'],['purchases','#/acquisti'],['customers','#/clienti'],['orders','#/ordini'],['expenses','#/spese'],['reports','#/report'],['settings','#/impostazioni']];
+  const allowed = {admin: all.map(a => a[0]), vendite:['dashboard','catalog','customers','orders','settings'], magazzino:['dashboard','catalog','purchases','settings']}[r];
+  return all.filter(a => allowed.includes(a[0]));
+}
+function renderShell(){
+  $('#app').innerHTML = `<header class="top"><div class="top-row"><div class="brand">Modus Vestendi</div><div class="row">${langSelect()}<button class="link" style="color:#d9cfc6" onclick="logout()">${t('logout')}</button></div></div>
+  <nav class="tabs">${navItems().map(([k, h]) => `<a href="${h}" data-k="${k}">${t(k)}</a>`).join('')}</nav></header><main id="main"></main>`;
+}
+window.addEventListener('hashchange', () => S.profile?.role && route());
+async function route(){
+  const h = location.hash.replace(/^#\/?/, '');
+  const [p, id] = h.split('/');
+  const map = {'':['dashboard', viewDashboard], catalogo:['catalog', viewCatalog], articolo:['catalog', viewModel], acquisti:['purchases', viewPurchases], acquisto:['purchases', viewPurchase],
+    clienti:['customers', viewCustomers], cliente:['customers', viewCustomer], ordini:['orders', viewOrders], ordine:['orders', viewOrder], spese:['expenses', viewExpenses], report:['reports', viewReports], impostazioni:['settings', viewSettings]};
+  const [k, fn] = map[p] || map[''];
+  document.querySelectorAll('nav.tabs a').forEach(a => a.classList.toggle('on', a.dataset.k === k));
+  if (!navItems().some(n => n[0] === k)) return (location.hash = '#/');
+  const main = $('#main'); main.innerHTML = `<p class="muted">…</p>`;
+  try { await fn(main, id ? Number(id) : null); } catch (e) { console.error(e); main.innerHTML = `<div class="card">${esc(e.message || e)}</div>`; }
+  window.scrollTo(0, 0);
+}
+
+// ====== Panoramica ======
+async function viewDashboard(main){
+  const variants = check(await sb.from('variants').select('id,sku,size,color,qty,low_stock_threshold,models(id,name,brand_id)'));
+  const inStock = variants.reduce((a, v) => a + Math.max(0, v.qty), 0);
+  const low = variants.filter(v => v.low_stock_threshold > 0 && v.qty <= v.low_stock_threshold);
+  let kpis = `<div class="card kpi"><div class="v">${inStock}</div><div class="l">${t('in_stock')}</div></div>`;
+  if (can.costs()){
+    const vc = check(await sb.from('variant_costs').select('variant_id,landed_cost'));
+    const cost = Object.fromEntries(vc.map(x => [x.variant_id, Number(x.landed_cost)]));
+    const value = variants.reduce((a, v) => a + Math.max(0, v.qty) * (cost[v.id] || 0), 0);
+    kpis += `<div class="card kpi"><div class="v">${eur(value)}</div><div class="l">${t('stock_value')}</div></div>`;
+  }
+  let recent = '';
+  if (can.sales()){
+    const toShip = check(await sb.from('orders').select('id', {count:'exact', head:false}).eq('status', 'confermato'));
+    const pays = check(await sb.from('payments').select('amount,kind').eq('status', 'da_incassare'));
+    const due = pays.filter(p => p.kind !== 'rimborso').reduce((a, p) => a + Number(p.amount), 0);
+    kpis += `<div class="card kpi"><div class="v">${toShip.length}</div><div class="l">${t('to_ship')}</div></div><div class="card kpi"><div class="v">${eur(due)}</div><div class="l">${t('to_collect')}</div></div>`;
+    const ro = check(await sb.from('orders').select('id,order_no,order_date,status,customers(full_name)').order('created_at', {ascending:false}).limit(8));
+    recent = `<div class="card"><h3>${t('recent_orders')}</h3>${ro.length ? `<div class="table-wrap"><table>${ro.map(o => `<tr class="click" onclick="location.hash='#/ordine/${o.id}'"><td>${esc(o.order_no)}</td><td>${esc(o.customers?.full_name)}</td><td>${fdate(o.order_date)}</td><td>${statusPill('order_status', o.status)}</td></tr>`).join('')}</table></div>` : `<div class="empty">${t('no_data')}</div>`}</div>`;
+  }
+  main.innerHTML = `<h1>${t('dashboard')}</h1><div class="grid g4">${kpis}</div>${recent}
+  <div class="card"><h3>${t('low_stock')}</h3>${low.length ? `<table>${low.map(v => `<tr class="click" onclick="location.hash='#/articolo/${v.models.id}'"><td>${esc(brandName(v.models.brand_id))} · ${esc(v.models.name)}</td><td>${esc(v.size || '')} ${esc(v.color || '')}</td><td class="right">${v.qty}</td></tr>`).join('')}</table>` : `<div class="empty">${t('no_data')}</div>`}</div>`;
+}
+
+// ====== Catalogo ======
+let catFilter = {q:'', brand:'', cat:''};
+async function viewCatalog(main){
+  const models = check(await sb.from('models').select('id,name,season,brand_id,category_id,instagram_status,variants(id,qty,sale_price),photos(path,is_main,sort)').eq('archived', false).order('created_at', {ascending:false}));
+  const mains = models.map(m => { const ph = (m.photos || []).sort((a, b) => (b.is_main - a.is_main) || a.sort - b.sort)[0]; return ph?.path; });
+  await signedUrls(mains);
+  main.innerHTML = `<div class="row spread"><h1>${t('catalog')}</h1>${can.catalogWrite() ? `<button class="primary" onclick="newModel()">+ ${t('new_model')}</button>` : ''}</div>
+  <div class="row" style="margin-bottom:14px"><input class="search" id="cq" placeholder="${t('search')}" value="${esc(catFilter.q)}">
+  <select id="cb" style="max-width:200px"><option value="">${t('brand')}: ${t('all')}</option>${S.brands.map(b => `<option value="${b.id}" ${String(b.id) === catFilter.brand ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}</select>
+  <select id="cc" style="max-width:240px"><option value="">${t('category')}: ${t('all')}</option>${catOptions().map(([k, l]) => `<option value="${k}" ${String(k) === catFilter.cat ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
+  <div class="models" id="ml"></div>`;
+  const draw = () => {
+    const q = catFilter.q.toLowerCase();
+    const list = models.map((m, i) => ({m, ph: mains[i]})).filter(({m}) =>
+      (!catFilter.brand || String(m.brand_id) === catFilter.brand) &&
+      (!catFilter.cat || String(m.category_id) === catFilter.cat || String(S.categories.find(c => c.id === m.category_id)?.parent_id) === catFilter.cat) &&
+      (!q || (m.name + ' ' + brandName(m.brand_id) + ' ' + (m.season || '')).toLowerCase().includes(q)));
+    $('#ml').innerHTML = list.length ? list.map(({m, ph}) => {
+      const qty = (m.variants || []).reduce((a, v) => a + v.qty, 0);
+      const price = (m.variants || []).map(v => v.sale_price).filter(Boolean)[0];
+      return `<div class="model" onclick="location.hash='#/articolo/${m.id}'"><div class="ph" style="${ph && urlCache[ph] ? `background-image:url('${urlCache[ph]}')` : ''}">${ph ? '' : t('photos')}</div>
+      <div class="b"><div class="small muted">${esc(brandName(m.brand_id))}</div><div class="n">${esc(m.name)}</div><div class="row spread small"><span>${price ? eur(price) : ''}</span><span class="pill ${qty > 0 ? 'good' : 'grey'}">${qty} pz</span></div></div></div>`;
+    }).join('') : `<div class="empty">${t('no_data')}</div>`;
+  };
+  draw();
+  $('#cq').oninput = e => { catFilter.q = e.target.value; draw(); };
+  $('#cb').onchange = e => { catFilter.brand = e.target.value; draw(); };
+  $('#cc').onchange = e => { catFilter.cat = e.target.value; draw(); };
+}
+function modelFields(){
+  return [
+    {name:'brand_id', label:t('brand'), type:'select', options:S.brands.map(b => [b.id, b.name]), required:true},
+    {name:'new_brand', label:`${t('brand')} (+ ${t('add')})`},
+    {name:'category_id', label:t('category'), type:'select', options:catOptions()},
+    {name:'name', label:t('name'), required:true},
+    {name:'season', label:t('season')},
+    {name:'list_price', label:t('list_price'), type:'number'},
+    {name:'instagram_status', label:t('instagram'), type:'select', options:opts('instagram_status'), empty:false},
+    {name:'instagram_url', label:'Link post Instagram'},
+    {name:'description', label:t('description'), type:'textarea'}
+  ];
+}
+async function ensureBrand(v){
+  if (v.new_brand){
+    const b = check(await sb.from('brands').insert({name: v.new_brand}).select().single());
+    S.brands.push(b); v.brand_id = b.id;
+  }
+  delete v.new_brand;
+  if (!v.brand_id) { toast(t('brand'), true); throw new Error('brand'); }
+}
+function newModel(){
+  const f = modelFields(); f[0].required = false;
+  form({title:t('new_model'), fields:f, values:{instagram_status:'non_pubblicato'}, onSubmit: async v => {
+    await ensureBrand(v);
+    const m = check(await sb.from('models').insert(v).select().single());
+    location.hash = '#/articolo/' + m.id;
+  }});
+}
+const skuFor = (m, size, color) => [brandName(m.brand_id).replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'MV', m.id, (size || 'U').toUpperCase().replace(/\s+/g, ''), (color || '').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase()].filter(Boolean).join('-');
+async function viewModel(main, id){
+  const m = check(await sb.from('models').select('*,variants(*),photos(*)').eq('id', id).single());
+  m.variants.sort((a, b) => (a.color || '').localeCompare(b.color || '') || (a.size || '').localeCompare(b.size || '', undefined, {numeric:true}));
+  m.photos.sort((a, b) => (b.is_main - a.is_main) || a.sort - b.sort);
+  await signedUrls(m.photos.map(p => p.path));
+  let costs = {};
+  if (can.costs()){
+    const vc = check(await sb.from('variant_costs').select('*').in('variant_id', m.variants.map(v => v.id).concat([0])));
+    costs = Object.fromEntries(vc.map(x => [x.variant_id, x]));
+  }
+  const sizes = [...new Set(m.variants.map(v => v.size || '—'))];
+  const colors = [...new Set(m.variants.map(v => v.color || '—'))];
+  const matrix = m.variants.length ? `<div class="table-wrap"><table class="matrix"><tr><th></th>${sizes.map(s => `<th>${esc(s)}</th>`).join('')}</tr>${colors.map(c => `<tr><th style="text-align:left">${esc(c)}</th>${sizes.map(s => { const v = m.variants.find(x => (x.size || '—') === s && (x.color || '—') === c); return `<td class="q">${v ? v.qty : ''}</td>`; }).join('')}</tr>`).join('')}</table></div>` : '';
+  const w = can.catalogWrite();
+  main.innerHTML = `<p><a href="#/catalogo">← ${t('catalog')}</a></p>
+  <div class="row spread"><div><div class="muted">${esc(brandName(m.brand_id))} · ${esc(catLabel(m.category_id))}</div><h1>${esc(m.name)}</h1></div>
+  <div class="row">${w ? `<button onclick="editModel(${m.id})">${t('edit')}</button><button class="danger" onclick="archiveModel(${m.id})">${t('archive')}</button>` : ''}</div></div>
+  <div class="row small" style="margin-bottom:12px">${m.season ? `<span class="pill grey">${esc(m.season)}</span>` : ''}${statusPill('instagram_status', m.instagram_status)}${m.instagram_url ? `<a href="${esc(m.instagram_url)}" target="_blank" rel="noopener">Instagram ↗</a>` : ''}${m.list_price ? `<span class="muted">${t('list_price')}: ${eur(m.list_price)}</span>` : ''}</div>
+  ${m.description ? `<p>${esc(m.description)}</p>` : ''}
+  <div class="card"><div class="row spread"><h3>${t('photos')}</h3>${w ? `<label class="btn" style="margin:0;color:var(--ink)">+ ${t('add_photo')}<input type="file" accept="image/*" multiple class="hide" id="pf"></label>` : ''}</div>
+  <div class="photos">${m.photos.map(p => `<div class="p ${p.is_main ? 'main' : ''}" style="background-image:url('${urlCache[p.path] || ''}')" onclick="window.open('${urlCache[p.path] || ''}','_blank')">${w ? `<button onclick="event.stopPropagation();photoMenu(${p.id},${m.id})">⋯</button>` : ''}</div>`).join('') || `<span class="muted small">${t('no_data')}</span>`}</div></div>
+  <div class="card"><div class="row spread"><h3>${t('variants')}</h3>${w ? `<button onclick="editVariant(null,${m.id})">+ ${t('add_variant')}</button>` : ''}</div>${matrix}
+  <div class="table-wrap"><table><tr><th>${t('sku')}</th><th>${t('size')}</th><th>${t('color')}</th><th class="right">${t('qty')}</th><th>${t('status')}</th><th>${t('location')}</th><th class="right">${t('sale_price')}</th>${can.costs() ? `<th class="right">${t('landed_cost')}</th>` : ''}<th></th></tr>
+  ${m.variants.map(v => `<tr><td class="small">${esc(v.sku)}</td><td>${esc(v.size)}</td><td>${esc(v.color)}</td><td class="right"><b>${v.qty}</b></td><td>${statusPill('variant_status', v.status)}</td><td class="small">${esc(ev('location', v.location))}</td><td class="right">${eur(v.sale_price)}</td>${can.costs() ? `<td class="right" title="${costs[v.id] ? `${t('purchase_price')} ${eur(costs[v.id].purchase_price)} + ${eur(costs[v.id].allocated_cost)}` : ''}">${eur(costs[v.id]?.landed_cost)}</td>` : ''}
+  <td class="right">${w ? `<button class="link" onclick="editVariant(${v.id},${m.id})">${t('edit')}</button><button class="link" onclick="adjustStock(${v.id},${m.id})">±</button>` : ''}${can.sales() ? `<button class="link" onclick="reserveVariant(${v.id})">${t('reserve')}</button>` : ''}</td></tr>`).join('')}</table></div></div>`;
+  window._model = m;
+  const pf = $('#pf');
+  if (pf) pf.onchange = async e => {
+    const files = [...e.target.files]; if (!files.length) return;
+    toast('Upload…');
+    for (const [i, file] of files.entries()){
+      const blob = await resizeImage(file);
+      const path = `${m.id}/${Date.now()}_${i}.jpg`;
+      check(await sb.storage.from('foto').upload(path, blob, {contentType:'image/jpeg'}));
+      check(await sb.from('photos').insert({model_id: m.id, path, is_main: m.photos.length === 0 && i === 0, sort: m.photos.length + i}));
+    }
+    route();
+  };
+}
+function editModel(id){
+  const m = window._model;
+  form({title:t('edit'), fields:modelFields(), values:m, onSubmit: async v => {
+    await ensureBrand(v);
+    check(await sb.from('models').update(v).eq('id', id)); toast(t('saved')); route();
+  }});
+}
+async function archiveModel(id){ if (!confirmBox()) return; check(await sb.from('models').update({archived:true}).eq('id', id)); location.hash = '#/catalogo'; }
+function photoMenu(pid, mid){
+  const m = modal(`<h3>${t('photos')}</h3><div class="row"><button onclick="setMainPhoto(${pid},${mid})">★ ${t('set_main')}</button><button class="danger" onclick="deletePhoto(${pid})">${t('delete')}</button><button onclick="this.closest('.modal-bg').remove()">${t('close')}</button></div>`);
+}
+async function setMainPhoto(pid, mid){ check(await sb.from('photos').update({is_main:false}).eq('model_id', mid)); check(await sb.from('photos').update({is_main:true}).eq('id', pid)); document.querySelector('.modal-bg')?.remove(); route(); }
+async function deletePhoto(pid){
+  if (!confirmBox()) return;
+  const p = window._model.photos.find(x => x.id === pid);
+  await sb.storage.from('foto').remove([p.path]);
+  check(await sb.from('photos').delete().eq('id', pid)); document.querySelector('.modal-bg')?.remove(); route();
+}
+function editVariant(vid, mid){
+  const m = window._model; const v = vid ? m.variants.find(x => x.id === vid) : {status:'in_magazzino', location:'italia', condition:'nuovo_cartellino', low_stock_threshold:0};
+  const fields = [
+    {name:'size', label:t('size')}, {name:'color', label:t('color')},
+    {name:'sale_price', label:t('sale_price'), type:'number'},
+    {name:'status', label:t('status'), type:'select', options:opts('variant_status'), empty:false},
+    {name:'location', label:t('location'), type:'select', options:opts('location'), empty:false},
+    {name:'condition', label:t('condition'), type:'select', options:opts('condition'), empty:false},
+    {name:'low_stock_threshold', label:t('low_stock'), type:'number'},
+    {name:'sku', label:t('sku')}
+  ];
+  if (!vid) fields.splice(2, 0, {name:'initial_qty', label:t('qty'), type:'number', value:0});
+  form({title: vid ? t('edit') : t('add_variant'), fields, values:v, onSubmit: async x => {
+    const q = x.initial_qty; delete x.initial_qty;
+    x.low_stock_threshold = x.low_stock_threshold || 0;
+    if (!x.sku) x.sku = skuFor(m, x.size, x.color);
+    if (vid) check(await sb.from('variants').update(x).eq('id', vid));
+    else {
+      const nv = check(await sb.from('variants').insert({...x, model_id: mid}).select().single());
+      if (q) check(await sb.from('stock_movements').insert({variant_id: nv.id, kind:'carico', qty:q, reference:'carico iniziale'}));
+    }
+    route();
+  }});
+}
+function adjustStock(vid){
+  form({title:t('movements'), fields:[
+    {name:'kind', label:t('kind'), type:'select', options:[['carico','+ carico'],['rettifica','± rettifica'],['trasferimento','trasferimento']], empty:false},
+    {name:'qty', label:`${t('qty')} (+/−)`, type:'number', required:true},
+    {name:'reference', label:t('notes')}
+  ], onSubmit: async x => { check(await sb.from('stock_movements').insert({...x, variant_id: vid})); route(); }});
+}
+async function reserveVariant(vid){
+  const cs = check(await sb.from('customers').select('id,full_name,instagram').order('full_name'));
+  form({title:t('reserve'), fields:[
+    {name:'customer_id', label:t('customer'), type:'select', options:cs.map(c => [c.id, c.full_name + (c.instagram ? ' @' + c.instagram : '')]), required:true},
+    {name:'expires_on', label:t('until'), type:'date'}
+  ], onSubmit: async x => {
+    check(await sb.from('reservations').insert({...x, variant_id: vid}));
+    if (can.catalogWrite()) await sb.from('variants').update({status:'riservato'}).eq('id', vid);
+    toast(t('saved'));
+  }});
+}
+
+// ====== Acquisti ======
+async function viewPurchases(main){
+  const ps = check(await sb.from('purchases').select('*,suppliers(name),trips(title),purchase_lines(qty,unit_price)').order('purchase_date', {ascending:false}));
+  main.innerHTML = `<div class="row spread"><h1>${t('purchases')}</h1><div class="row"><button onclick="editTrip()">+ ${t('trip')}</button><button onclick="editSupplier()">+ ${t('supplier')}</button><button class="primary" onclick="newPurchase()">+ ${t('new_purchase')}</button></div></div>
+  <div class="card"><div class="table-wrap"><table><tr><th>#</th><th>${t('date')}</th><th>${t('supplier')}</th><th>${t('trip')}</th><th class="right">${t('lines')}</th><th class="right">${t('total')}</th><th>${t('status')}</th></tr>
+  ${ps.map(p => { const q = p.purchase_lines.reduce((a, l) => a + l.qty, 0), tot = p.purchase_lines.reduce((a, l) => a + l.qty * l.unit_price, 0);
+    return `<tr class="click" onclick="location.hash='#/acquisto/${p.id}'"><td>${p.id}</td><td>${fdate(p.purchase_date)}</td><td>${esc(p.suppliers?.name)}</td><td>${esc(p.trips?.title)}</td><td class="right">${q}</td><td class="right">${eur(tot)}</td><td>${statusPill('purchase_status', p.status)}</td></tr>`; }).join('') || `<tr><td colspan="7" class="empty">${t('no_data')}</td></tr>`}</table></div></div>
+  <div class="card"><h3>${t('trips')}</h3><table>${S.trips.map(tr => `<tr><td>${esc(tr.title)}</td><td>${esc(tr.destination || '')}</td><td>${fdate(tr.start_date)}</td><td class="right"><button class="link" onclick="tripCosts(${tr.id})">${t('costs')}</button><button class="link" onclick="editTrip(${tr.id})">${t('edit')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>
+  <div class="card"><h3>${t('suppliers')}</h3><table>${S.suppliers.map(s => `<tr><td>${esc(s.name)}</td><td>${esc(s.city || '')} ${esc(s.country || '')}</td><td>${esc(ev('supplier_kind', s.kind))}</td><td class="right"><button class="link" onclick="editSupplier(${s.id})">${t('edit')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>`;
+}
+function editTrip(id){
+  const tr = id ? S.trips.find(x => x.id === id) : {};
+  form({title:t('trip'), fields:[{name:'title', label:t('name'), required:true},{name:'destination', label:'Destinazione'},{name:'start_date', label:t('date'), type:'date'},{name:'end_date', label:'Fine', type:'date'},{name:'people', label:'Persone'},{name:'notes', label:t('notes'), type:'textarea'}],
+    values:tr, onSubmit: async v => { if (id) check(await sb.from('trips').update(v).eq('id', id)); else check(await sb.from('trips').insert(v)); await loadRefs(); route(); }});
+}
+function editSupplier(id){
+  const s = id ? S.suppliers.find(x => x.id === id) : {};
+  form({title:t('supplier'), fields:[{name:'name', label:t('name'), required:true},{name:'city', label:t('city')},{name:'country', label:t('country')},{name:'kind', label:t('kind'), type:'select', options:opts('supplier_kind')},{name:'notes', label:t('notes'), type:'textarea'}],
+    values:s, onSubmit: async v => { if (id) check(await sb.from('suppliers').update(v).eq('id', id)); else check(await sb.from('suppliers').insert(v)); await loadRefs(); route(); }});
+}
+function newPurchase(){
+  form({title:t('new_purchase'), fields:[
+    {name:'supplier_id', label:t('supplier'), type:'select', options:S.suppliers.map(s => [s.id, s.name])},
+    {name:'trip_id', label:t('trip'), type:'select', options:S.trips.map(x => [x.id, x.title])},
+    {name:'purchase_date', label:t('date'), type:'date', value:today()},
+    {name:'status', label:t('status'), type:'select', options:opts('purchase_status'), empty:false, value:'ordinato'},
+    {name:'notes', label:t('notes'), type:'textarea'}
+  ], onSubmit: async v => { const p = check(await sb.from('purchases').insert(v).select().single()); location.hash = '#/acquisto/' + p.id; }});
+}
+async function allVariants(){
+  return check(await sb.from('variants').select('id,sku,size,color,qty,sale_price,model_id,models(name,brand_id,archived)'));
+}
+const variantLabel = v => `${brandName(v.models?.brand_id)} · ${v.models?.name} · ${v.size || ''} ${v.color || ''} (${v.sku || v.id})`;
+async function viewPurchase(main, id){
+  const p = check(await sb.from('purchases').select('*,suppliers(name),trips(title),purchase_lines(*,variants(sku,size,color,models(name,brand_id))),purchase_costs(*)').eq('id', id).single());
+  const tot = p.purchase_lines.reduce((a, l) => a + l.qty * l.unit_price, 0);
+  const ctot = p.purchase_costs.reduce((a, c) => a + Number(c.amount), 0);
+  window._purchase = p;
+  main.innerHTML = `<p><a href="#/acquisti">← ${t('purchases')}</a></p>
+  <div class="row spread"><div><h1>${t('purchases')} #${p.id}</h1><div class="muted">${fdate(p.purchase_date)} · ${esc(p.suppliers?.name || '')} ${p.trips ? '· ' + esc(p.trips.title) : ''}</div></div>
+  <div class="row">${statusPill('purchase_status', p.status)}<button onclick="editPurchaseStatus(${p.id})">${t('edit')}</button>${p.status !== 'ricevuto' ? `<button class="accent" onclick="receivePurchase(${p.id})">${t('receive')}</button>` : ''}</div></div>
+  <div class="card"><div class="row spread"><h3>${t('lines')}</h3>${p.status !== 'ricevuto' ? `<button onclick="addPurchaseLine(${p.id})">+ ${t('add_line')}</button>` : ''}</div>
+  <div class="table-wrap"><table><tr><th>${t('items')}</th><th class="right">${t('qty')}</th><th class="right">${t('purchase_price')}</th><th class="right">+ ${t('costs')}/pz</th><th class="right">${t('landed_cost')}</th><th></th></tr>
+  ${p.purchase_lines.map(l => `<tr><td>${esc(brandName(l.variants.models.brand_id))} · ${esc(l.variants.models.name)} <span class="muted small">${esc(l.variants.size || '')} ${esc(l.variants.color || '')}</span></td><td class="right">${l.qty}</td><td class="right">${eur(l.unit_price)}</td><td class="right">${eur(l.allocated_unit_cost)}</td><td class="right"><b>${eur(Number(l.unit_price) + Number(l.allocated_unit_cost))}</b></td><td class="right">${p.status !== 'ricevuto' ? `<button class="link" onclick="delRow('purchase_lines',${l.id})">${t('delete')}</button>` : ''}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">${t('no_data')}</td></tr>`}
+  <tr><td><b>${t('total')}</b></td><td></td><td class="right"><b>${eur(tot)}</b></td><td class="right"><b>${eur(ctot)}</b></td><td></td><td></td></tr></table></div></div>
+  <div class="card"><div class="row spread"><h3>${t('costs')}</h3><button onclick="addCost({purchase_id:${p.id}})">+ ${t('add')}</button></div>
+  <table>${p.purchase_costs.map(c => `<tr><td>${esc(ev('cost_kind', c.kind))}</td><td>${esc(c.notes || '')}</td><td class="small muted">${c.allocation === 'valore' ? t('by_value') : t('by_pieces')}</td><td class="right">${eur(c.amount)}</td><td class="right"><button class="link" onclick="delRow('purchase_costs',${c.id})">${t('delete')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table>
+  ${p.trip_id ? `<p class="small muted">${t('trip')}: <button class="link" onclick="tripCosts(${p.trip_id})">${t('costs')} ${esc(p.trips.title)}</button></p>` : ''}</div>
+  ${p.notes ? `<div class="card"><p>${esc(p.notes)}</p></div>` : ''}`;
+}
+function editPurchaseStatus(id){
+  const p = window._purchase;
+  form({title:t('edit'), fields:[
+    {name:'supplier_id', label:t('supplier'), type:'select', options:S.suppliers.map(s => [s.id, s.name])},
+    {name:'trip_id', label:t('trip'), type:'select', options:S.trips.map(x => [x.id, x.title])},
+    {name:'purchase_date', label:t('date'), type:'date'},
+    {name:'status', label:t('status'), type:'select', options:opts('purchase_status').filter(o => o[0] !== 'ricevuto'), empty:false},
+    {name:'notes', label:t('notes'), type:'textarea'}
+  ], values:p, onSubmit: async v => { if (p.status === 'ricevuto') delete v.status; check(await sb.from('purchases').update(v).eq('id', id)); route(); }});
+}
+async function addPurchaseLine(pid){
+  const vs = (await allVariants()).filter(v => !v.models?.archived).sort((a, b) => variantLabel(a).localeCompare(variantLabel(b)));
+  form({title:t('add_line'), fields:[
+    {name:'variant_id', label:`${t('items')} (${t('catalog')})`, type:'select', options:vs.map(v => [v.id, variantLabel(v)]), required:true},
+    {name:'qty', label:t('qty'), type:'number', value:1, required:true},
+    {name:'unit_price', label:t('purchase_price'), type:'number', required:true}
+  ], onSubmit: async v => { check(await sb.from('purchase_lines').insert({...v, purchase_id: pid})); route(); }});
+}
+async function receivePurchase(id){ if (!confirmBox()) return; check(await sb.rpc('ricevi_acquisto', {p_purchase_id: id})); toast(t('saved')); route(); }
+function addCost(target){
+  form({title:t('costs'), fields:[
+    {name:'kind', label:t('kind'), type:'select', options:opts('cost_kind'), empty:false},
+    {name:'amount', label:t('amount') + ' (€)', type:'number', required:true},
+    {name:'allocation', label:t('allocation'), type:'select', options:[['valore', t('by_value')], ['pezzi', t('by_pieces')]], empty:false},
+    {name:'cost_date', label:t('date'), type:'date', value:today()},
+    {name:'notes', label:t('notes')}
+  ], onSubmit: async v => { check(await sb.from('purchase_costs').insert({...v, ...target})); route(); }});
+}
+async function tripCosts(tid){
+  const tr = S.trips.find(x => x.id === tid);
+  const cs = check(await sb.from('purchase_costs').select('*').eq('trip_id', tid).is('purchase_id', null));
+  const m = modal(`<h2>${t('costs')} · ${esc(tr.title)}</h2><p class="small muted">${t('allocation')}: tutti gli acquisti del viaggio.</p>
+  <table>${cs.map(c => `<tr><td>${esc(ev('cost_kind', c.kind))}</td><td>${esc(c.notes || '')}</td><td class="right">${eur(c.amount)}</td><td><button class="link" onclick="delRow('purchase_costs',${c.id})">${t('delete')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table>
+  <div class="row" style="justify-content:flex-end;margin-top:12px"><button onclick="this.closest('.modal-bg').remove()">${t('close')}</button><button class="primary" id="ac">+ ${t('add')}</button></div>`);
+  m.querySelector('#ac').onclick = () => { m.remove(); addCost({trip_id: tid}); };
+}
+async function delRow(table, id){ if (!confirmBox()) return; check(await sb.from(table).delete().eq('id', id)); document.querySelector('.modal-bg')?.remove(); route(); }
+
+// ====== Clienti ======
+let custQ = '';
+async function viewCustomers(main){
+  const cs = check(await sb.from('customers').select('id,full_name,instagram,phone,country,orders(id,status)').order('full_name'));
+  main.innerHTML = `<div class="row spread"><h1>${t('customers')}</h1><button class="primary" onclick="editCustomer()">+ ${t('new_customer')}</button></div>
+  <input class="search" id="cuq" placeholder="${t('search')}" value="${esc(custQ)}" style="margin-bottom:12px"><div class="card"><div class="table-wrap"><table id="ct"></table></div></div>`;
+  const draw = () => {
+    const q = custQ.toLowerCase();
+    const list = cs.filter(c => !q || [c.full_name, c.instagram, c.phone].join(' ').toLowerCase().includes(q));
+    $('#ct').innerHTML = `<tr><th>${t('name')}</th><th>Instagram</th><th>${t('phone')}</th><th>${t('country')}</th><th class="right">${t('orders')}</th></tr>` +
+      (list.map(c => `<tr class="click" onclick="location.hash='#/cliente/${c.id}'"><td>${esc(c.full_name)}</td><td>${c.instagram ? '@' + esc(c.instagram) : ''}</td><td>${esc(c.phone || '')}</td><td>${esc(ev('country', c.country))}</td><td class="right">${c.orders.filter(o => o.status !== 'annullato').length}</td></tr>`).join('') || `<tr><td colspan="5" class="empty">${t('no_data')}</td></tr>`);
+  };
+  draw(); $('#cuq').oninput = e => { custQ = e.target.value; draw(); };
+}
+function editCustomer(id){
+  const c = id ? window._customer : {currency:'EUR'};
+  form({title: id ? t('edit') : t('new_customer'), fields:[
+    {name:'full_name', label:t('name'), required:true},
+    {name:'instagram', label:'Instagram (senza @)'},
+    {name:'phone', label:t('phone'), type:'tel'},
+    {name:'email', label:t('email'), type:'email'},
+    {name:'country', label:t('country'), type:'select', options:opts('country')},
+    {name:'currency', label:t('currency'), type:'select', options:opts('currency'), empty:false},
+    {name:'preferred_lang', label:t('language'), type:'select', options:[['it','Italiano'],['en','English'],['sq','Shqip']]},
+    {name:'source', label:t('source'), type:'select', options:opts('source')},
+    {name:'privacy_consent', label:t('privacy'), type:'checkbox'},
+    {name:'notes', label:t('notes'), type:'textarea'}
+  ], values:c, onSubmit: async v => {
+    if (v.instagram) v.instagram = v.instagram.replace(/^@/, '').trim();
+    if (id) check(await sb.from('customers').update(v).eq('id', id));
+    else { const n = check(await sb.from('customers').insert(v).select().single()); location.hash = '#/cliente/' + n.id; return; }
+    route();
+  }});
+}
+async function viewCustomer(main, id){
+  const [c, ms, ad, msg, os, rq, rs] = await Promise.all([
+    sb.from('customers').select('*').eq('id', id).single(),
+    sb.from('customer_measurements').select('*').eq('customer_id', id).order('taken_on', {ascending:false}),
+    sb.from('addresses').select('*').eq('customer_id', id).order('is_default', {ascending:false}),
+    sb.from('messages').select('*').eq('customer_id', id).order('sent_at', {ascending:false}).limit(50),
+    sb.from('orders').select('id,order_no,order_date,status,order_lines(qty,unit_price,variants(size,color,models(name,brand_id)))').eq('customer_id', id).order('order_date', {ascending:false}),
+    sb.from('customer_requests').select('*').eq('customer_id', id).order('created_at', {ascending:false}),
+    sb.from('reservations').select('*,variants(size,color,models(name,brand_id))').eq('customer_id', id).eq('active', true)
+  ]);
+  const cu = check(c); window._customer = cu;
+  const meas = check(ms)[0]; window._meas = meas;
+  const orders = check(os).filter(o => o.status !== 'annullato');
+  const spent = orders.reduce((a, o) => a + o.order_lines.reduce((b, l) => b + l.qty * l.unit_price, 0), 0);
+  main.innerHTML = `<p><a href="#/clienti">← ${t('customers')}</a></p>
+  <div class="row spread"><div><h1>${esc(cu.full_name)}</h1><div class="row small muted">${cu.instagram ? `<a href="https://instagram.com/${esc(cu.instagram)}" target="_blank" rel="noopener">@${esc(cu.instagram)}</a>` : ''}${cu.phone ? `<a href="tel:${esc(cu.phone)}">${esc(cu.phone)}</a> · <a href="https://wa.me/${esc(cu.phone.replace(/\D/g, ''))}" target="_blank" rel="noopener">WhatsApp</a>` : ''}<span>${esc(ev('country', cu.country))}</span><span>${esc(ev('source', cu.source))}</span>${cu.privacy_consent ? '<span class="pill good">GDPR ✓</span>' : '<span class="pill warn">GDPR —</span>'}</div></div>
+  <div class="row"><button onclick="editCustomer(${id})">${t('edit')}</button><button class="primary" onclick="newOrder(${id})">+ ${t('new_order')}</button></div></div>
+  <div class="grid g4" style="margin:12px 0"><div class="card kpi"><div class="v">${orders.length}</div><div class="l">${t('orders')}</div></div><div class="card kpi"><div class="v">${eur(spent)}</div><div class="l">${t('total')}</div></div></div>
+  ${cu.notes ? `<div class="card">${esc(cu.notes)}</div>` : ''}
+  <div class="grid g2">
+  <div class="card"><div class="row spread"><h3>${t('measurements')}</h3><button onclick="editMeasurements(${id})">${meas ? t('edit') : '+ ' + t('add')}</button></div>
+  ${meas ? `<table class="small"><tr><td>${t('bust')}</td><td>${meas.bust_cm ?? ''}</td></tr><tr><td>${t('waist')}</td><td>${meas.waist_cm ?? ''}</td></tr><tr><td>${t('hips')}</td><td>${meas.hips_cm ?? ''}</td></tr><tr><td>${t('height')}</td><td>${meas.height_cm ?? ''}</td></tr><tr><td>${t('shoe')}</td><td>${esc(meas.shoe_size || '')}</td></tr><tr><td>${t('usual_size')}</td><td>${esc(meas.usual_size || '')}</td></tr>
+  ${Object.entries(meas.brand_sizes || {}).map(([b, s]) => `<tr><td>${esc(b)}</td><td>${esc(s)}</td></tr>`).join('')}</table><p class="small muted">${fdate(meas.taken_on)}${meas.notes ? ' · ' + esc(meas.notes) : ''}</p>` : `<div class="empty">${t('no_data')}</div>`}</div>
+  <div class="card"><div class="row spread"><h3>${t('addresses')}</h3><button onclick="editAddress(${id})">+ ${t('add')}</button></div>
+  ${check(ad).map(a => `<div style="margin-bottom:10px">${a.is_default ? '★ ' : ''}<b>${esc(a.label || '')}</b> ${esc(a.line1)}, ${esc(a.zip || '')} ${esc(a.city || '')}, ${esc(a.country || '')} <button class="link" onclick="delRow('addresses',${a.id})">${t('delete')}</button></div>`).join('') || `<div class="empty">${t('no_data')}</div>`}</div></div>
+  <div class="card"><h3>${t('history')}</h3><div class="table-wrap"><table>${check(os).map(o => `<tr class="click" onclick="location.hash='#/ordine/${o.id}'"><td>${esc(o.order_no)}</td><td>${fdate(o.order_date)}</td><td class="small">${o.order_lines.map(l => `${esc(brandName(l.variants.models.brand_id))} ${esc(l.variants.models.name)} (${esc(l.variants.size || '')})`).join(', ')}</td><td class="right">${eur(o.order_lines.reduce((b, l) => b + l.qty * l.unit_price, 0))}</td><td>${statusPill('order_status', o.status)}</td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div></div>
+  ${check(rs).length ? `<div class="card"><h3>${t('reservations')}</h3>${check(rs).map(r => `<div>${esc(brandName(r.variants.models.brand_id))} ${esc(r.variants.models.name)} ${esc(r.variants.size || '')} ${esc(r.variants.color || '')} ${r.expires_on ? '· ' + t('until') + ' ' + fdate(r.expires_on) : ''} <button class="link" onclick="endReservation(${r.id})">${t('delete')}</button></div>`).join('')}</div>` : ''}
+  <div class="card"><div class="row spread"><h3>${t('requests')}</h3><button onclick="addRequest(${id})">+ ${t('add')}</button></div>
+  ${check(rq).map(r => `<div class="row spread" style="margin-bottom:8px"><span>${esc(r.description)} ${r.size ? '· ' + esc(r.size) : ''} ${r.max_price ? '· max ' + eur(r.max_price) : ''}</span><span>${statusPill('req_status', r.status)} <button class="link" onclick="cycleRequest(${r.id},'${r.status}')">→</button></span></div>`).join('') || `<div class="empty">${t('no_data')}</div>`}</div>
+  <div class="card"><h3>${t('messages')}</h3><label>${t('paste_dm')}</label><textarea id="dm" placeholder="Busto 88, vita 70, taglia M… / Rruga …, Tiranë / +355 …"></textarea>
+  <div class="row" style="margin:8px 0"><select id="dmdir" style="width:auto"><option value="in">← cliente</option><option value="out">→ noi</option></select><button class="accent" onclick="analyzeDM(${id})">${t('analyze')}</button></div><div id="dmres"></div>
+  ${check(msg).map(m => `<div class="msg ${m.direction}"><div class="small muted">${new Date(m.sent_at).toLocaleString()}</div>${esc(m.body)}</div>`).join('')}</div>`;
+}
+function editMeasurements(cid){
+  const m = window._meas || {};
+  const bs = Object.entries(m.brand_sizes || {}).map(([b, s]) => `${b}: ${s}`).join(', ');
+  form({title:t('measurements'), fields:[
+    {name:'bust_cm', label:t('bust'), type:'number'}, {name:'waist_cm', label:t('waist'), type:'number'}, {name:'hips_cm', label:t('hips'), type:'number'},
+    {name:'height_cm', label:t('height'), type:'number'}, {name:'shoe_size', label:t('shoe')}, {name:'usual_size', label:t('usual_size')},
+    {name:'brand_sizes', label:t('sizes_by_brand'), value:bs}, {name:'notes', label:t('notes')}
+  ], values:{...m, brand_sizes: bs}, onSubmit: async v => {
+    const obj = {}; (v.brand_sizes || '').split(',').forEach(p => { const [b, s] = p.split(':').map(x => x && x.trim()); if (b && s) obj[b] = s; });
+    v.brand_sizes = obj;
+    check(await sb.from('customer_measurements').insert({...v, customer_id: cid, taken_on: today()})); route();
+  }});
+}
+function editAddress(cid){
+  form({title:t('address'), fields:[{name:'label', label:'Etichetta (casa, ufficio)'},{name:'line1', label:t('address'), required:true},{name:'city', label:t('city')},{name:'zip', label:t('zip')},{name:'country', label:t('country')},{name:'is_default', label:'Predefinito', type:'checkbox'}],
+    onSubmit: async v => { if (v.is_default) await sb.from('addresses').update({is_default:false}).eq('customer_id', cid); check(await sb.from('addresses').insert({...v, customer_id: cid})); route(); }});
+}
+function addRequest(cid){
+  form({title:t('requests'), fields:[{name:'description', label:t('description'), required:true},{name:'brand_id', label:t('brand'), type:'select', options:S.brands.map(b => [b.id, b.name])},{name:'size', label:t('size')},{name:'max_price', label:'Max €', type:'number'}],
+    onSubmit: async v => { check(await sb.from('customer_requests').insert({...v, customer_id: cid})); route(); }});
+}
+async function cycleRequest(id, s){ const n = {aperta:'trovata', trovata:'chiusa', chiusa:'aperta'}[s]; check(await sb.from('customer_requests').update({status:n}).eq('id', id)); route(); }
+async function endReservation(id){ check(await sb.from('reservations').update({active:false}).eq('id', id)); route(); }
+
+// Estrazione dati dai DM (IT / EN / SQ)
+function extractFromText(txt){
+  const out = {};
+  const n = '(\\d{2,3}(?:[.,]\\d)?)';
+  const pick = (keys) => { for (const k of keys){ const r = new RegExp(k + '\\s*[:=]?\\s*' + n, 'i'); const m = txt.match(r); if (m) return Number(m[1].replace(',', '.')); } return null; };
+  out.bust_cm = pick(['busto', 'seno', 'petto', 'bust', 'chest', 'gjoks[ia]?', 'kraharor[ri]?']);
+  out.waist_cm = pick(['vita', 'waist', 'bel[ii]?', 'mesi']);
+  out.hips_cm = pick(['fianchi', 'hips?', 'vithe[t]?', 'ijet?']);
+  out.height_cm = pick(['altezza', 'alta', 'height', 'gjatësi[a]?', 'gjatesi[a]?']);
+  const sz = txt.match(/(?:taglia|size|masa|masë|mase)\s*[:=]?\s*(XXS|XS|S|M|L|XL|XXL|\d{2})\b/i); if (sz) out.usual_size = sz[1].toUpperCase();
+  const sh = txt.match(/(?:scarpe|numero|shoe|shoes|këpucë|kepuce|numri)\s*[:=]?\s*(\d{2}(?:[.,]5)?)/i); if (sh) out.shoe_size = sh[1];
+  const ph = txt.match(/(\+?\d[\d\s\-]{7,}\d)/); if (ph) out.phone = ph[1].replace(/[\s\-]/g, '');
+  const ad = txt.split('\n').find(l => /\b(rruga|rr\.|via|street|st\.|blv|bulevardi|lagjja|pallati)\b/i.test(l)); if (ad) out.address = ad.trim();
+  Object.keys(out).forEach(k => out[k] == null && delete out[k]);
+  return out;
+}
+async function analyzeDM(cid){
+  const txt = $('#dm').value.trim(); if (!txt) return;
+  const x = extractFromText(txt);
+  check(await sb.from('messages').insert({customer_id: cid, body: txt, direction: $('#dmdir').value, extracted: x, source:'manuale'}));
+  const keys = Object.keys(x);
+  if (!keys.length){ toast(t('saved')); return route(); }
+  const labels = {bust_cm:t('bust'), waist_cm:t('waist'), hips_cm:t('hips'), height_cm:t('height'), usual_size:t('usual_size'), shoe_size:t('shoe'), phone:t('phone'), address:t('address')};
+  const m = modal(`<h3>${t('extracted')}</h3><form>${keys.map(k => `<div class="field"><label><input type="checkbox" name="${k}" checked style="width:auto"> ${labels[k]}</label><input name="v_${k}" value="${esc(x[k])}"></div>`).join('')}
+  <div class="row" style="justify-content:flex-end"><button type="button" data-x>${t('close')}</button><button class="primary">${t('apply')}</button></div></form>`);
+  m.querySelector('[data-x]').onclick = () => { m.remove(); route(); };
+  m.querySelector('form').onsubmit = async e => {
+    e.preventDefault(); const f = e.target.elements; const on = k => f[k] && f[k].checked; const val = k => f['v_' + k].value;
+    const meas = {};
+    ['bust_cm', 'waist_cm', 'hips_cm', 'height_cm'].forEach(k => { if (on(k)) meas[k] = num(val(k)); });
+    ['usual_size', 'shoe_size'].forEach(k => { if (on(k)) meas[k] = val(k); });
+    if (Object.keys(meas).length){
+      const prev = window._meas || {};
+      const base = {bust_cm:prev.bust_cm, waist_cm:prev.waist_cm, hips_cm:prev.hips_cm, height_cm:prev.height_cm, shoe_size:prev.shoe_size, usual_size:prev.usual_size, brand_sizes:prev.brand_sizes || {}};
+      check(await sb.from('customer_measurements').insert({...base, ...meas, customer_id: cid, notes:'da DM'}));
+    }
+    if (on('phone')) check(await sb.from('customers').update({phone: val('phone')}).eq('id', cid));
+    if (on('address')) check(await sb.from('addresses').insert({customer_id: cid, line1: val('address'), country: window._customer.country}));
+    m.remove(); toast(t('saved')); route();
+  };
+}
+
+// ====== Ordini ======
+let orderFilter = '';
+async function viewOrders(main){
+  const os = check(await sb.from('orders').select('id,order_no,order_date,status,currency,customers(full_name,country)').order('created_at', {ascending:false}).limit(300));
+  const tots = check(await sb.from('v_order_totals').select('*').in('order_id', os.map(o => o.id).concat([0])));
+  const T2 = Object.fromEntries(tots.map(x => [x.order_id, x]));
+  main.innerHTML = `<div class="row spread"><h1>${t('orders')}</h1><button class="primary" onclick="newOrder()">+ ${t('new_order')}</button></div>
+  <div class="chips" style="margin-bottom:12px"><button class="${orderFilter ? '' : 'primary'}" onclick="orderFilter='';route()">${t('all')}</button>${opts('order_status').map(([k, l]) => `<button class="${orderFilter === k ? 'primary' : ''}" onclick="orderFilter='${k}';route()">${l}</button>`).join('')}</div>
+  <div class="card"><div class="table-wrap"><table><tr><th>${t('order')}</th><th>${t('date')}</th><th>${t('customer')}</th><th class="right">${t('total')}</th><th class="right">${t('to_collect')}</th><th>${t('status')}</th></tr>
+  ${os.filter(o => !orderFilter || o.status === orderFilter).map(o => `<tr class="click" onclick="location.hash='#/ordine/${o.id}'"><td>${esc(o.order_no)}</td><td>${fdate(o.order_date)}</td><td>${esc(o.customers?.full_name)} <span class="muted small">${esc(o.customers?.country || '')}</span></td><td class="right">${eur(T2[o.id]?.total)}</td><td class="right">${Number(T2[o.id]?.to_collect) ? eur(T2[o.id].to_collect) : ''}</td><td>${statusPill('order_status', o.status)}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">${t('no_data')}</td></tr>`}</table></div></div>`;
+}
+async function newOrder(cid){
+  const cs = check(await sb.from('customers').select('id,full_name,instagram,currency').order('full_name'));
+  form({title:t('new_order'), fields:[
+    {name:'customer_id', label:t('customer'), type:'select', options:cs.map(c => [c.id, c.full_name + (c.instagram ? ' @' + c.instagram : '')]), required:true},
+    {name:'channel', label:t('channel'), type:'select', options:opts('channel'), empty:false, value:'instagram'},
+    {name:'order_date', label:t('date'), type:'date', value:today()}
+  ], values:{customer_id: cid}, onSubmit: async v => {
+    const c = cs.find(x => String(x.id) === String(v.customer_id));
+    const ad = check(await sb.from('addresses').select('id').eq('customer_id', v.customer_id).order('is_default', {ascending:false}).limit(1));
+    const o = check(await sb.from('orders').insert({...v, currency: c?.currency || 'EUR', address_id: ad[0]?.id || null}).select().single());
+    location.hash = '#/ordine/' + o.id;
+  }});
+}
+const trackUrl = s => { const c = S.carriers.find(x => x.id === s.carrier_id); return c?.tracking_url_template && s.tracking_no ? c.tracking_url_template.replace('{n}', encodeURIComponent(s.tracking_no)) : null; };
+async function viewOrder(main, id){
+  const [o, tot, pays, ships, rets] = await Promise.all([
+    sb.from('orders').select('*,customers(id,full_name,instagram,phone,country),addresses(*),order_lines(*,variants(id,sku,size,color,qty,models(id,name,brand_id)))').eq('id', id).single(),
+    sb.from('v_order_totals').select('*').eq('order_id', id).single(),
+    sb.from('payments').select('*').eq('order_id', id).order('id'),
+    sb.from('shipments').select('*').eq('order_id', id).order('id'),
+    sb.from('returns').select('*,order_lines!inner(order_id)').eq('order_lines.order_id', id)
+  ]);
+  const od = check(o), tt = check(tot); window._order = od;
+  let marg = null;
+  if (can.admin()){ const r = await sb.from('v_order_margins').select('*').eq('order_id', id).maybeSingle(); marg = r.data; }
+  const draft = od.status === 'bozza';
+  const fx = Number(od.fx_rate) || 1;
+  const inCur = v => od.currency !== 'EUR' ? ` <span class="muted small">≈ ${(Number(v) * fx).toLocaleString(undefined, {maximumFractionDigits:0})} ${od.currency}</span>` : '';
+  main.innerHTML = `<p><a href="#/ordini">← ${t('orders')}</a></p>
+  <div class="row spread"><div><h1>${esc(od.order_no)}</h1><div class="muted"><a href="#/cliente/${od.customers.id}">${esc(od.customers.full_name)}</a> · ${fdate(od.order_date)} · ${esc(ev('channel', od.channel))}</div></div>
+  <div class="row">${statusPill('order_status', od.status)}
+  ${draft ? `<button class="accent" onclick="confirmOrder(${id})">${t('confirm')}</button>` : ''}
+  ${!['annullato', 'consegnato', 'reso'].includes(od.status) ? `<button class="danger" onclick="cancelOrder(${id})">${t('cancel_order')}</button>` : ''}
+  <button onclick="editOrder(${id})">${t('edit')}</button></div></div>
+  ${od.addresses ? `<p class="small">📍 ${esc(od.addresses.line1)}, ${esc(od.addresses.zip || '')} ${esc(od.addresses.city || '')}, ${esc(od.addresses.country || '')}</p>` : ''}
+  <div class="card"><div class="row spread"><h3>${t('items')}</h3>${draft ? `<button onclick="addOrderLine(${id})">+ ${t('add_line')}</button>` : ''}</div>
+  <div class="table-wrap"><table><tr><th>${t('items')}</th><th class="right">${t('qty')}</th><th class="right">${t('price')}</th><th class="right">${t('total')}</th><th></th></tr>
+  ${od.order_lines.map(l => `<tr><td><a href="#/articolo/${l.variants.models.id}">${esc(brandName(l.variants.models.brand_id))} · ${esc(l.variants.models.name)}</a> <span class="muted small">${esc(l.variants.size || '')} ${esc(l.variants.color || '')} · ${esc(l.variants.sku || '')}</span></td><td class="right">${l.qty}</td><td class="right">${eur(l.unit_price)}</td><td class="right">${eur(l.qty * l.unit_price)}</td>
+  <td class="right">${draft ? `<button class="link" onclick="delRow('order_lines',${l.id})">${t('delete')}</button>` : (['spedito', 'consegnato', 'confermato'].includes(od.status) ? `<button class="link" onclick="returnLine(${l.id})">${t('return_item')}</button>` : '')}</td></tr>`).join('') || `<tr><td colspan="5" class="empty">${t('no_data')}</td></tr>`}
+  ${Number(od.discount) ? `<tr><td>${t('discount')}</td><td></td><td></td><td class="right">− ${eur(od.discount)}</td><td></td></tr>` : ''}
+  <tr><td><b>${t('total')}</b></td><td></td><td></td><td class="right"><b>${eur(tt.total)}</b>${inCur(tt.total)}</td><td></td></tr></table></div>
+  ${marg ? `<p class="small muted">${t('goods_cost')} ${eur(marg.goods_cost)} · ${t('shipping_cost')} ${eur(marg.shipping_cost)} · <b>${t('margin')} ${eur(marg.margin)}</b></p>` : ''}</div>
+  <div class="grid g2">
+  <div class="card"><div class="row spread"><h3>${t('payments')}</h3><button onclick="addPayment(${id})">+ ${t('add')}</button></div>
+  <p class="small">${t('paid')}: <b>${eur(tt.paid)}</b> · ${t('to_collect')}: <b>${eur(tt.to_collect)}</b> · Saldo: <b>${eur(Number(tt.total) - Number(tt.paid))}</b></p>
+  <table>${check(pays).map(p => `<tr><td>${esc(ev('pay_kind', p.kind))}<div class="small muted">${esc(ev('pay_method', p.method))}</div></td><td class="right">${eur(p.amount)}</td><td>${statusPill('pay_status', p.status)}</td><td class="right">${p.status === 'da_incassare' ? `<button class="link" onclick="markPaid(${p.id})">✓</button>` : ''}<button class="link" onclick="delRow('payments',${p.id})">${t('delete')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>
+  <div class="card"><div class="row spread"><h3>${t('shipments')}</h3><button onclick="editShipment(null,${id})">+ ${t('add')}</button></div>
+  ${check(ships).map(s => { const u = trackUrl(s); const c = S.carriers.find(x => x.id === s.carrier_id);
+    return `<div style="margin-bottom:12px"><div class="row spread"><b>${esc(c?.name || '')}</b>${statusPill('ship_status', s.status)}</div>
+    <div class="small">${t('tracking')}: ${esc(s.tracking_no || '—')} ${s.tracking_no ? `<button class="link" onclick="navigator.clipboard.writeText('${esc(s.tracking_no)}');toast('OK')">⧉</button>` : ''}</div>
+    <div class="small muted">${t('cost')} ${eur(s.cost)}${Number(s.duties) ? ' · ' + t('duties') + ' ' + eur(s.duties) : ''}${s.cod_amount ? ' · ' + t('cod') + ' ' + eur(s.cod_amount) : ''}${s.shipped_on ? ' · ' + fdate(s.shipped_on) : ''}</div>
+    <div class="row" style="margin-top:6px">${u ? `<a class="btn" href="${esc(u)}" target="_blank" rel="noopener">${t('track')} ↗</a>` : (s.tracking_no ? `<span class="small muted">${t('forgot_template')}</span>` : '')}<button onclick="editShipment(${s.id},${id})">${t('edit')}</button></div></div>`; }).join('') || `<div class="empty">${t('no_data')}</div>`}</div></div>
+  ${check(rets).length ? `<div class="card"><h3>${t('return_item')}</h3>${check(rets).map(r => `<div>${esc(ev('return_reason', r.reason))} · ${esc(ev('return_outcome', r.outcome))} ${r.back_to_stock ? '· ' + t('back_to_stock') : ''} ${r.notes ? '· ' + esc(r.notes) : ''}</div>`).join('')}</div>` : ''}
+  ${od.notes ? `<div class="card">${esc(od.notes)}</div>` : ''}`;
+  window._ships = check(ships);
+}
+async function editOrder(id){
+  const od = window._order;
+  const ad = check(await sb.from('addresses').select('*').eq('customer_id', od.customer_id));
+  form({title:t('edit'), fields:[
+    {name:'address_id', label:t('address'), type:'select', options:ad.map(a => [a.id, `${a.line1}, ${a.city || ''}`])},
+    {name:'currency', label:t('currency'), type:'select', options:opts('currency'), empty:false},
+    {name:'fx_rate', label:t('fx_rate'), type:'number'},
+    {name:'discount', label:t('discount') + ' (€)', type:'number'},
+    {name:'channel', label:t('channel'), type:'select', options:opts('channel'), empty:false},
+    {name:'notes', label:t('notes'), type:'textarea'}
+  ], values:od, onSubmit: async v => { v.discount = v.discount || 0; v.fx_rate = v.fx_rate || 1; check(await sb.from('orders').update(v).eq('id', id)); route(); }});
+}
+async function addOrderLine(oid){
+  const vs = (await allVariants()).filter(v => !v.models?.archived && v.qty > 0).sort((a, b) => variantLabel(a).localeCompare(variantLabel(b)));
+  const m = form({title:t('add_line'), fields:[
+    {name:'variant_id', label:t('items'), type:'select', options:vs.map(v => [v.id, `${variantLabel(v)} — ${v.qty} ${t('available')}`]), required:true},
+    {name:'qty', label:t('qty'), type:'number', value:1, required:true},
+    {name:'unit_price', label:t('price') + ' (€)', type:'number', required:true}
+  ], onSubmit: async v => { check(await sb.from('order_lines').insert({...v, order_id: oid})); route(); }});
+  const sel = m.querySelector('[name=variant_id]'), pr = m.querySelector('[name=unit_price]');
+  sel.onchange = () => { const v = vs.find(x => String(x.id) === sel.value); if (v?.sale_price && !pr.value) pr.value = v.sale_price; };
+}
+async function confirmOrder(id){
+  check(await sb.rpc('conferma_ordine', {p_order_id: id}));
+  const tt = check(await sb.from('v_order_totals').select('*').eq('order_id', id).single());
+  const pays = check(await sb.from('payments').select('id').eq('order_id', id));
+  if (!pays.length && Number(tt.total) > 0) check(await sb.from('payments').insert({order_id: id, method:'contanti_alla_consegna', kind:'saldo', amount: tt.total, status:'da_incassare'}));
+  toast(t('saved')); route();
+}
+async function cancelOrder(id){ if (!confirmBox()) return; check(await sb.rpc('annulla_ordine', {p_order_id: id})); route(); }
+function addPayment(oid){
+  form({title:t('payments'), fields:[
+    {name:'kind', label:t('kind'), type:'select', options:opts('pay_kind'), empty:false, value:'saldo'},
+    {name:'method', label:t('method'), type:'select', options:opts('pay_method'), empty:false, value:'contanti'},
+    {name:'amount', label:t('amount') + ' (€)', type:'number', required:true},
+    {name:'status', label:t('status'), type:'select', options:opts('pay_status'), empty:false, value:'incassato'},
+    {name:'paid_on', label:t('date'), type:'date', value:today()},
+    {name:'notes', label:t('notes')}
+  ], onSubmit: async v => { check(await sb.from('payments').insert({...v, order_id: oid})); route(); }});
+}
+async function markPaid(pid){
+  const p = (await sb.from('payments').select('method').eq('id', pid).single()).data;
+  check(await sb.from('payments').update({status: p.method === 'contanti_alla_consegna' ? 'consegnato_dal_corriere' : 'incassato', paid_on: today()}).eq('id', pid)); route();
+}
+function editShipment(sid, oid){
+  const s = sid ? window._ships.find(x => x.id === sid) : {carrier_id: S.carriers.find(c => c.name === 'Postman')?.id, status:'da_spedire'};
+  form({title:t('shipments'), fields:[
+    {name:'carrier_id', label:t('carrier'), type:'select', options:S.carriers.map(c => [c.id, c.name])},
+    {name:'tracking_no', label:t('tracking')},
+    {name:'status', label:t('status'), type:'select', options:opts('ship_status'), empty:false},
+    {name:'cost', label:t('cost') + ' (€)', type:'number'},
+    {name:'duties', label:t('duties') + ' (€)', type:'number'},
+    {name:'cod_amount', label:t('cod') + ' (€)', type:'number'},
+    {name:'shipped_on', label:'Data spedizione', type:'date'},
+    {name:'delivered_on', label:'Data consegna', type:'date'},
+    {name:'notes', label:t('notes')}
+  ], values:s, onSubmit: async v => {
+    v.cost = v.cost || 0; v.duties = v.duties || 0;
+    if (sid) check(await sb.from('shipments').update(v).eq('id', sid)); else check(await sb.from('shipments').insert({...v, order_id: oid}));
+    route();
+  }});
+}
+function returnLine(lid){
+  form({title:t('return_item'), fields:[
+    {name:'reason', label:t('reason'), type:'select', options:opts('return_reason'), empty:false},
+    {name:'outcome', label:t('kind'), type:'select', options:opts('return_outcome'), empty:false},
+    {name:'back_to_stock', label:t('back_to_stock'), type:'checkbox', value:true},
+    {name:'notes', label:t('notes')}
+  ], onSubmit: async v => { check(await sb.rpc('registra_reso', {p_order_line_id: lid, p_reason: v.reason, p_outcome: v.outcome, p_back_to_stock: v.back_to_stock, p_notes: v.notes})); route(); }});
+}
+
+// ====== Spese e campagne (admin) ======
+async function viewExpenses(main){
+  const [ex, ca] = await Promise.all([sb.from('expenses').select('*').order('expense_date', {ascending:false}).limit(300), sb.from('campaigns').select('*').order('start_date', {ascending:false})]);
+  const custs = check(await sb.from('customers').select('id,campaign_id').not('campaign_id', 'is', null));
+  main.innerHTML = `<div class="row spread"><h1>${t('expenses')}</h1><div class="row"><button onclick="addCampaign()">+ ${t('campaigns')}</button><button class="primary" onclick="addExpense()">+ ${t('expenses')}</button></div></div>
+  <div class="card"><div class="table-wrap"><table><tr><th>${t('date')}</th><th>${t('category')}</th><th>${t('description')}</th><th class="right">${t('amount')}</th><th></th></tr>
+  ${check(ex).map(e => `<tr><td>${fdate(e.expense_date)}</td><td>${esc(ev('expense_cat', e.category))}</td><td>${esc(e.description || '')}</td><td class="right">${eur(e.amount)}</td><td class="right"><button class="link" onclick="delRow('expenses',${e.id})">${t('delete')}</button></td></tr>`).join('') || `<tr><td colspan="5" class="empty">${t('no_data')}</td></tr>`}</table></div></div>
+  <div class="card"><h3>${t('campaigns')}</h3><table><tr><th>${t('name')}</th><th>${t('date')}</th><th class="right">${t('spend')}</th><th class="right">${t('customers')}</th><th></th></tr>
+  ${check(ca).map(c => `<tr><td>${esc(c.name)}</td><td>${fdate(c.start_date)} – ${fdate(c.end_date)}</td><td class="right">${eur(c.spend)}</td><td class="right">${custs.filter(x => x.campaign_id === c.id).length}</td><td class="right"><button class="link" onclick="delRow('campaigns',${c.id})">${t('delete')}</button></td></tr>`).join('') || `<tr><td colspan="5" class="empty">${t('no_data')}</td></tr>`}</table></div>`;
+}
+function addExpense(){
+  form({title:t('expenses'), fields:[{name:'category', label:t('category'), type:'select', options:opts('expense_cat'), empty:false},{name:'amount', label:t('amount') + ' (€)', type:'number', required:true},{name:'expense_date', label:t('date'), type:'date', value:today()},{name:'description', label:t('description')}],
+    onSubmit: async v => { check(await sb.from('expenses').insert(v)); route(); }});
+}
+function addCampaign(){
+  form({title:t('campaigns'), fields:[{name:'name', label:t('name'), required:true},{name:'start_date', label:'Inizio', type:'date'},{name:'end_date', label:'Fine', type:'date'},{name:'spend', label:t('spend') + ' (€)', type:'number'},{name:'notes', label:t('notes')}],
+    onSubmit: async v => { v.spend = v.spend || 0; check(await sb.from('campaigns').insert(v)); route(); }});
+}
+
+// ====== Report (admin) ======
+async function viewReports(main){
+  const [mg, ex, lines] = await Promise.all([
+    sb.from('v_order_margins').select('*'),
+    sb.from('expenses').select('amount,expense_date'),
+    sb.from('order_lines').select('qty,unit_price,orders!inner(status),order_line_costs(landed_cost),variants(models(brand_id,category_id))').not('orders.status', 'in', '(bozza,annullato)')
+  ]);
+  const rows = check(mg), exps = check(ex);
+  const months = {};
+  rows.forEach(r => { const k = r.order_date.slice(0, 7); months[k] = months[k] || {rev:0, goods:0, ship:0, marg:0, exp:0, n:0}; const m = months[k]; m.rev += +r.total; m.goods += +r.goods_cost; m.ship += +r.shipping_cost; m.marg += +r.margin; m.n++; });
+  exps.forEach(e => { const k = e.expense_date.slice(0, 7); months[k] = months[k] || {rev:0, goods:0, ship:0, marg:0, exp:0, n:0}; months[k].exp += +e.amount; });
+  const brands = {};
+  check(lines).forEach(l => { const b = brandName(l.variants.models.brand_id) || '—'; brands[b] = brands[b] || {rev:0, cost:0, q:0}; brands[b].rev += l.qty * l.unit_price; brands[b].cost += l.qty * (+(l.order_line_costs?.landed_cost) || 0); brands[b].q += l.qty; });
+  const countries = {};
+  rows.forEach(r => { const c = ev('country', r.country) || '—'; countries[c] = countries[c] || {rev:0, marg:0, n:0}; countries[c].rev += +r.total; countries[c].marg += +r.margin; countries[c].n++; });
+  main.innerHTML = `<h1>${t('reports')}</h1>
+  <div class="card"><h3>${t('by_month')}</h3><div class="table-wrap"><table><tr><th></th><th class="right">${t('orders')}</th><th class="right">${t('revenue')}</th><th class="right">${t('goods_cost')}</th><th class="right">${t('shipping_cost')}</th><th class="right">${t('margin')}</th><th class="right">${t('expenses')}</th><th class="right">${t('net')}</th></tr>
+  ${Object.keys(months).sort().reverse().map(k => { const m = months[k]; return `<tr><td>${k}</td><td class="right">${m.n}</td><td class="right">${eur(m.rev)}</td><td class="right">${eur(m.goods)}</td><td class="right">${eur(m.ship)}</td><td class="right">${eur(m.marg)}</td><td class="right">${eur(m.exp)}</td><td class="right"><b>${eur(m.marg - m.exp)}</b></td></tr>`; }).join('') || `<tr><td colspan="8" class="empty">${t('no_data')}</td></tr>`}</table></div></div>
+  <div class="grid g2"><div class="card"><h3>${t('by_brand')}</h3><table><tr><th></th><th class="right">pz</th><th class="right">${t('revenue')}</th><th class="right">${t('margin')}</th></tr>
+  ${Object.entries(brands).sort((a, b) => b[1].rev - a[1].rev).map(([b, v]) => `<tr><td>${esc(b)}</td><td class="right">${v.q}</td><td class="right">${eur(v.rev)}</td><td class="right">${eur(v.rev - v.cost)}${v.rev ? ` <span class="muted small">${Math.round((v.rev - v.cost) / v.rev * 100)}%</span>` : ''}</td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>
+  <div class="card"><h3>${t('by_country')}</h3><table><tr><th></th><th class="right">${t('orders')}</th><th class="right">${t('revenue')}</th><th class="right">${t('margin')}</th></tr>
+  ${Object.entries(countries).sort((a, b) => b[1].rev - a[1].rev).map(([c, v]) => `<tr><td>${esc(c)}</td><td class="right">${v.n}</td><td class="right">${eur(v.rev)}</td><td class="right">${eur(v.marg)}</td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div></div>
+  <p class="small muted">Margine per marca = prezzo di vendita − costo reale; spedizioni e dazi sono nel margine per mese e per paese.</p>`;
+}
+
+// ====== Impostazioni ======
+async function viewSettings(main){
+  let users = '';
+  if (can.admin()){
+    const ps = check(await sb.from('profiles').select('*').order('created_at'));
+    users = `<div class="card"><h3>${t('users')}</h3><p class="small muted">Chi deve entrare si registra dalla pagina di accesso; qui gli assegni il ruolo.</p><table>${ps.map(p => `<tr><td>${esc(p.full_name || '')}<div class="small muted">${esc(p.email || '')}</div></td><td><select onchange="setRole('${p.id}', this.value)" ${p.id === S.user.id ? 'disabled' : ''}><option value="">—</option>${opts('role').map(([k, l]) => `<option value="${k}" ${p.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select></td></tr>`).join('')}</table></div>`;
+  }
+  const carriers = can.sales() ? `<div class="card"><div class="row spread"><h3>${t('carriers')}</h3><button onclick="editCarrier()">+ ${t('add')}</button></div><table>${S.carriers.map(c => `<tr><td><b>${esc(c.name)}</b><div class="small muted">${esc(c.tracking_url_template || t('forgot_template'))}</div></td><td class="right"><button class="link" onclick="editCarrier(${c.id})">${t('edit')}</button></td></tr>`).join('')}</table></div>` : '';
+  const cats = can.catalogWrite() ? `<div class="card"><div class="row spread"><h3>${t('category')} / ${t('brand')}</h3><div class="row"><button onclick="addCategory()">+ ${t('category')}</button><button onclick="addBrand()">+ ${t('brand')}</button></div></div><p class="small">${catOptions().map(c => esc(c[1])).join(' · ')}</p><p class="small muted">${S.brands.map(b => esc(b.name)).join(' · ')}</p></div>` : '';
+  const backup = can.admin() ? `<div class="card"><h3>${t('backup')}</h3><p class="small muted">Scarica una copia leggibile dei dati e salvala nella cartella Drive condivisa.</p><div class="chips">${['models','variants','variant_costs','purchases','purchase_lines','purchase_costs','customers','customer_measurements','addresses','orders','order_lines','payments','shipments','expenses','stock_movements','activity_log'].map(x => `<button onclick="exportCsv('${x}')">${x}</button>`).join('')}</div></div>` : '';
+  main.innerHTML = `<h1>${t('settings')}</h1><div class="card"><p>${esc(S.profile.full_name || '')} · ${esc(S.profile.email || '')} · <span class="pill">${esc(ev('role', S.profile.role))}</span></p><label>${t('language')}</label>${langSelect().replace('<select', '<select style="max-width:160px;color:var(--ink);border-color:var(--line)"')}</div>${users}${carriers}${cats}${backup}`;
+}
+async function setRole(id, role){ check(await sb.from('profiles').update({role: role || null}).eq('id', id)); toast(t('saved')); }
+function editCarrier(id){
+  const c = id ? S.carriers.find(x => x.id === id) : {};
+  form({title:t('carrier'), fields:[{name:'name', label:t('name'), required:true},{name:'tracking_url_template', label:t('tracking_template')},{name:'notes', label:t('notes')}], values:c,
+    onSubmit: async v => { if (id) check(await sb.from('carriers').update(v).eq('id', id)); else check(await sb.from('carriers').insert(v)); await loadRefs(); route(); }});
+}
+function addCategory(){
+  form({title:t('category'), fields:[{name:'name', label:t('name'), required:true},{name:'parent_id', label:'Dentro a', type:'select', options:S.categories.filter(c => !c.parent_id).map(c => [c.id, c.name])}],
+    onSubmit: async v => { check(await sb.from('categories').insert(v)); await loadRefs(); route(); }});
+}
+function addBrand(){
+  form({title:t('brand'), fields:[{name:'name', label:t('name'), required:true},{name:'country', label:t('country')},{name:'size_guide', label:'Guida taglie', type:'textarea'}],
+    onSubmit: async v => { check(await sb.from('brands').insert(v)); await loadRefs(); route(); }});
+}
+async function exportCsv(table){
+  const rows = check(await sb.from(table).select('*').limit(10000));
+  if (!rows.length) return toast(t('no_data'));
+  const cols = Object.keys(rows[0]);
+  const cell = v => { if (v == null) return ''; const s = typeof v === 'object' ? JSON.stringify(v) : String(v); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const csv = '\ufeff' + [cols.join(','), ...rows.map(r => cols.map(c => cell(r[c])).join(','))].join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = `mv_${table}_${today()}.csv`; a.click();
+}
+
+sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') renderLogin(); });
+boot();
+</script>
+</body>
+</html>
