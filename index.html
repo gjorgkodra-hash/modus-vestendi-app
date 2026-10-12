@@ -34,10 +34,22 @@ header.top{position:sticky;top:0;z-index:20;background:var(--bg);color:var(--ink
 .login-logo{display:block;width:150px;max-width:60%;margin:4px auto 6px}
 .tagline{text-align:center;font-family:Jost,sans-serif;letter-spacing:.18em;font-size:14px;color:var(--ink);margin:0 0 18px}
 .top-row select{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:4px 6px}
-nav.tabs{display:flex;gap:4px;overflow-x:auto;padding:10px 0 0;scrollbar-width:none}
-nav.tabs::-webkit-scrollbar{display:none}
-nav.tabs a{color:var(--muted);text-decoration:none;padding:8px 12px;border-radius:10px 10px 0 0;white-space:nowrap;font-size:14px}
+nav.tabs{display:flex;gap:4px;padding:8px 0 0}
+nav.tabs a{flex:1 1 0;min-width:0;text-align:center;color:var(--muted);text-decoration:none;padding:9px 4px;border-radius:10px 10px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
 nav.tabs a.on{background:var(--tan);color:var(--ink);font-weight:600}
+.menu-btn{border:1px solid var(--line);background:transparent;width:40px;height:40px;padding:0;justify-content:center;flex:none}
+.menu-btn span,.menu-btn span::before,.menu-btn span::after{display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;position:relative;content:""}
+.menu-btn span::before{position:absolute;top:-6px}.menu-btn span::after{position:absolute;top:6px}
+.menu-btn.on{background:var(--tan);border-color:var(--accent)}
+.drop{position:absolute;left:0;right:0;top:100%;background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 12px 24px rgba(44,37,39,.12);padding:6px 16px 14px;transform-origin:top;animation:drop .18s ease-out}
+@keyframes drop{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.drop{animation:none}}
+.drop a,.drop .drop-row{display:flex;align-items:center;justify-content:space-between;padding:13px 4px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:16px}
+.drop a.on{font-weight:600}
+.drop a.on::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.drop .who{padding:10px 4px 4px;color:var(--muted);font-size:13px}
+.drop button.link{font-size:16px;padding:13px 4px;color:var(--bad)}
+.menu-veil{position:fixed;inset:0;z-index:15;background:rgba(44,37,39,.25)}
 main{max-width:1100px;margin:0 auto;padding:16px 16px 80px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
 .grid{display:grid;gap:12px}
@@ -102,7 +114,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ====== Traduzioni IT / EN / SQ ======
 const T = {
-  dashboard:['Panoramica','Overview','Përmbledhje'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
+  dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
   login:['Accedi','Log in','Hyr'], signup:['Registrati','Sign up','Regjistrohu'], email:['Email','Email','Email'], password:['Password','Password','Fjalëkalimi'],
@@ -315,6 +327,7 @@ function renderWaiting(){
 async function logout(){ await sb.auth.signOut(); location.hash = ''; boot(); }
 
 // ====== Struttura e navigazione ======
+const MAIN_TABS = {admin:['dashboard','catalog','orders','customers'], vendite:['dashboard','catalog','orders','customers'], magazzino:['dashboard','catalog','purchases']};
 function navItems(){
   const r = S.profile.role;
   const all = [['dashboard','#/'],['catalog','#/catalogo'],['purchases','#/acquisti'],['customers','#/clienti'],['orders','#/ordini'],['expenses','#/spese'],['reports','#/report'],['settings','#/impostazioni']];
@@ -322,8 +335,23 @@ function navItems(){
   return all.filter(a => allowed.includes(a[0]));
 }
 function renderShell(){
-  $('#app').innerHTML = `<header class="top"><div class="top-row"><div class="brand"><img src="icons/mv-mark.png" alt="MV"><span>modus vestendi</span></div><div class="row">${langSelect()}<button class="link" onclick="logout()">${t('logout')}</button></div></div>
-  <nav class="tabs">${navItems().map(([k, h]) => `<a href="${h}" data-k="${k}">${t(k)}</a>`).join('')}</nav></header><main id="main"></main>`;
+  const main = MAIN_TABS[S.profile.role];
+  const tabs = main.map(k => navItems().find(n => n[0] === k)).filter(Boolean);
+  const more = navItems().filter(n => !main.includes(n[0]));
+  $('#app').innerHTML = `<header class="top"><div class="top-row"><div class="brand"><img src="icons/mv-mark.png" alt="MV"><span>modus vestendi</span></div>
+  <button class="menu-btn" id="mb" aria-label="${t('menu')}" aria-expanded="false" onclick="toggleMenu()"><span></span></button></div>
+  <nav class="tabs">${tabs.map(([k, h]) => `<a href="${h}" data-k="${k}">${k === 'dashboard' ? t('home') : t(k)}</a>`).join('')}</nav>
+  <div class="drop" id="drop" hidden>
+    <div class="who">${esc(S.profile.full_name || S.profile.email || '')} · ${esc(ev('role', S.profile.role))}</div>
+    ${more.map(([k, h]) => `<a href="${h}" data-k="${k}" onclick="toggleMenu(false)">${t(k)}</a>`).join('')}
+    <div class="drop-row"><span>${t('language')}</span>${langSelect()}</div>
+    <button class="link" onclick="logout()">${t('logout')}</button>
+  </div></header><div class="menu-veil" id="veil" hidden onclick="toggleMenu(false)"></div><main id="main"></main>`;
+}
+function toggleMenu(open){
+  const d = $('#drop'); if (!d) return;
+  const show = open === undefined ? d.hidden : open;
+  d.hidden = !show; $('#veil').hidden = !show; $('#mb').setAttribute('aria-expanded', show);
 }
 window.addEventListener('hashchange', () => S.profile?.role && route());
 async function route(){
@@ -332,7 +360,9 @@ async function route(){
   const map = {'':['dashboard', viewDashboard], catalogo:['catalog', viewCatalog], articolo:['catalog', viewModel], acquisti:['purchases', viewPurchases], acquisto:['purchases', viewPurchase],
     clienti:['customers', viewCustomers], cliente:['customers', viewCustomer], ordini:['orders', viewOrders], ordine:['orders', viewOrder], spese:['expenses', viewExpenses], report:['reports', viewReports], impostazioni:['settings', viewSettings]};
   const [k, fn] = map[p] || map[''];
-  document.querySelectorAll('nav.tabs a').forEach(a => a.classList.toggle('on', a.dataset.k === k));
+  document.querySelectorAll('nav.tabs a, .drop a').forEach(a => a.classList.toggle('on', a.dataset.k === k));
+  $('#mb')?.classList.toggle('on', !MAIN_TABS[S.profile.role].includes(k));
+  toggleMenu(false);
   if (!navItems().some(n => n[0] === k)) return (location.hash = '#/');
   const main = $('#main'); main.innerHTML = `<p class="muted">…</p>`;
   try { await fn(main, id ? Number(id) : null); } catch (e) { console.error(e); main.innerHTML = `<div class="card">${esc(e.message || e)}</div>`; }
