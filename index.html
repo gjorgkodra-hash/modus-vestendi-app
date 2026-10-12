@@ -165,7 +165,7 @@ const T = {
   one_size:['Taglia unica','One size','Masë e vetme'], reserved_short:['riservati','reserved','rezervuar'], sold_short:['venduti','sold','shitur'],
   sizes_stock:['Taglie e disponibilità','Sizes and stock','Masat dhe gjendja'], add_size:['Aggiungi taglia','Add size','Shto masë'],
   sales_reservations:['Vendite e prenotazioni','Sales and reservations','Shitjet dhe rezervimet'], no_sales_yet:['Ancora nessuna vendita','No sales yet','Ende pa shitje'],
-  sizes_qty:['Taglie e quantità (es. S:1, M:2 — oppure U:1)','Sizes and quantity (e.g. S:1, M:2 — or U:1)','Masat dhe sasia (p.sh. S:1, M:2 — ose U:1)'],
+  sizes_qty:['Taglia (vuoto = taglia unica · più taglie: S:1, M:2)','Size (empty = one size · several: S:1, M:2)','Masa (bosh = masë e vetme · disa masa: S:1, M:2)'],
   to_do:['Da fare','To do','Për t\'u bërë'], to_deliver_own:['Da consegnare (noi)','To deliver (us)','Për t\'u dorëzuar (ne)'], to_ship_choose:['Da spedire','To ship','Për t\'u dërguar'],
   received_add_hint:['Acquisto già ricevuto: i pezzi che aggiungi entrano subito in magazzino.','Purchase already received: items you add go straight into stock.','Blerja është marrë: copët që shton hyjnë menjëherë në magazinë.'],
   variant_has_orders:['Questa taglia ha già ordini: non si può eliminare. Usa ± per correggere la quantità.','This size already has orders and cannot be deleted. Use ± to fix the quantity.','Kjo masë ka porosi dhe nuk fshihet dot. Përdor ± për të korrigjuar sasinë.'],
@@ -180,6 +180,7 @@ const T = {
   delete_model_hint:['Spariscono anche taglie, foto, magazzino e righe negli acquisti.','Sizes, photos, stock and purchase lines are removed too.','Fshihen edhe masat, fotot, magazina dhe rreshtat në blerje.'],
   delete_order:['Elimina ordine','Delete order','Fshi porosinë'], delete_order_hint:['Se era confermato, i pezzi tornano prima in magazzino.','If it was confirmed, the items go back to stock first.','Nëse ishte konfirmuar, copët kthehen më parë në magazinë.'],
   archived:['Archiviati','Archived','Të arkivuara'], restore:['Ripristina','Restore','Rikthe'],
+  of_which_ordered:['ordinati, da consegnare','ordered, to deliver','të porositura, për t\'u dorëzuar'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -446,7 +447,9 @@ async function viewDashboard(main){
   const variants = check(await sb.from('variants').select('id,sku,size,color,qty,low_stock_threshold,models!inner(id,name,brand_id,archived)').eq('models.archived', false));
   const inStock = variants.reduce((a, v) => a + Math.max(0, v.qty), 0);
   const low = variants.filter(v => v.low_stock_threshold > 0 && v.qty <= v.low_stock_threshold);
-  let kpis = `<div class="card kpi"><div class="v">${inStock}</div><div class="l">${t('in_stock')}</div></div>`;
+  const pend = check(await sb.from('order_lines').select('qty,orders!inner(status)').eq('orders.status', 'confermato'));
+  const committed = pend.reduce((a, l) => a + l.qty, 0);
+  let kpis = `<div class="card kpi"><div class="v">${inStock + committed}</div><div class="l">${t('in_stock')}${committed ? ` · ${committed} ${t('of_which_ordered')}` : ''}</div></div>`;
   if (can.costs()){
     const vc = check(await sb.from('variant_costs').select('variant_id,landed_cost'));
     const cost = Object.fromEntries(vc.map(x => [x.variant_id, Number(x.landed_cost)]));
@@ -470,7 +473,7 @@ async function viewDashboard(main){
     const pays = check(await sb.from('payments').select('amount,kind').eq('status', 'da_incassare'));
     const due = pays.filter(p => p.kind !== 'rimborso').reduce((a, p) => a + Number(p.amount), 0);
     kpis += `<div class="card kpi"><div class="v">${toShip.length}</div><div class="l">${t('to_ship')}</div></div><div class="card kpi"><div class="v">${eur(due)}</div><div class="l">${t('to_collect')}</div></div>`;
-    const ro = check(await sb.from('orders').select('id,order_no,order_date,status,customers(full_name)').order('created_at', {ascending:false}).limit(8));
+    const ro = check(await sb.from('orders').select('id,order_no,order_date,status,customers(full_name)').neq('status', 'annullato').order('created_at', {ascending:false}).limit(8));
     recent = `<div class="card"><h3>${t('recent_orders')}</h3>${ro.length ? `<div class="table-wrap"><table>${ro.map(o => `<tr class="click" onclick="location.hash='#/ordine/${o.id}'"><td>${esc(o.order_no)}</td><td>${esc(o.customers?.full_name)}</td><td>${fdate(o.order_date)}</td><td>${statusPill('order_status', o.status)}</td></tr>`).join('')}</table></div>` : `<div class="empty">${t('no_data')}</div>`}</div>`;
   }
   main.innerHTML = `<h1>${t('dashboard')}</h1>${alerts}<div class="grid g4">${kpis}</div>${recent}
@@ -531,18 +534,20 @@ function newModel(){
   const f = modelFields(); f[0].required = false;
   f.splice(4, 0, {name:'photos', label:t('photos'), type:'file'},
     {name:'sale_price', label:t('sale_price') + ' (€)', type:'number', required:true},
-    {name:'sizes', label:t('sizes_qty'), value:'U:1', required:true},
+    {name:'sizes', label:t('sizes_qty')},
+    {name:'qty', label:t('qty'), type:'number', value:1, required:true},
     {name:'color', label:`${t('color')} (${t('optional')})`});
   form({title:t('new_model'), fields:f, values:{instagram_status:'non_pubblicato'}, onSubmit: async v => {
     await ensureBrand(v);
-    const files = v.photos, sizes = v.sizes, color = v.color, price = v.sale_price;
-    delete v.photos; delete v.sizes; delete v.color; delete v.sale_price;
+    const files = v.photos, sizes = v.sizes || '', color = v.color, price = v.sale_price, baseQty = v.qty ?? 1;
+    delete v.photos; delete v.sizes; delete v.color; delete v.sale_price; delete v.qty;
     if (!v.list_price) v.list_price = price;
     const m = check(await sb.from('models').insert(v).select().single());
-    for (const part of String(sizes).split(/[,;\n]+/)){
+    const parts = String(sizes).split(/[,;\n]+/).map(x => x.trim()).filter(Boolean);
+    for (const part of (parts.length ? parts : ['U'])){
       const [sz, q] = part.split(':').map(x => x && x.trim());
       if (!sz) continue;
-      const qty = Number(q ?? 1) || 0;
+      const qty = q != null ? (Number(q) || 0) : baseQty;
       const nv = check(await sb.from('variants').insert({model_id: m.id, size: sz, color: color || null, sale_price: price, status:'in_magazzino', sku: skuFor(m, sz, color)}).select().single());
       if (qty) check(await sb.from('stock_movements').insert({variant_id: nv.id, kind:'carico', qty, reference:'carico iniziale'}));
     }
@@ -985,7 +990,7 @@ async function viewOrders(main){
   main.innerHTML = `<div class="row spread"><h1>${t('orders')}</h1><button class="primary" onclick="newOrder()">+ ${t('new_order')}</button></div>
   <div class="chips" style="margin-bottom:12px"><button class="${orderFilter ? '' : 'primary'}" onclick="orderFilter='';route()">${t('all')}</button>${opts('order_status').filter(([k]) => k !== 'bozza').map(([k, l]) => `<button class="${orderFilter === k ? 'primary' : ''}" onclick="orderFilter='${k}';route()">${l}</button>`).join('')}</div>
   <div class="card"><div class="table-wrap"><table><tr><th>${t('order')}</th><th>${t('date')}</th><th>${t('customer')}</th><th class="right">${t('total')}</th><th class="right">${t('to_collect')}</th><th>${t('status')}</th></tr>
-  ${os.filter(o => !orderFilter || o.status === orderFilter).map(o => `<tr class="click" onclick="location.hash='#/ordine/${o.id}'"><td>${esc(o.order_no)}</td><td>${fdate(o.order_date)}</td><td>${esc(o.customers?.full_name)} <span class="muted small">${esc(o.customers?.country || '')}</span></td><td class="right">${eur(T2[o.id]?.total)}</td><td class="right">${Number(T2[o.id]?.to_collect) ? eur(T2[o.id].to_collect) : ''}</td><td>${statusPill('order_status', o.status)}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">${t('no_data')}</td></tr>`}</table></div></div>`;
+  ${os.filter(o => orderFilter ? o.status === orderFilter : o.status !== 'annullato').map(o => `<tr class="click" onclick="location.hash='#/ordine/${o.id}'"><td>${esc(o.order_no)}</td><td>${fdate(o.order_date)}</td><td>${esc(o.customers?.full_name)} <span class="muted small">${esc(o.customers?.country || '')}</span></td><td class="right">${eur(T2[o.id]?.total)}</td><td class="right">${Number(T2[o.id]?.to_collect) ? eur(T2[o.id].to_collect) : ''}</td><td>${statusPill('order_status', o.status)}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">${t('no_data')}</td></tr>`}</table></div></div>`;
 }
 // ---- scelta cliente: cerca tra gli esistenti o crea nuovo ----
 const custLabel = c => c.full_name + (c.instagram ? ' @' + c.instagram : '') + (c.phone ? ' · ' + c.phone : '');
