@@ -210,7 +210,7 @@ const T = {
   set_main:['Principale','Main','Kryesore'], instagram:['Instagram','Instagram','Instagram'], trips:['Viaggi','Trips','Udhëtimet'], trip:['Viaggio','Trip','Udhëtimi'],
   supplier:['Punto d\'acquisto','Store','Pika e blerjes'], suppliers:['Punti d\'acquisto','Stores','Pikat e blerjes'], new_purchase:['Nuovo acquisto','New purchase','Blerje e re'],
   lines:['Pezzi','Items','Artikujt'], costs:['Costi','Costs','Kostot'], receive:['Segna come ricevuto (carica magazzino)','Mark received (add to stock)','Shëno si të marrë (shto në magazinë)'],
-  allocation:['Ripartizione','Allocation','Shpërndarja'], by_value:['per valore','by value','sipas vlerës'], by_pieces:['per pezzi','by pieces','sipas copëve'],
+  allocation:['Ripartizione','Allocation','Shpërndarja'], by_value:['in proporzione al prezzo','in proportion to price','në raport me çmimin'], by_pieces:['in parti uguali per pezzo','equally per piece','njëlloj për çdo copë'],
   new_customer:['Nuovo cliente','New customer','Klient i ri'], history:['Storico acquisti','Purchase history','Historiku i blerjeve'], requests:['Richieste "cerco per te"','"Find it for me" requests','Kërkesa "ma gjej"'],
   paste_dm:['Incolla la conversazione dal DM','Paste the DM conversation','Ngjit bisedën nga DM'], analyze:['Analizza e salva','Analyse and save','Analizo dhe ruaj'],
   extracted:['Dati trovati','Data found','Të dhëna të gjetura'], apply:['Applica al profilo','Apply to profile','Apliko në profil'],
@@ -847,7 +847,7 @@ function addCost(target){
   form({title:t('costs'), fields:[
     {name:'kind', label:t('kind'), type:'select', options:opts('cost_kind'), empty:false},
     {name:'amount', label:t('amount') + ' (€)', type:'number', required:true},
-    {name:'allocation', label:t('allocation'), type:'select', options:[['valore', t('by_value')], ['pezzi', t('by_pieces')]], empty:false},
+    {name:'allocation', label:t('allocation'), type:'select', options:[['pezzi', t('by_pieces')], ['valore', t('by_value')]], empty:false, value:'pezzi'},
     {name:'cost_date', label:t('date'), type:'date', value:today()},
     {name:'notes', label:t('notes')}
   ], onSubmit: async v => { check(await sb.from('purchase_costs').insert({...v, ...target})); route(); }});
