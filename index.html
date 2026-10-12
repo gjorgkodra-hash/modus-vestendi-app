@@ -90,7 +90,13 @@ tr.click{cursor:pointer} tr.click:hover{background:var(--accent-soft)}
 .model .b{padding:10px}
 .model .n{font-weight:600;font-size:14px}
 .photos{display:flex;gap:8px;flex-wrap:wrap}
-.photos .p{width:96px;height:128px;border-radius:10px;background:#eee center/cover;position:relative;border:2px solid transparent}
+.photo-add{width:96px;height:128px;border:2px dashed var(--accent);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--accent);font-size:13px;text-align:center;cursor:pointer;background:var(--accent-soft);padding:6px}
+.photo-add .plus{font-size:28px;line-height:1}
+.file-box{display:flex;align-items:center;gap:12px;border:2px dashed var(--accent);border-radius:12px;padding:14px;background:var(--accent-soft);color:var(--accent);cursor:pointer;margin:0}
+.file-box .plus{font-size:26px;line-height:1}
+.file-prev{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.file-prev img{width:56px;height:74px;object-fit:cover;border-radius:8px}
+.photos .p{width:96px;height:128px;border-radius:10px;background:var(--accent-soft) center/cover;position:relative;border:2px solid transparent}
 .photos .p.main{border-color:var(--accent)}
 .photos .p button{position:absolute;bottom:4px;right:4px;padding:2px 6px;font-size:11px}
 .matrix td,.matrix th{text-align:center}
@@ -123,6 +129,7 @@ const T = {
   or_new:['oppure scrivi un nome nuovo','or type a new name','ose shkruaj një emër të ri'], optional:['facoltativo','optional','opsionale'],
   new_item_inline:['Oppure articolo nuovo','Or new item','Ose artikull i ri'], pick_or_new:['Scegli un articolo del catalogo o scrivi il nome di uno nuovo','Pick a catalogue item or type a new one','Zgjidh një artikull nga katalogu ose shkruaj emrin e një të riu'],
   purch_help:['<b>Acquisto</b> = uno scontrino: i pezzi comprati in un negozio, con il prezzo pagato. <b>Punto d\'acquisto</b> = il negozio o outlet (si crea una volta e si riusa). <b>Viaggio</b> = facoltativo: un giro di acquisti con più negozi; benzina, pedaggi e hotel si dividono su tutti i pezzi del viaggio.','<b>Purchase</b> = one receipt: the items bought in one store, with the price paid. <b>Store</b> = the shop or outlet (created once, reused). <b>Trip</b> = optional: a buying trip across several stores; fuel, tolls and hotel are split across every item of the trip.','<b>Blerja</b> = një faturë: copët e blera në një dyqan, me çmimin e paguar. <b>Pika e blerjes</b> = dyqani ose outleti (krijohet një herë dhe ripërdoret). <b>Udhëtimi</b> = opsional: një xhiro blerjesh në disa dyqane; karburanti, pagesat rrugore dhe hoteli ndahen mbi të gjitha copët e udhëtimit.'],
+  photo_hint:['Scatta o scegli foto','Take or choose photos','Bëj ose zgjidh foto'], uploading:['Caricamento foto…','Uploading photos…','Po ngarkohen fotot…'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -232,6 +239,7 @@ function form({title, fields, values = {}, onSubmit, submitLabel, extra = ''}){
     if (f.type === 'select') input = `<select name="${f.name}" ${f.required ? 'required' : ''}>${f.empty !== false ? '<option value="">—</option>' : ''}${f.options.map(([k, l]) => `<option value="${esc(k)}" ${String(k) === String(v) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
     else if (f.type === 'textarea') input = `<textarea name="${f.name}">${esc(v)}</textarea>`;
     else if (f.type === 'checkbox') input = `<input type="checkbox" name="${f.name}" style="width:auto" ${v ? 'checked' : ''}>`;
+    else if (f.type === 'file') input = `<label class="file-box"><span class="plus">+</span><span>${t('photo_hint')}</span><input type="file" name="${f.name}" accept="image/*" multiple class="hide" onchange="previewFiles(this)"></label><div class="file-prev"></div>`;
     else input = `<input name="${f.name}" type="${f.type || 'text'}" ${f.type === 'number' ? 'step="any"' : ''} value="${esc(v)}" ${f.required ? 'required' : ''}>`;
     return `<div class="field"><label>${esc(f.label)}</label>${input}</div>`;
   }).join('')}${extra}<div class="row" style="justify-content:flex-end;margin-top:8px"><button type="button" data-x>${t('cancel')}</button><button class="primary" type="submit">${esc(submitLabel || t('save'))}</button></div></form>`;
@@ -243,6 +251,7 @@ function form({title, fields, values = {}, onSubmit, submitLabel, extra = ''}){
     fields.forEach(f => {
       const el = e.target.elements[f.name];
       if (f.type === 'checkbox') out[f.name] = el.checked;
+      else if (f.type === 'file') out[f.name] = [...el.files];
       else if (f.type === 'number') out[f.name] = num(el.value);
       else out[f.name] = el.value === '' ? null : el.value;
     });
@@ -455,9 +464,12 @@ async function ensureBrand(v){
 }
 function newModel(){
   const f = modelFields(); f[0].required = false;
+  f.splice(4, 0, {name:'photos', label:t('photos'), type:'file'});
   form({title:t('new_model'), fields:f, values:{instagram_status:'non_pubblicato'}, onSubmit: async v => {
     await ensureBrand(v);
+    const files = v.photos; delete v.photos;
     const m = check(await sb.from('models').insert(v).select().single());
+    await uploadPhotos(m.id, files);
     location.hash = '#/articolo/' + m.id;
   }});
 }
@@ -481,8 +493,8 @@ async function viewModel(main, id){
   <div class="row">${w ? `<button onclick="editModel(${m.id})">${t('edit')}</button><button class="danger" onclick="archiveModel(${m.id})">${t('archive')}</button>` : ''}</div></div>
   <div class="row small" style="margin-bottom:12px">${m.season ? `<span class="pill grey">${esc(m.season)}</span>` : ''}${statusPill('instagram_status', m.instagram_status)}${m.instagram_url ? `<a href="${esc(m.instagram_url)}" target="_blank" rel="noopener">Instagram ↗</a>` : ''}${m.list_price ? `<span class="muted">${t('list_price')}: ${eur(m.list_price)}</span>` : ''}</div>
   ${m.description ? `<p>${esc(m.description)}</p>` : ''}
-  <div class="card"><div class="row spread"><h3>${t('photos')}</h3>${w ? `<label class="btn" style="margin:0;color:var(--ink)">+ ${t('add_photo')}<input type="file" accept="image/*" multiple class="hide" id="pf"></label>` : ''}</div>
-  <div class="photos">${m.photos.map(p => `<div class="p ${p.is_main ? 'main' : ''}" style="background-image:url('${urlCache[p.path] || ''}')" onclick="window.open('${urlCache[p.path] || ''}','_blank')">${w ? `<button onclick="event.stopPropagation();photoMenu(${p.id},${m.id})">⋯</button>` : ''}</div>`).join('') || `<span class="muted small">${t('no_data')}</span>`}</div></div>
+  <div class="card"><h3>${t('photos')}</h3>
+  <div class="photos">${w ? `<label class="photo-add"><span class="plus">+</span><span>${t('add_photo')}</span><input type="file" accept="image/*" multiple class="hide" id="pf"></label>` : ''}${m.photos.map(p => `<div class="p ${p.is_main ? 'main' : ''}" style="background-image:url('${urlCache[p.path] || ''}')" onclick="window.open('${urlCache[p.path] || ''}','_blank')">${w ? `<button onclick="event.stopPropagation();photoMenu(${p.id},${m.id})">⋯</button>` : ''}</div>`).join('') || (w ? '' : `<span class="muted small">${t('no_data')}</span>`)}</div></div>
   <div class="card"><div class="row spread"><h3>${t('variants')}</h3>${w ? `<button onclick="editVariant(null,${m.id})">+ ${t('add_variant')}</button>` : ''}</div>${matrix}
   <div class="table-wrap"><table><tr><th>${t('sku')}</th><th>${t('size')}</th><th>${t('color')}</th><th class="right">${t('qty')}</th><th>${t('status')}</th><th>${t('location')}</th><th class="right">${t('sale_price')}</th>${can.costs() ? `<th class="right">${t('landed_cost')}</th>` : ''}<th></th></tr>
   ${m.variants.map(v => `<tr><td class="small">${esc(v.sku)}</td><td>${esc(v.size)}</td><td>${esc(v.color)}</td><td class="right"><b>${v.qty}</b></td><td>${statusPill('variant_status', v.status)}</td><td class="small">${esc(ev('location', v.location))}</td><td class="right">${eur(v.sale_price)}</td>${can.costs() ? `<td class="right" title="${costs[v.id] ? `${t('purchase_price')} ${eur(costs[v.id].purchase_price)} + ${eur(costs[v.id].allocated_cost)}` : ''}">${eur(costs[v.id]?.landed_cost)}</td>` : ''}
@@ -490,16 +502,23 @@ async function viewModel(main, id){
   window._model = m;
   const pf = $('#pf');
   if (pf) pf.onchange = async e => {
-    const files = [...e.target.files]; if (!files.length) return;
-    toast('Upload…');
-    for (const [i, file] of files.entries()){
-      const blob = await resizeImage(file);
-      const path = `${m.id}/${Date.now()}_${i}.jpg`;
-      check(await sb.storage.from('foto').upload(path, blob, {contentType:'image/jpeg'}));
-      check(await sb.from('photos').insert({model_id: m.id, path, is_main: m.photos.length === 0 && i === 0, sort: m.photos.length + i}));
-    }
+    await uploadPhotos(m.id, [...e.target.files], m.photos.length);
     route();
   };
+}
+async function uploadPhotos(modelId, files, start = 0){
+  if (!files || !files.length) return;
+  toast(t('uploading'));
+  for (const [i, file] of files.entries()){
+    const blob = await resizeImage(file);
+    const path = `${modelId}/${Date.now()}_${i}.jpg`;
+    check(await sb.storage.from('foto').upload(path, blob, {contentType:'image/jpeg'}));
+    check(await sb.from('photos').insert({model_id: modelId, path, is_main: start === 0 && i === 0, sort: start + i}));
+  }
+}
+function previewFiles(input){
+  const box = input.closest('.field').querySelector('.file-prev');
+  box.innerHTML = [...input.files].map(f => `<img src="${URL.createObjectURL(f)}" alt="">`).join('');
 }
 function editModel(id){
   const m = window._model;
@@ -640,6 +659,7 @@ async function addPurchaseLine(pid){
     {name:'size', label:t('size')},
     {name:'color', label:t('color')},
     {name:'sale_price', label:t('sale_price'), type:'number'},
+    {name:'photos', label:t('photos'), type:'file'},
     {name:'qty', label:t('qty'), type:'number', value:1, required:true},
     {name:'unit_price', label:t('purchase_price'), type:'number', required:true}
   ], onSubmit: async v => {
@@ -648,6 +668,7 @@ async function addPurchaseLine(pid){
       if (!v.name){ toast(t('pick_or_new'), true); throw new Error('item'); }
       await ensureBrand(v);
       const m = check(await sb.from('models').insert({brand_id: v.brand_id, category_id: v.category_id, name: v.name}).select().single());
+      await uploadPhotos(m.id, v.photos);
       const nv = check(await sb.from('variants').insert({model_id: m.id, size: v.size, color: v.color, sale_price: v.sale_price, status:'ordinato', sku: skuFor(m, v.size, v.color)}).select().single());
       vid = nv.id;
     }
