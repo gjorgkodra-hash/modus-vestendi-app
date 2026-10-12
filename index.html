@@ -168,6 +168,8 @@ const T = {
   sizes_qty:['Taglie e quantità (es. S:1, M:2 — oppure U:1)','Sizes and quantity (e.g. S:1, M:2 — or U:1)','Masat dhe sasia (p.sh. S:1, M:2 — ose U:1)'],
   to_do:['Da fare','To do','Për t\'u bërë'], to_deliver_own:['Da consegnare (noi)','To deliver (us)','Për t\'u dorëzuar (ne)'], to_ship_choose:['Da spedire','To ship','Për t\'u dërguar'],
   received_add_hint:['Acquisto già ricevuto: i pezzi che aggiungi entrano subito in magazzino.','Purchase already received: items you add go straight into stock.','Blerja është marrë: copët që shton hyjnë menjëherë në magazinë.'],
+  variant_has_orders:['Questa taglia ha già ordini: non si può eliminare. Usa ± per correggere la quantità.','This size already has orders and cannot be deleted. Use ± to fix the quantity.','Kjo masë ka porosi dhe nuk fshihet dot. Përdor ± për të korrigjuar sasinë.'],
+  delete_variant_hint:['Verrà tolta anche dagli acquisti e dal magazzino.','It will also be removed from purchases and stock.','Do të hiqet edhe nga blerjet dhe magazina.'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -571,7 +573,7 @@ async function viewModel(main, id){
     <div style="flex:1;min-width:0"><b>${esc(vname(v))}</b> <span class="small muted">${esc(v.sku || '')}</span>
     <div class="small">${eur(v.sale_price)}${can.costs() && costs[v.id] ? ` · <span class="muted">${t('landed_cost')} ${eur(costs[v.id].landed_cost)}</span>` : ''} · ${esc(ev('location', v.location))}</div></div>
     <div class="right" style="flex:none"><span class="pill ${s.available > 0 ? 'good' : 'grey'}">${Math.max(0, s.available)} ${t('available')}</span>${s.reserved ? `<div class="small" style="color:var(--warn)">${s.reserved} ${t('reserved_short')}</div>` : ''}
-    <div>${can.sales() && s.available > 0 ? `<button class="link" onclick="sellFromModel(${v.id})">${t('sell')}</button>` : ''}${w ? `<button class="link" onclick="editVariant(${v.id},${m.id})">${t('edit')}</button><button class="link" onclick="adjustStock(${v.id},${m.id})">±</button>` : ''}</div></div></div>`; }).join('') || `<div class="empty">${t('no_data')}</div>`}</div>
+    <div>${can.sales() && s.available > 0 ? `<button class="link" onclick="sellFromModel(${v.id})">${t('sell')}</button>` : ''}${w ? `<button class="link" onclick="editVariant(${v.id},${m.id})">${t('edit')}</button><button class="link" onclick="adjustStock(${v.id},${m.id})">±</button><button class="link" style="color:var(--bad)" onclick="deleteVariant(${v.id})">${t('delete')}</button>` : ''}</div></div></div>`; }).join('') || `<div class="empty">${t('no_data')}</div>`}</div>
   ${can.sales() ? `<div class="card"><h3>${t('sales_reservations')}</h3>
   ${sales.sort((a, b) => b.orders.id - a.orders.id).map(s => { const v = m.variants.find(x => x.id === s.variant_id); return `<div class="row" style="flex-wrap:nowrap;padding:9px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='#/ordine/${s.orders.id}'">
     <div style="flex:1;min-width:0"><b>${esc(s.orders.customers?.full_name || '')}</b>${s.orders.customers?.instagram ? ` <span class="small muted">@${esc(s.orders.customers.instagram)}</span>` : ''}
@@ -580,6 +582,15 @@ async function viewModel(main, id){
   ${w ? `<div class="row" style="justify-content:center"><button onclick="editModel(${m.id})">${t('edit')}</button><button class="danger" onclick="archiveModel(${m.id})">${t('archive')}</button></div>` : ''}`;
   window._model = m;
   ['#pf', '#pfc'].forEach(sel => { const el = $(sel); if (el) el.onchange = async e => { await uploadPhotos(m.id, [...e.target.files], m.photos.length); route(); }; });
+}
+async function deleteVariant(vid){
+  const used = check(await sb.from('order_lines').select('id').eq('variant_id', vid).limit(1));
+  if (used.length) return toast(t('variant_has_orders'), true);
+  const v = window._model.variants.find(x => x.id === vid);
+  if (!confirm(`${t('delete')}: ${[v.size, v.color].filter(Boolean).join(' · ') || t('one_size')}?\n${t('delete_variant_hint')}`)) return;
+  check(await sb.from('purchase_lines').delete().eq('variant_id', vid));
+  check(await sb.from('variants').delete().eq('id', vid));
+  toast(t('saved')); route();
 }
 async function uploadPhotos(modelId, files, start = 0){
   if (!files || !files.length) return;
