@@ -170,6 +170,9 @@ const T = {
   received_add_hint:['Acquisto già ricevuto: i pezzi che aggiungi entrano subito in magazzino.','Purchase already received: items you add go straight into stock.','Blerja është marrë: copët që shton hyjnë menjëherë në magazinë.'],
   variant_has_orders:['Questa taglia ha già ordini: non si può eliminare. Usa ± per correggere la quantità.','This size already has orders and cannot be deleted. Use ± to fix the quantity.','Kjo masë ka porosi dhe nuk fshihet dot. Përdor ± për të korrigjuar sasinë.'],
   delete_variant_hint:['Verrà tolta anche dagli acquisti e dal magazzino.','It will also be removed from purchases and stock.','Do të hiqet edhe nga blerjet dhe magazina.'],
+  buy_mode:['Come hai comprato?','How did you buy it?','Si e bleve?'], bm_store:['In negozio: ritirato sul posto','In store: collected on site','Në dyqan: e morëm vetë'], bm_online:['Online: spedito a noi','Online: shipped to us','Online: na dërgohet'],
+  bm_store_short:['In negozio','In store','Në dyqan'], bm_online_short:['Online','Online','Online'], collected:['Ritirato','Collected','E marrë'],
+  expected_on:['Arrivo previsto','Expected arrival','Mbërritja e pritshme'], arrival:['Arrivo della merce','Goods arrival','Mbërritja e mallit'], no_tracking:['tracking non ancora inserito','no tracking yet','pa numër gjurmimi ende'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -665,7 +668,7 @@ async function viewPurchases(main){
   <div class="help">${t('purch_help')}</div>
   <div class="card"><div class="table-wrap"><table><tr><th>#</th><th>${t('date')}</th><th>${t('supplier')}</th><th>${t('trip')}</th><th class="right">${t('lines')}</th><th class="right">${t('total')}</th><th>${t('status')}</th></tr>
   ${ps.map(p => { const q = p.purchase_lines.reduce((a, l) => a + l.qty, 0), tot = p.purchase_lines.reduce((a, l) => a + l.qty * l.unit_price, 0);
-    return `<tr class="click" onclick="location.hash='#/acquisto/${p.id}'"><td>${p.id}</td><td>${fdate(p.purchase_date)}</td><td>${esc(p.suppliers?.name)}</td><td>${esc(p.trips?.title)}</td><td class="right">${q}</td><td class="right">${eur(tot)}</td><td>${statusPill('purchase_status', p.status)}</td></tr>`; }).join('') || `<tr><td colspan="7" class="empty">${t('no_data')}</td></tr>`}</table></div></div>
+    return `<tr class="click" onclick="location.hash='#/acquisto/${p.id}'"><td>${p.id}</td><td>${fdate(p.purchase_date)}</td><td>${esc(p.suppliers?.name)}</td><td>${esc(p.trips?.title)}</td><td class="right">${q}</td><td class="right">${eur(tot)}</td><td>${p.status === 'ricevuto' && p.buy_mode !== 'online' ? `<span class="pill good">${t('collected')}</span>` : statusPill('purchase_status', p.status)}</td></tr>`; }).join('') || `<tr><td colspan="7" class="empty">${t('no_data')}</td></tr>`}</table></div></div>
   <div class="card"><div class="row spread"><h3>${t('trips')}</h3><button onclick="editTrip()">+ ${t('add')}</button></div><table>${S.trips.map(tr => `<tr><td>${esc(tr.title)}</td><td>${esc(tr.destination || '')}</td><td>${fdate(tr.start_date)}</td><td class="right"><button class="link" onclick="tripCosts(${tr.id})">${t('costs')}</button><button class="link" onclick="editTrip(${tr.id})">${t('edit')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>
   <div class="card"><div class="row spread"><h3>${t('suppliers')}</h3><button onclick="editSupplier()">+ ${t('add')}</button></div><table>${S.suppliers.map(s => `<tr><td>${esc(s.name)}</td><td>${esc(s.city || '')} ${esc(s.country || '')}</td><td>${esc(ev('supplier_kind', s.kind))}</td><td class="right"><button class="link" onclick="editSupplier(${s.id})">${t('edit')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>`;
 }
@@ -679,20 +682,34 @@ function editSupplier(id){
   form({title:t('supplier'), fields:[{name:'name', label:t('name'), required:true},{name:'city', label:t('city')},{name:'country', label:t('country')},{name:'kind', label:t('kind'), type:'select', options:opts('supplier_kind')},{name:'notes', label:t('notes'), type:'textarea'}],
     values:s, onSubmit: async v => { if (id) check(await sb.from('suppliers').update(v).eq('id', id)); else check(await sb.from('suppliers').insert(v)); await loadRefs(); route(); }});
 }
+function buyModeToggle(m){
+  const sel = m.querySelector('[name=buy_mode]');
+  const sync = () => ['carrier_name','tracking_no','expected_on','status'].forEach(n => { const el = m.querySelector(`[name=${n}]`); if (el) el.closest('.field').classList.toggle('hide', sel.value !== 'online'); });
+  sel.addEventListener('change', sync); sync();
+}
+const onlineFields = () => [
+  {name:'carrier_name', label:t('carrier')},
+  {name:'tracking_no', label:t('tracking')},
+  {name:'expected_on', label:t('expected_on'), type:'date'}];
+const buyModeField = () => ({name:'buy_mode', label:t('buy_mode'), type:'select', empty:false, value:'negozio', options:[['negozio', t('bm_store')], ['online', t('bm_online')]]});
 function newPurchase(){
-  form({title:t('new_purchase'), fields:[
+  const m = form({title:t('new_purchase'), fields:[
+    buyModeField(),
     {name:'supplier_id', label:t('supplier'), type:'select', options:S.suppliers.map(s => [s.id, s.name])},
     {name:'new_supplier', label:`${t('supplier')}: ${t('or_new')}`},
     {name:'trip_id', label:`${t('trip')} (${t('optional')})`, type:'select', options:S.trips.map(x => [x.id, x.title])},
     {name:'new_trip', label:`${t('trip')}: ${t('or_new')}`},
     {name:'purchase_date', label:t('date'), type:'date', value:today()},
-    {name:'status', label:t('status'), type:'select', options:opts('purchase_status').filter(o => o[0] !== 'ricevuto'), empty:false, value:'ordinato'},
+    ...onlineFields(),
     {name:'notes', label:t('notes'), type:'textarea'}
   ], onSubmit: async v => {
     if (v.new_supplier){ const n = check(await sb.from('suppliers').insert({name: v.new_supplier}).select().single()); v.supplier_id = n.id; }
     if (v.new_trip){ const n = check(await sb.from('trips').insert({title: v.new_trip, start_date: v.purchase_date}).select().single()); v.trip_id = n.id; }
     delete v.new_supplier; delete v.new_trip;
+    if (v.buy_mode === 'negozio'){ v.status = 'ricevuto'; v.carrier_name = v.tracking_no = v.expected_on = null; }
+    else v.status = v.tracking_no ? 'in_arrivo' : 'ordinato';
     const p = check(await sb.from('purchases').insert(v).select().single()); await loadRefs(); location.hash = '#/acquisto/' + p.id; }});
+  buyModeToggle(m);
 }
 async function allVariants(){
   return check(await sb.from('variants').select('id,sku,size,color,qty,sale_price,model_id,models(name,brand_id,archived)'));
@@ -705,7 +722,9 @@ async function viewPurchase(main, id){
   window._purchase = p;
   main.innerHTML = `<p><a href="#/acquisti">← ${t('purchases')}</a></p>
   <div class="row spread"><div><h1>${t('purchases')} #${p.id}</h1><div class="muted">${fdate(p.purchase_date)} · ${esc(p.suppliers?.name || '')} ${p.trips ? '· ' + esc(p.trips.title) : ''}</div></div>
-  <div class="row">${statusPill('purchase_status', p.status)}<button onclick="editPurchaseStatus(${p.id})">${t('edit')}</button>${p.status !== 'ricevuto' ? `<button class="accent" onclick="receivePurchase(${p.id})">${t('receive')}</button>` : ''}</div></div>
+  <div class="row"><span class="pill grey">${p.buy_mode === 'online' ? t('bm_online_short') : t('bm_store_short')}</span>${p.status === 'ricevuto' && p.buy_mode !== 'online' ? `<span class="pill good">${t('collected')}</span>` : statusPill('purchase_status', p.status)}<button onclick="editPurchaseStatus(${p.id})">${t('edit')}</button></div></div>
+  ${p.buy_mode === 'online' && p.status !== 'ricevuto' ? `<div class="help"><b>${t('arrival')}</b>${p.expected_on ? ` · ${t('expected_on')} ${fdate(p.expected_on)}` : ''}<div class="small" style="margin-top:4px">${esc(p.carrier_name || '')} ${p.tracking_no ? `· ${esc(p.tracking_no)} <button class="link" onclick="navigator.clipboard.writeText('${esc(p.tracking_no)}').then(()=>toast('OK'))">⧉</button>` : `· <span class="muted">${t('no_tracking')}</span>`}</div>
+    <div class="row" style="margin-top:8px">${p.tracking_no ? `<a class="btn" href="https://t.17track.net/en#nums=${encodeURIComponent(p.tracking_no)}" target="_blank" rel="noopener">${t('track')} ↗</a>` : ''}<button class="primary" onclick="receivePurchase(${p.id})">${t('receive')}</button></div></div>` : ''}
   <div class="card"><div class="row spread"><h3>${t('lines')}</h3><button class="primary" onclick="addPurchaseLine(${p.id})">+ ${t('add_line')}</button></div>
   ${p.status === 'ricevuto' ? `<p class="small muted" style="margin:0 0 6px">${t('received_add_hint')}</p>` : ''}
   ${p.purchase_lines.map(l => `<div class="row" style="flex-wrap:nowrap;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)">
@@ -721,13 +740,20 @@ async function viewPurchase(main, id){
 }
 function editPurchaseStatus(id){
   const p = window._purchase;
-  form({title:t('edit'), fields:[
+  const received = p.status === 'ricevuto';
+  const fields = [
+    ...(received ? [] : [buyModeField()]),
     {name:'supplier_id', label:t('supplier'), type:'select', options:S.suppliers.map(s => [s.id, s.name])},
     {name:'trip_id', label:t('trip'), type:'select', options:S.trips.map(x => [x.id, x.title])},
     {name:'purchase_date', label:t('date'), type:'date'},
-    {name:'status', label:t('status'), type:'select', options:opts('purchase_status').filter(o => o[0] !== 'ricevuto'), empty:false},
-    {name:'notes', label:t('notes'), type:'textarea'}
-  ], values:p, onSubmit: async v => { if (p.status === 'ricevuto') delete v.status; check(await sb.from('purchases').update(v).eq('id', id)); route(); }});
+    ...(p.buy_mode === 'online' || !received ? onlineFields() : []),
+    ...(received ? [] : [{name:'status', label:t('status'), type:'select', empty:false, options:[['ordinato', ev('purchase_status','ordinato')], ['in_arrivo', ev('purchase_status','in_arrivo')]]}]),
+    {name:'notes', label:t('notes'), type:'textarea'}];
+  const m = form({title:t('edit'), fields, values:p, onSubmit: async v => {
+    if (!received && v.buy_mode === 'negozio'){ check(await sb.from('purchases').update({...v, status:'ordinato'}).eq('id', id)); check(await sb.rpc('ricevi_acquisto', {p_purchase_id: id})); }
+    else check(await sb.from('purchases').update(v).eq('id', id));
+    route(); }});
+  if (!received) buyModeToggle(m);
 }
 async function addPurchaseLine(pid){
   const vs = (await allVariants()).filter(v => !v.models?.archived).sort((a, b) => variantLabel(a).localeCompare(variantLabel(b)));
