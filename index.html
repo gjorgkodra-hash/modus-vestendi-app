@@ -173,6 +173,13 @@ const T = {
   buy_mode:['Come hai comprato?','How did you buy it?','Si e bleve?'], bm_store:['In negozio: ritirato sul posto','In store: collected on site','Në dyqan: e morëm vetë'], bm_online:['Online: spedito a noi','Online: shipped to us','Online: na dërgohet'],
   bm_store_short:['In negozio','In store','Në dyqan'], bm_online_short:['Online','Online','Online'], collected:['Ritirato','Collected','E marrë'],
   expected_on:['Arrivo previsto','Expected arrival','Mbërritja e pritshme'], arrival:['Arrivo della merce','Goods arrival','Mbërritja e mallit'], no_tracking:['tracking non ancora inserito','no tracking yet','pa numër gjurmimi ende'],
+  line_kind:['Che pezzo è?','What item is it?','Çfarë artikulli është?'], lk_new:['Pezzo nuovo (non ancora nel catalogo)','New item (not in the catalogue yet)','Artikull i ri (ende jo në katalog)'], lk_existing:['Già nel catalogo','Already in the catalogue','Tashmë në katalog'],
+  add_stock_q:['Sono pezzi in più: aumenta il magazzino','These are extra pieces: increase stock','Janë copë shtesë: rrit magazinën'],
+  add_stock_hint:['Lascia spento se il pezzo è già in magazzino e vuoi solo registrare quanto l\'hai pagato.','Leave off if the item is already in stock and you only want to record what you paid.','Lëre të fikur nëse copa është tashmë në magazinë dhe do vetëm të shënosh sa e pagove.'],
+  model_has_orders:['Questo prodotto ha ordini: puoi solo archiviarlo.','This product has orders: you can only archive it.','Ky produkt ka porosi: mund vetëm ta arkivosh.'],
+  delete_model_hint:['Spariscono anche taglie, foto, magazzino e righe negli acquisti.','Sizes, photos, stock and purchase lines are removed too.','Fshihen edhe masat, fotot, magazina dhe rreshtat në blerje.'],
+  delete_order:['Elimina ordine','Delete order','Fshi porosinë'], delete_order_hint:['Se era confermato, i pezzi tornano prima in magazzino.','If it was confirmed, the items go back to stock first.','Nëse ishte konfirmuar, copët kthehen më parë në magazinë.'],
+  archived:['Archiviati','Archived','Të arkivuara'], restore:['Ripristina','Restore','Rikthe'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -436,7 +443,7 @@ async function route(){
 
 // ====== Panoramica ======
 async function viewDashboard(main){
-  const variants = check(await sb.from('variants').select('id,sku,size,color,qty,low_stock_threshold,models(id,name,brand_id)'));
+  const variants = check(await sb.from('variants').select('id,sku,size,color,qty,low_stock_threshold,models!inner(id,name,brand_id,archived)').eq('models.archived', false));
   const inStock = variants.reduce((a, v) => a + Math.max(0, v.qty), 0);
   const low = variants.filter(v => v.low_stock_threshold > 0 && v.qty <= v.low_stock_threshold);
   let kpis = `<div class="card kpi"><div class="v">${inStock}</div><div class="l">${t('in_stock')}</div></div>`;
@@ -471,15 +478,15 @@ async function viewDashboard(main){
 }
 
 // ====== Catalogo ======
-let catFilter = {q:'', brand:'', cat:''};
+let catFilter = {q:'', brand:'', cat:'', archived:false};
 async function viewCatalog(main){
-  const models = check(await sb.from('models').select('id,name,season,brand_id,category_id,instagram_status,variants(id,qty,sale_price),photos(path,is_main,sort)').eq('archived', false).order('created_at', {ascending:false}));
+  const models = check(await sb.from('models').select('id,name,season,brand_id,category_id,instagram_status,variants(id,qty,sale_price),photos(path,is_main,sort)').eq('archived', !!catFilter.archived).order('created_at', {ascending:false}));
   const mains = models.map(m => { const ph = (m.photos || []).sort((a, b) => (b.is_main - a.is_main) || a.sort - b.sort)[0]; return ph?.path; });
   await signedUrls(mains);
   main.innerHTML = `<div class="row spread"><h1>${t('catalog')}</h1>${can.catalogWrite() ? `<button class="primary" onclick="newModel()">+ ${t('new_model')}</button>` : ''}</div>
   <div class="row" style="margin-bottom:14px"><input class="search" id="cq" placeholder="${t('search')}" value="${esc(catFilter.q)}">
   <select id="cb" style="max-width:200px"><option value="">${t('brand')}: ${t('all')}</option>${S.brands.map(b => `<option value="${b.id}" ${String(b.id) === catFilter.brand ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}</select>
-  <select id="cc" style="max-width:240px"><option value="">${t('category')}: ${t('all')}</option>${catOptions().map(([k, l]) => `<option value="${k}" ${String(k) === catFilter.cat ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
+  <button class="${catFilter.archived ? 'primary' : ''}" onclick="catFilter.archived=!catFilter.archived;route()">${t('archived')}</button><select id="cc" style="max-width:240px"><option value="">${t('category')}: ${t('all')}</option>${catOptions().map(([k, l]) => `<option value="${k}" ${String(k) === catFilter.cat ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
   <div class="models" id="ml"></div>`;
   const draw = () => {
     const q = catFilter.q.toLowerCase();
@@ -582,7 +589,7 @@ async function viewModel(main, id){
     <div style="flex:1;min-width:0"><b>${esc(s.orders.customers?.full_name || '')}</b>${s.orders.customers?.instagram ? ` <span class="small muted">@${esc(s.orders.customers.instagram)}</span>` : ''}
     <div class="small muted">${esc(s.orders.order_no)} · ${fdate(s.orders.order_date)} · ${esc(vname(v || {}))} · ${s.qty} × ${eur(s.unit_price)}${s.orders.status === 'riservato' && s.orders.reserved_until ? ` · ${t('until')} ${fdt(s.orders.reserved_until)}` : ''}</div></div>
     <div style="flex:none">${statusPill('order_status', s.orders.status)}</div></div>`; }).join('') || `<div class="empty">${t('no_sales_yet')}</div>`}</div>` : ''}
-  ${w ? `<div class="row" style="justify-content:center"><button onclick="editModel(${m.id})">${t('edit')}</button><button class="danger" onclick="archiveModel(${m.id})">${t('archive')}</button></div>` : ''}`;
+  ${w ? `<div class="row" style="justify-content:center"><button onclick="editModel(${m.id})">${t('edit')}</button>${m.archived ? `<button onclick="unarchiveModel(${m.id})">${t('restore')}</button>` : `<button class="danger" onclick="archiveModel(${m.id})">${t('archive')}</button>`}<button class="danger" onclick="deleteModel(${m.id})">${t('delete')}</button></div>` : ''}`;
   window._model = m;
   ['#pf', '#pfc'].forEach(sel => { const el = $(sel); if (el) el.onchange = async e => { await uploadPhotos(m.id, [...e.target.files], m.photos.length); route(); }; });
 }
@@ -617,6 +624,7 @@ function editModel(id){
     check(await sb.from('models').update(v).eq('id', id)); toast(t('saved')); route();
   }});
 }
+async function unarchiveModel(id){ check(await sb.from('models').update({archived:false}).eq('id', id)); toast(t('saved')); route(); }
 async function archiveModel(id){ if (!confirmBox()) return; check(await sb.from('models').update({archived:true}).eq('id', id)); location.hash = '#/catalogo'; }
 function photoMenu(pid, mid){
   const m = modal(`<h3>${t('photos')}</h3><div class="row"><button onclick="setMainPhoto(${pid},${mid})">★ ${t('set_main')}</button><button class="danger" onclick="deletePhoto(${pid})">${t('delete')}</button><button onclick="this.closest('.modal-bg').remove()">${t('close')}</button></div>`);
@@ -757,9 +765,12 @@ function editPurchaseStatus(id){
 }
 async function addPurchaseLine(pid){
   const vs = (await allVariants()).filter(v => !v.models?.archived).sort((a, b) => variantLabel(a).localeCompare(variantLabel(b)));
-  form({title:t('add_line'), fields:[
-    {name:'variant_id', label:`${t('items')} (${t('catalog')})`, type:'select', options:vs.map(v => [v.id, variantLabel(v)])},
-    {name:'brand_id', label:`${t('new_item_inline')} · ${t('brand')}`, type:'select', options:S.brands.map(b => [b.id, b.name])},
+  const newF = ['brand_id','new_brand','category_id','name','size','color','sale_price','photos'], oldF = ['variant_id','add_stock'];
+  const m = form({title:t('add_line'), fields:[
+    {name:'line_kind', label:t('line_kind'), type:'select', empty:false, value:'new', options:[['new', t('lk_new')], ['existing', t('lk_existing')]]},
+    {name:'variant_id', label:t('catalog'), type:'select', options:vs.map(v => [v.id, variantLabel(v)])},
+    {name:'add_stock', label:t('add_stock_q'), type:'checkbox', value:false},
+    {name:'brand_id', label:t('brand'), type:'select', options:S.brands.map(b => [b.id, b.name])},
     {name:'new_brand', label:`${t('brand')}: ${t('or_new')}`},
     {name:'category_id', label:t('category'), type:'select', options:catOptions()},
     {name:'name', label:t('name')},
@@ -770,21 +781,47 @@ async function addPurchaseLine(pid){
     {name:'qty', label:t('qty'), type:'number', value:1, required:true},
     {name:'unit_price', label:t('purchase_price'), type:'number', required:true}
   ], onSubmit: async v => {
-    let vid = v.variant_id;
-    if (!vid){
+    let vid = null, toStock = true;
+    if (v.line_kind === 'existing'){
+      vid = v.variant_id; toStock = !!v.add_stock;
+      if (!vid){ toast(t('pick_or_new'), true); throw new Error('item'); }
+    } else {
       if (!v.name){ toast(t('pick_or_new'), true); throw new Error('item'); }
       await ensureBrand(v);
-      const m = check(await sb.from('models').insert({brand_id: v.brand_id, category_id: v.category_id, name: v.name}).select().single());
-      await uploadPhotos(m.id, v.photos);
-      const nv = check(await sb.from('variants').insert({model_id: m.id, size: v.size, color: v.color, sale_price: v.sale_price, status:'ordinato', sku: skuFor(m, v.size, v.color)}).select().single());
+      const md = check(await sb.from('models').insert({brand_id: v.brand_id, category_id: v.category_id, name: v.name, list_price: v.sale_price}).select().single());
+      await uploadPhotos(md.id, v.photos);
+      const nv = check(await sb.from('variants').insert({model_id: md.id, size: v.size, color: v.color, sale_price: v.sale_price, status:'ordinato', sku: skuFor(md, v.size, v.color)}).select().single());
       vid = nv.id;
     }
-    check(await sb.from('purchase_lines').insert({variant_id: vid, qty: v.qty, unit_price: v.unit_price, purchase_id: pid}));
-    if (window._purchase?.status === 'ricevuto'){
+    check(await sb.from('purchase_lines').insert({variant_id: vid, qty: v.qty, unit_price: v.unit_price, purchase_id: pid, add_to_stock: toStock}));
+    if (toStock && window._purchase?.status === 'ricevuto'){
       check(await sb.from('stock_movements').insert({variant_id: vid, kind:'carico', qty: v.qty, reference:'acquisto #' + pid}));
       await sb.from('variants').update({status:'in_magazzino'}).eq('id', vid);
     }
     route(); }});
+  const sel = m.querySelector('[name=line_kind]');
+  const sync = () => { [...newF, ...oldF].forEach(n => { const el = m.querySelector(`[name=${n}]`); if (el) el.closest('.field').classList.toggle('hide', (sel.value === 'new') !== newF.includes(n)); }); };
+  sel.addEventListener('change', sync); sync();
+  const hint = document.createElement('p'); hint.className = 'small muted'; hint.style.margin = '-6px 0 12px'; hint.textContent = t('add_stock_hint');
+  m.querySelector('[name=add_stock]').closest('.field').appendChild(hint);
+}
+async function deleteModel(id){
+  const m = window._model;
+  const vids = m.variants.map(v => v.id).concat([0]);
+  const used = check(await sb.from('order_lines').select('id').in('variant_id', vids).limit(1));
+  if (used.length) return toast(t('model_has_orders'), true);
+  if (!confirm(`${t('delete')}: ${brandName(m.brand_id)} ${m.name}?\n${t('delete_model_hint')}`)) return;
+  if (m.photos.length) await sb.storage.from('foto').remove(m.photos.map(p => p.path));
+  check(await sb.from('purchase_lines').delete().in('variant_id', vids));
+  check(await sb.from('models').delete().eq('id', m.id));
+  toast(t('saved')); location.hash = '#/catalogo';
+}
+async function deleteOrder(id){
+  const od = window._order;
+  if (!confirm(`${t('delete')} ${od.order_no}?\n${t('delete_order_hint')}`)) return;
+  if (!['annullato', 'bozza', 'riservato'].includes(od.status)) check(await sb.rpc('annulla_ordine', {p_order_id: id}));
+  check(await sb.from('orders').delete().eq('id', id));
+  toast(t('saved')); location.hash = '#/ordini';
 }
 async function receivePurchase(id){ if (!confirmBox()) return; check(await sb.rpc('ricevi_acquisto', {p_purchase_id: id})); toast(t('saved')); route(); }
 function addCost(target){
@@ -1130,7 +1167,7 @@ async function viewOrder(main, id){
     <div class="row" style="margin-top:6px">${u ? `<a class="btn" href="${esc(u)}" target="_blank" rel="noopener">${t('track')} ↗</a>` : ''}<button onclick="editShipment(${s.id},${id})">${t('edit')}</button></div></div>`; }).join('') || (od.delivery_mode ? '' : `<div class="empty">${t('no_data')}</div>`)}</div></div>
   ${check(rets).length ? `<div class="card"><h3>${t('return_item')}</h3>${check(rets).map(r => `<div>${esc(ev('return_reason', r.reason))} · ${esc(ev('return_outcome', r.outcome))} ${r.back_to_stock ? '· ' + t('back_to_stock') : ''} ${r.notes ? '· ' + esc(r.notes) : ''}</div>`).join('')}</div>` : ''}
   ${od.notes ? `<div class="card">${esc(od.notes)}</div>` : ''}
-  ${!['annullato', 'consegnato', 'reso', 'riservato', 'bozza'].includes(od.status) ? `<p style="text-align:center"><button class="link" style="color:var(--bad)" onclick="cancelOrder(${id})">${t('cancel_order')}</button></p>` : ''}`;
+  <p class="row" style="justify-content:center">${!['annullato', 'consegnato', 'reso', 'riservato', 'bozza'].includes(od.status) ? `<button class="link" style="color:var(--bad)" onclick="cancelOrder(${id})">${t('cancel_order')}</button>` : ''}<button class="link" style="color:var(--bad)" onclick="deleteOrder(${id})">${t('delete_order')}</button></p>`;
 }
 function confirmReservation(id){
   form({title:t('confirm_order'), submitLabel:t('confirm_order'), fields:[
