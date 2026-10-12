@@ -145,6 +145,28 @@ const T = {
   report_hint:['Margine per marca = prezzo di vendita − costo reale; spedizioni e dazi sono nel margine per mese e per paese.','Brand margin = sale price − landed cost; shipping and duties are in the monthly and country margins.','Marzhi sipas markës = çmimi i shitjes − kosto reale; dërgesat dhe doganat janë te marzhi mujor dhe sipas shtetit.'],
   users_hint:['Chi deve entrare si registra dalla pagina di accesso; qui gli assegni il ruolo.','New users sign up from the login page; assign their role here.','Kush duhet të hyjë regjistrohet nga faqja e hyrjes; këtu i cakton rolin.'],
   backup_hint:['Scarica una copia leggibile dei dati e salvala nella cartella Drive condivisa.','Download a readable copy of the data and save it in the shared Drive folder.','Shkarko një kopje të lexueshme të të dhënave dhe ruaje në dosjen e përbashkët në Drive.'],
+  reserve:['Riserva','Reserve','Rezervo'], confirm_order:['Conferma ordine','Confirm order','Konfirmo porosinë'], sell:['Vendi','Sell','Shit'],
+  new_cust_hint:['Cliente nuovo: verrà creato con il nome scritto sopra.','New customer: created with the name typed above.','Klient i ri: krijohet me emrin e shkruar sipër.'],
+  new_address:['Nuovo indirizzo (facoltativo)','New address (optional)','Adresë e re (opsionale)'], add_product_search:['Aggiungi prodotto: cerca marca, nome, taglia…','Add product: search brand, name, size…','Shto produkt: kërko markë, emër, masë…'],
+  no_items_yet:['Nessun prodotto: aggiungine almeno uno','No products yet: add at least one','Asnjë produkt: shto të paktën një'], reserve_until:['Riserva fino al','Reserve until','Rezervo deri më'],
+  reserved_until_lbl:['Riservato fino al','Reserved until','Rezervuar deri më'], reservation_expired:['Prenotazione scaduta','Reservation expired','Rezervimi ka skaduar'],
+  cancel_reservation:['Annulla prenotazione','Cancel reservation','Anulo rezervimin'], own_delivery:['Consegna Modus Vestendi','Modus Vestendi delivery','Dorëzim nga Modus Vestendi'],
+  own_delivery_hint:['L\'ordine resta "Ordinato" finché non lo segni come spedito.','The order stays "Ordered" until you mark it shipped.','Porosia mbetet "Porositur" derisa ta shënosh si të dërguar.'],
+  mark_shipped:['Segna come spedito','Mark as shipped','Shëno si të dërguar'], change_delivery:['Cambia consegna','Change delivery','Ndrysho dorëzimin'],
+  choose_delivery:['Come lo consegni?','How will you deliver it?','Si do ta dorëzosh?'], ship_with:['Spedisci con','Ship with','Dërgo me'], deliver_ourselves:['Consegniamo noi','We deliver it','E dorëzojmë ne'],
+  ship_hint:['Il costo della spedizione si aggiunge al costo dei pezzi dell\'ordine e riduce il margine.','The shipping cost is added to the cost of the order\'s items and reduces the margin.','Kostoja e dërgesës i shtohet kostos së copëve të porosisë dhe ul marzhin.'],
+  with_courier:['Con corriere','With courier','Me korrier'], shipped_at_lbl:['spedito il','shipped on','dërguar më'], delivered_at_lbl:['consegnato il','delivered on','dorëzuar më'],
+  confirm_delivery_ask:['Spedito da più di 24 ore: conferma la consegna','Shipped over 24 hours ago: confirm delivery','Dërguar mbi 24 orë më parë: konfirmo dorëzimin'],
+  confirm_delivery:['Conferma consegna','Confirm delivery','Konfirmo dorëzimin'], cash_collected:['Contanti incassati','Cash collected','Paratë u arkëtuan'],
+  open_carrier:['Apri la pagina del corriere','Open the courier page','Hap faqen e korrierit'],
+  carrier_steps:['Crea la spedizione nel pannello del corriere, poi torna qui e inserisci numero di tracking e costo.','Create the shipment in the courier panel, then come back and enter tracking number and cost.','Krijo dërgesën në panelin e korrierit, pastaj kthehu këtu dhe shkruaj numrin e gjurmimit dhe koston.'],
+  cost_on_product:['si aggiunge al costo del prodotto','added to the product cost','i shtohet kostos së produktit'],
+  no_address:['Nessun indirizzo: aggiungilo nella scheda cliente','No address: add it on the customer page','Pa adresë: shtoje te faqja e klientit'],
+  one_size:['Taglia unica','One size','Masë e vetme'], reserved_short:['riservati','reserved','rezervuar'], sold_short:['venduti','sold','shitur'],
+  sizes_stock:['Taglie e disponibilità','Sizes and stock','Masat dhe gjendja'], add_size:['Aggiungi taglia','Add size','Shto masë'],
+  sales_reservations:['Vendite e prenotazioni','Sales and reservations','Shitjet dhe rezervimet'], no_sales_yet:['Ancora nessuna vendita','No sales yet','Ende pa shitje'],
+  sizes_qty:['Taglie e quantità (es. S:1, M:2 — oppure U:1)','Sizes and quantity (e.g. S:1, M:2 — or U:1)','Masat dhe sasia (p.sh. S:1, M:2 — ose U:1)'],
+  to_do:['Da fare','To do','Për t\'u bërë'], to_deliver_own:['Da consegnare (noi)','To deliver (us)','Për t\'u dorëzuar (ne)'], to_ship_choose:['Da spedire','To ship','Për t\'u dërguar'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -206,7 +228,7 @@ const E = {
   country:{AL:['Albania','Albania','Shqipëri'],XK:['Kosovo','Kosovo','Kosovë'],MK:['Macedonia del Nord','North Macedonia','Maqedoni e Veriut'],UK:['Regno Unito','UK','Mbretëri e Bashkuar'],IT:['Italia','Italy','Itali'],ES:['Spagna','Spain','Spanjë'],altro:['Altro','Other','Tjetër']},
   currency:{EUR:['EUR','EUR','EUR'],ALL:['Lek (ALL)','Lek (ALL)','Lek (ALL)'],MKD:['Denar (MKD)','Denar (MKD)','Denar (MKD)'],GBP:['Sterlina (GBP)','Pound (GBP)','Paund (GBP)']},
   source:{instagram_organico:['Instagram organico','Instagram organic','Instagram organik'],instagram_ads:['Instagram ads','Instagram ads','Reklama në Instagram'],passaparola:['Passaparola','Word of mouth','Nga goja në gojë'],facebook:['Facebook','Facebook','Facebook'],altro:['Altro','Other','Tjetër']},
-  order_status:{bozza:['Bozza','Draft','Draft'],confermato:['Ordinato','Ordered','Porositur'],spedito:['Spedito','Shipped','Dërguar'],consegnato:['Consegnato','Delivered','Dorëzuar'],reso:['Reso','Returned','Kthyer'],annullato:['Annullato','Cancelled','Anuluar']},
+  order_status:{bozza:['Bozza','Draft','Draft'],riservato:['Riservato','Reserved','Rezervuar'],confermato:['Ordinato','Ordered','Porositur'],spedito:['Spedito','Shipped','Dërguar'],consegnato:['Consegnato','Delivered','Dorëzuar'],reso:['Reso','Returned','Kthyer'],annullato:['Annullato','Cancelled','Anuluar']},
   channel:{instagram:['Instagram','Instagram','Instagram'],facebook:['Facebook','Facebook','Facebook'],whatsapp:['WhatsApp','WhatsApp','WhatsApp'],di_persona:['Di persona','In person','Personalisht'],altro:['Altro','Other','Tjetër']},
   pay_method:{contanti:['Contanti','Cash','Para në dorë'],contanti_alla_consegna:['Contanti alla consegna (corriere)','Cash on delivery (courier)','Para në dorëzim (korrieri)'],bonifico:['Bonifico','Bank transfer','Transfertë bankare'],carta:['Carta','Card','Kartë'],altro:['Altro','Other','Tjetër']},
   pay_kind:{acconto:['Acconto','Deposit','Kapar'],saldo:['Saldo','Balance','Saldo'],rimborso:['Rimborso','Refund','Rimbursim']},
@@ -418,8 +440,19 @@ async function viewDashboard(main){
     const value = variants.reduce((a, v) => a + Math.max(0, v.qty) * (cost[v.id] || 0), 0);
     kpis += `<div class="card kpi"><div class="v">${eur(value)}</div><div class="l">${t('stock_value')}</div></div>`;
   }
-  let recent = '';
+  let recent = '', alerts = '';
   if (can.sales()){
+    const act = check(await sb.from('orders').select('id,order_no,status,reserved_until,delivery_mode,shipped_at,customers(full_name)').in('status', ['riservato','confermato','spedito']).order('created_at'));
+    const now = Date.now();
+    const items = [];
+    act.forEach(o => {
+      const nm = esc(o.customers?.full_name || '');
+      if (o.status === 'riservato' && o.reserved_until && new Date(o.reserved_until) < now) items.push(['bad', o, `${t('reservation_expired')}: ${nm}`]);
+      else if (o.status === 'riservato') items.push(['warn', o, `${t('reserved_until_lbl')} ${fdt(o.reserved_until)}: ${nm}`]);
+      else if (o.status === 'confermato') items.push(['warn', o, `${o.delivery_mode === 'modus_vestendi' ? t('to_deliver_own') : t('to_ship_choose')}: ${nm}`]);
+      else if (o.status === 'spedito' && o.delivery_mode === 'modus_vestendi' && hoursSince(o.shipped_at) >= 24) items.push(['bad', o, `${t('confirm_delivery_ask')}: ${nm}`]);
+    });
+    if (items.length) alerts = `<div class="card"><h3>${t('to_do')}</h3>${items.map(([c, o, txt]) => `<div class="row" style="flex-wrap:nowrap;padding:9px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='#/ordine/${o.id}'"><span class="pill ${c}" style="flex:none">${esc(o.order_no)}</span><span style="min-width:0">${txt}</span></div>`).join('')}</div>`;
     const toShip = check(await sb.from('orders').select('id', {count:'exact', head:false}).eq('status', 'confermato'));
     const pays = check(await sb.from('payments').select('amount,kind').eq('status', 'da_incassare'));
     const due = pays.filter(p => p.kind !== 'rimborso').reduce((a, p) => a + Number(p.amount), 0);
@@ -427,7 +460,7 @@ async function viewDashboard(main){
     const ro = check(await sb.from('orders').select('id,order_no,order_date,status,customers(full_name)').order('created_at', {ascending:false}).limit(8));
     recent = `<div class="card"><h3>${t('recent_orders')}</h3>${ro.length ? `<div class="table-wrap"><table>${ro.map(o => `<tr class="click" onclick="location.hash='#/ordine/${o.id}'"><td>${esc(o.order_no)}</td><td>${esc(o.customers?.full_name)}</td><td>${fdate(o.order_date)}</td><td>${statusPill('order_status', o.status)}</td></tr>`).join('')}</table></div>` : `<div class="empty">${t('no_data')}</div>`}</div>`;
   }
-  main.innerHTML = `<h1>${t('dashboard')}</h1><div class="grid g4">${kpis}</div>${recent}
+  main.innerHTML = `<h1>${t('dashboard')}</h1>${alerts}<div class="grid g4">${kpis}</div>${recent}
   <div class="card"><h3>${t('low_stock')}</h3>${low.length ? `<table>${low.map(v => `<tr class="click" onclick="location.hash='#/articolo/${v.models.id}'"><td>${esc(brandName(v.models.brand_id))} · ${esc(v.models.name)}</td><td>${esc(v.size || '')} ${esc(v.color || '')}</td><td class="right">${v.qty}</td></tr>`).join('')}</table>` : `<div class="empty">${t('no_data')}</div>`}</div>`;
 }
 
@@ -483,11 +516,23 @@ async function ensureBrand(v){
 }
 function newModel(){
   const f = modelFields(); f[0].required = false;
-  f.splice(4, 0, {name:'photos', label:t('photos'), type:'file'});
+  f.splice(4, 0, {name:'photos', label:t('photos'), type:'file'},
+    {name:'sale_price', label:t('sale_price') + ' (€)', type:'number', required:true},
+    {name:'sizes', label:t('sizes_qty'), value:'U:1', required:true},
+    {name:'color', label:`${t('color')} (${t('optional')})`});
   form({title:t('new_model'), fields:f, values:{instagram_status:'non_pubblicato'}, onSubmit: async v => {
     await ensureBrand(v);
-    const files = v.photos; delete v.photos;
+    const files = v.photos, sizes = v.sizes, color = v.color, price = v.sale_price;
+    delete v.photos; delete v.sizes; delete v.color; delete v.sale_price;
+    if (!v.list_price) v.list_price = price;
     const m = check(await sb.from('models').insert(v).select().single());
+    for (const part of String(sizes).split(/[,;\n]+/)){
+      const [sz, q] = part.split(':').map(x => x && x.trim());
+      if (!sz) continue;
+      const qty = Number(q ?? 1) || 0;
+      const nv = check(await sb.from('variants').insert({model_id: m.id, size: sz, color: color || null, sale_price: price, status:'in_magazzino', sku: skuFor(m, sz, color)}).select().single());
+      if (qty) check(await sb.from('stock_movements').insert({variant_id: nv.id, kind:'carico', qty, reference:'carico iniziale'}));
+    }
     await uploadPhotos(m.id, files);
     location.hash = '#/articolo/' + m.id;
   }});
@@ -497,27 +542,41 @@ async function viewModel(main, id){
   const m = check(await sb.from('models').select('*,variants(*),photos(*)').eq('id', id).single());
   m.variants.sort((a, b) => (a.color || '').localeCompare(b.color || '') || (a.size || '').localeCompare(b.size || '', undefined, {numeric:true}));
   m.photos.sort((a, b) => (b.is_main - a.is_main) || a.sort - b.sort);
+  const vids = m.variants.map(v => v.id).concat([0]);
+  const [stock, sales] = await Promise.all([
+    sb.from('v_variant_stock').select('*').in('variant_id', vids).then(check),
+    can.sales() ? sb.from('order_lines').select('id,qty,unit_price,variant_id,orders!inner(id,order_no,order_date,status,reserved_until,customers(id,full_name,instagram))').in('variant_id', vids).then(check) : Promise.resolve([])
+  ]);
+  const ST = Object.fromEntries(stock.map(x => [x.variant_id, x]));
   await signedUrls(m.photos.map(p => p.path));
   let costs = {};
   if (can.costs()){
-    const vc = check(await sb.from('variant_costs').select('*').in('variant_id', m.variants.map(v => v.id).concat([0])));
+    const vc = check(await sb.from('variant_costs').select('*').in('variant_id', vids));
     costs = Object.fromEntries(vc.map(x => [x.variant_id, x]));
   }
-  const sizes = [...new Set(m.variants.map(v => v.size || '—'))];
-  const colors = [...new Set(m.variants.map(v => v.color || '—'))];
-  const matrix = m.variants.length ? `<div class="table-wrap"><table class="matrix"><tr><th></th>${sizes.map(s => `<th>${esc(s)}</th>`).join('')}</tr>${colors.map(c => `<tr><th style="text-align:left">${esc(c)}</th>${sizes.map(s => { const v = m.variants.find(x => (x.size || '—') === s && (x.color || '—') === c); return `<td class="q">${v ? v.qty : ''}</td>`; }).join('')}</tr>`).join('')}</table></div>` : '';
   const w = can.catalogWrite();
+  const totAvail = stock.reduce((a, x) => a + Math.max(0, x.available), 0), totRes = stock.reduce((a, x) => a + x.reserved, 0);
+  const sold = sales.filter(s => !['riservato', 'annullato', 'bozza'].includes(s.orders.status)).reduce((a, s) => a + s.qty, 0);
+  const vname = v => [v.size, v.color].filter(Boolean).join(' · ') || t('one_size');
   main.innerHTML = `<p><a href="#/catalogo">← ${t('catalog')}</a></p>
-  <div class="row spread"><div><div class="muted">${esc(brandName(m.brand_id))} · ${esc(catLabel(m.category_id))}</div><h1>${esc(m.name)}</h1></div>
-  <div class="row">${can.sales() ? `<button class="primary" onclick="sellFromModel()">${t('sell')}</button>` : ''}${w ? `<button onclick="editModel(${m.id})">${t('edit')}</button><button class="danger" onclick="archiveModel(${m.id})">${t('archive')}</button>` : ''}</div></div>
-  <div class="row small" style="margin-bottom:12px">${m.season ? `<span class="pill grey">${esc(m.season)}</span>` : ''}${statusPill('instagram_status', m.instagram_status)}${m.instagram_url ? `<a href="${esc(m.instagram_url)}" target="_blank" rel="noopener">Instagram ↗</a>` : ''}${m.list_price ? `<span class="muted">${t('list_price')}: ${eur(m.list_price)}</span>` : ''}</div>
+  <div><div class="muted small">${esc(brandName(m.brand_id))} · ${esc(catLabel(m.category_id))}</div><h1>${esc(m.name)}</h1></div>
+  <div class="row" style="margin-bottom:10px"><span class="pill ${totAvail ? 'good' : 'grey'}">${totAvail} ${t('available')}</span>${totRes ? `<span class="pill warn">${totRes} ${t('reserved_short')}</span>` : ''}${sold ? `<span class="pill">${sold} ${t('sold_short')}</span>` : ''}${statusPill('instagram_status', m.instagram_status)}${m.instagram_url ? `<a class="small" href="${esc(m.instagram_url)}" target="_blank" rel="noopener">Instagram ↗</a>` : ''}</div>
+  ${can.sales() ? `<div class="grid g2" style="margin-bottom:14px"><button class="primary" style="justify-content:center;padding:12px" onclick="sellFromModel()" ${totAvail ? '' : 'disabled'}>${t('sell')}</button><button class="accent" style="justify-content:center;padding:12px" onclick="sellFromModel(null,'riservato')" ${totAvail ? '' : 'disabled'}>${t('reserve')}</button></div>` : ''}
   ${m.description ? `<p>${esc(m.description)}</p>` : ''}
   <div class="card"><h3>${t('photos')}</h3>
   <div class="photos">${w ? `<label class="photo-add"><span class="plus" style="display:flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span>${t('take_photo')}</span><input type="file" accept="image/*" capture="environment" class="hide" id="pfc"></label><label class="photo-add"><span class="plus">+</span><span>${t('from_gallery')}</span><input type="file" accept="image/*" multiple class="hide" id="pf"></label>` : ''}${m.photos.map(p => `<div class="p ${p.is_main ? 'main' : ''}" style="background-image:url('${urlCache[p.path] || ''}')" onclick="window.open('${urlCache[p.path] || ''}','_blank')">${w ? `<button onclick="event.stopPropagation();photoMenu(${p.id},${m.id})">⋯</button>` : ''}</div>`).join('') || (w ? '' : `<span class="muted small">${t('no_data')}</span>`)}</div></div>
-  <div class="card"><div class="row spread"><h3>${t('variants')}</h3>${w ? `<button onclick="editVariant(null,${m.id})">+ ${t('add_variant')}</button>` : ''}</div>${matrix}
-  <div class="table-wrap"><table><tr><th>${t('sku')}</th><th>${t('size')}</th><th>${t('color')}</th><th class="right">${t('qty')}</th><th>${t('status')}</th><th>${t('location')}</th><th class="right">${t('sale_price')}</th>${can.costs() ? `<th class="right">${t('landed_cost')}</th>` : ''}<th></th></tr>
-  ${m.variants.map(v => `<tr><td class="small">${esc(v.sku)}</td><td>${esc(v.size)}</td><td>${esc(v.color)}</td><td class="right"><b>${v.qty}</b></td><td>${statusPill('variant_status', v.status)}</td><td class="small">${esc(ev('location', v.location))}</td><td class="right">${eur(v.sale_price)}</td>${can.costs() ? `<td class="right" title="${costs[v.id] ? `${t('purchase_price')} ${eur(costs[v.id].purchase_price)} + ${eur(costs[v.id].allocated_cost)}` : ''}">${eur(costs[v.id]?.landed_cost)}</td>` : ''}
-  <td class="right">${w ? `<button class="link" onclick="editVariant(${v.id},${m.id})">${t('edit')}</button><button class="link" onclick="adjustStock(${v.id},${m.id})">±</button>` : ''}${can.sales() ? `${v.qty > 0 ? `<button class="link" onclick="sellFromModel(${v.id})">${t('sell')}</button>` : ''}<button class="link" onclick="reserveVariant(${v.id})">${t('reserve')}</button>` : ''}</td></tr>`).join('')}</table></div></div>`;
+  <div class="card"><div class="row spread"><h3>${t('sizes_stock')}</h3>${w ? `<button onclick="editVariant(null,${m.id})">+ ${t('add_size')}</button>` : ''}</div>
+  ${m.variants.map(v => { const s = ST[v.id] || {available: v.qty, reserved: 0}; return `<div class="row" style="flex-wrap:nowrap;padding:10px 0;border-top:1px solid var(--line)">
+    <div style="flex:1;min-width:0"><b>${esc(vname(v))}</b> <span class="small muted">${esc(v.sku || '')}</span>
+    <div class="small">${eur(v.sale_price)}${can.costs() && costs[v.id] ? ` · <span class="muted">${t('landed_cost')} ${eur(costs[v.id].landed_cost)}</span>` : ''} · ${esc(ev('location', v.location))}</div></div>
+    <div class="right" style="flex:none"><span class="pill ${s.available > 0 ? 'good' : 'grey'}">${Math.max(0, s.available)} ${t('available')}</span>${s.reserved ? `<div class="small" style="color:var(--warn)">${s.reserved} ${t('reserved_short')}</div>` : ''}
+    <div>${can.sales() && s.available > 0 ? `<button class="link" onclick="sellFromModel(${v.id})">${t('sell')}</button>` : ''}${w ? `<button class="link" onclick="editVariant(${v.id},${m.id})">${t('edit')}</button><button class="link" onclick="adjustStock(${v.id},${m.id})">±</button>` : ''}</div></div></div>`; }).join('') || `<div class="empty">${t('no_data')}</div>`}</div>
+  ${can.sales() ? `<div class="card"><h3>${t('sales_reservations')}</h3>
+  ${sales.sort((a, b) => b.orders.id - a.orders.id).map(s => { const v = m.variants.find(x => x.id === s.variant_id); return `<div class="row" style="flex-wrap:nowrap;padding:9px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='#/ordine/${s.orders.id}'">
+    <div style="flex:1;min-width:0"><b>${esc(s.orders.customers?.full_name || '')}</b>${s.orders.customers?.instagram ? ` <span class="small muted">@${esc(s.orders.customers.instagram)}</span>` : ''}
+    <div class="small muted">${esc(s.orders.order_no)} · ${fdate(s.orders.order_date)} · ${esc(vname(v || {}))} · ${s.qty} × ${eur(s.unit_price)}${s.orders.status === 'riservato' && s.orders.reserved_until ? ` · ${t('until')} ${fdt(s.orders.reserved_until)}` : ''}</div></div>
+    <div style="flex:none">${statusPill('order_status', s.orders.status)}</div></div>`; }).join('') || `<div class="empty">${t('no_sales_yet')}</div>`}</div>` : ''}
+  ${w ? `<div class="row" style="justify-content:center"><button onclick="editModel(${m.id})">${t('edit')}</button><button class="danger" onclick="archiveModel(${m.id})">${t('archive')}</button></div>` : ''}`;
   window._model = m;
   ['#pf', '#pfc'].forEach(sel => { const el = $(sel); if (el) el.onchange = async e => { await uploadPhotos(m.id, [...e.target.files], m.photos.length); route(); }; });
 }
@@ -585,17 +644,7 @@ function adjustStock(vid){
     {name:'reference', label:t('notes')}
   ], onSubmit: async x => { check(await sb.from('stock_movements').insert({...x, variant_id: vid})); route(); }});
 }
-async function reserveVariant(vid){
-  const cs = check(await sb.from('customers').select('id,full_name,instagram').order('full_name'));
-  form({title:t('reserve'), fields:[
-    {name:'customer_id', label:t('customer'), type:'select', options:cs.map(c => [c.id, c.full_name + (c.instagram ? ' @' + c.instagram : '')]), required:true},
-    {name:'expires_on', label:t('until'), type:'date'}
-  ], onSubmit: async x => {
-    check(await sb.from('reservations').insert({...x, variant_id: vid}));
-    if (can.catalogWrite()) await sb.from('variants').update({status:'riservato'}).eq('id', vid);
-    toast(t('saved'));
-  }});
-}
+function reserveVariant(vid){ return sellFromModel(vid, 'riservato'); }
 
 // ====== Acquisti ======
 async function viewPurchases(main){
@@ -850,119 +899,225 @@ async function viewOrders(main){
   const tots = check(await sb.from('v_order_totals').select('*').in('order_id', os.map(o => o.id).concat([0])));
   const T2 = Object.fromEntries(tots.map(x => [x.order_id, x]));
   main.innerHTML = `<div class="row spread"><h1>${t('orders')}</h1><button class="primary" onclick="newOrder()">+ ${t('new_order')}</button></div>
-  <div class="chips" style="margin-bottom:12px"><button class="${orderFilter ? '' : 'primary'}" onclick="orderFilter='';route()">${t('all')}</button>${opts('order_status').map(([k, l]) => `<button class="${orderFilter === k ? 'primary' : ''}" onclick="orderFilter='${k}';route()">${l}</button>`).join('')}</div>
+  <div class="chips" style="margin-bottom:12px"><button class="${orderFilter ? '' : 'primary'}" onclick="orderFilter='';route()">${t('all')}</button>${opts('order_status').filter(([k]) => k !== 'bozza').map(([k, l]) => `<button class="${orderFilter === k ? 'primary' : ''}" onclick="orderFilter='${k}';route()">${l}</button>`).join('')}</div>
   <div class="card"><div class="table-wrap"><table><tr><th>${t('order')}</th><th>${t('date')}</th><th>${t('customer')}</th><th class="right">${t('total')}</th><th class="right">${t('to_collect')}</th><th>${t('status')}</th></tr>
   ${os.filter(o => !orderFilter || o.status === orderFilter).map(o => `<tr class="click" onclick="location.hash='#/ordine/${o.id}'"><td>${esc(o.order_no)}</td><td>${fdate(o.order_date)}</td><td>${esc(o.customers?.full_name)} <span class="muted small">${esc(o.customers?.country || '')}</span></td><td class="right">${eur(T2[o.id]?.total)}</td><td class="right">${Number(T2[o.id]?.to_collect) ? eur(T2[o.id].to_collect) : ''}</td><td>${statusPill('order_status', o.status)}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">${t('no_data')}</td></tr>`}</table></div></div>`;
 }
 // ---- scelta cliente: cerca tra gli esistenti o crea nuovo ----
 const custLabel = c => c.full_name + (c.instagram ? ' @' + c.instagram : '') + (c.phone ? ' · ' + c.phone : '');
 async function loadCustomersLite(){ return check(await sb.from('customers').select('id,full_name,instagram,phone,currency,country').order('full_name')); }
-function customerFields(cs, cid){
-  const cur = cid ? cs.find(c => c.id === cid) : null;
-  return [
-    {name:'customer', label:t('customer'), type:'datalist', options:cs.map(custLabel), value: cur ? custLabel(cur) : '', placeholder:t('cust_search'), required:true},
-    {name:'nc_heading', label:t('if_new_customer'), type:'heading', hint:t('if_new_hint')},
-    {name:'nc_instagram', label:'Instagram'},
-    {name:'nc_phone', label:t('phone'), type:'tel'},
-    {name:'nc_country', label:t('country'), type:'select', options:opts('country')}
-  ];
-}
-async function resolveCustomer(v, cs){
-  const typed = (v.customer || '').trim();
-  let c = cs.find(x => custLabel(x) === typed) || cs.find(x => x.full_name.toLowerCase() === typed.toLowerCase());
-  if (!c){
-    c = check(await sb.from('customers').insert({full_name: typed, instagram: v.nc_instagram ? v.nc_instagram.replace(/^@/, '').trim() : null, phone: v.nc_phone, country: v.nc_country, currency: 'EUR', source: 'instagram_organico'}).select().single());
-  }
-  ['customer','nc_heading','nc_instagram','nc_phone','nc_country'].forEach(k => delete v[k]);
-  return c;
-}
-async function createOrder(c, extra){
-  const ad = check(await sb.from('addresses').select('id').eq('customer_id', c.id).order('is_default', {ascending:false}).limit(1));
-  return check(await sb.from('orders').insert({customer_id: c.id, currency: 'EUR', address_id: ad[0]?.id || null, ...extra}).select().single());
-}
-async function newOrder(cid){
-  const cs = await loadCustomersLite();
-  form({title:t('new_order'), fields:[
-    ...customerFields(cs, cid),
-    {name:'channel', label:t('channel'), type:'select', options:opts('channel'), empty:false, value:'instagram'},
-    {name:'order_date', label:t('date'), type:'date', value:today()}
-  ], onSubmit: async v => {
-    const c = await resolveCustomer(v, cs);
-    const o = await createOrder(c, v);
-    location.hash = '#/ordine/' + o.id;
-  }});
-}
-// ---- vendita direttamente dal prodotto ----
-async function sellFromModel(vid){
-  const m = window._model;
-  const avail = m.variants.filter(v => v.qty > 0);
-  if (!avail.length) return toast(t('no_stock'), true);
-  const cs = await loadCustomersLite();
-  const pre = vid ? avail.find(v => v.id === vid) : avail[0];
-  const fm = form({title:`${t('sell')}: ${brandName(m.brand_id)} ${m.name}`, submitLabel:t('sell'), fields:[
-    {name:'variant_id', label:`${t('size')} / ${t('color')}`, type:'select', empty:false, options:avail.map(v => [v.id, `${v.size || '—'} ${v.color || ''} · ${v.qty} ${t('available')}${v.sale_price ? ' · ' + eur(v.sale_price) : ''}`]), value: pre?.id},
-    {name:'unit_price', label:t('sold_price'), type:'number', value: pre?.sale_price ?? m.list_price ?? '', required:true},
-    {name:'qty', label:t('qty'), type:'number', value:1, required:true},
-    ...customerFields(cs),
-    {name:'channel', label:t('channel'), type:'select', options:opts('channel'), empty:false, value:'instagram'},
-    {name:'pay_status', label:t('payments'), type:'select', empty:false, value:'da_incassare', options:[['da_incassare', t('pay_cod')], ['incassato', t('pay_now')]]},
-    {name:'notes', label:t('notes'), type:'textarea'}
-  ], onSubmit: async v => {
-    const c = await resolveCustomer(v, cs);
-    const o = await createOrder(c, {channel: v.channel, notes: v.notes});
-    check(await sb.from('order_lines').insert({order_id: o.id, variant_id: Number(v.variant_id), qty: v.qty || 1, unit_price: v.unit_price}));
-    check(await sb.rpc('conferma_ordine', {p_order_id: o.id}));
-    const total = (v.qty || 1) * v.unit_price;
-    check(await sb.from('payments').insert({order_id: o.id, kind:'saldo', amount: total,
-      method: v.pay_status === 'incassato' ? 'contanti' : 'contanti_alla_consegna', status: v.pay_status, paid_on: v.pay_status === 'incassato' ? today() : null}));
-    toast(t('saved'));
-    location.hash = '#/ordine/' + o.id;
-  }});
-  const sel = fm.querySelector('[name=variant_id]'), pr = fm.querySelector('[name=unit_price]');
-  sel.onchange = () => { const x = avail.find(a => String(a.id) === sel.value); if (x?.sale_price) pr.value = x.sale_price; };
+function newOrder(cid){ return openOrderSheet({customerId: cid}); }
+async function sellFromModel(vid, mode){ const m = window._model; return openOrderSheet({modelId: m.id, variantId: vid, mode}); }
+const plus48h = () => { const d = new Date(Date.now() + 48 * 3600e3); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
+const vLabel = v => `${brandName(v.models?.brand_id)} ${v.models?.name} · ${[v.size, v.color].filter(Boolean).join(' ') || '—'}`;
+
+// ---- scheda ordine unica: da prodotto, da cliente o da Ordini ----
+async function openOrderSheet({modelId, variantId, customerId, mode} = {}){
+  const [cs, vs, st] = await Promise.all([
+    loadCustomersLite(),
+    sb.from('variants').select('id,sku,size,color,sale_price,model_id,models(name,brand_id,archived,list_price)').then(check),
+    sb.from('v_variant_stock').select('*').then(check)
+  ]);
+  const avail = Object.fromEntries(st.map(x => [x.variant_id, x.available]));
+  const pool = vs.filter(v => !v.models?.archived && avail[v.id] > 0).sort((a, b) => vLabel(a).localeCompare(vLabel(b)));
+  const pickLabel = v => `${vLabel(v)} · ${avail[v.id]} ${t('available')}${v.sale_price ? ' · ' + eur(v.sale_price) : ''}`;
+  const lines = [];
+  const addLine = v => { if (!v || lines.some(l => l.v.id === v.id)) return; lines.push({v, qty: 1, price: v.sale_price ?? v.models?.list_price ?? ''}); };
+  if (variantId) addLine(pool.find(v => v.id === variantId));
+  else if (modelId){ const first = pool.filter(v => v.model_id === modelId); if (first.length === 1) addLine(first[0]); }
+  if ((variantId || modelId) && !lines.length && !pool.some(v => v.model_id === modelId)) return toast(t('no_stock'), true);
+  const cur = customerId ? cs.find(c => c.id === customerId) : null;
+
+  const m = modal(`<h2>${t(mode === 'riservato' ? 'reserve' : 'new_order')}</h2>
+  <form id="os" autocomplete="off">
+    <h3>1 · ${t('customer')}</h3>
+    <div class="field"><input id="os_c" list="os_cl" placeholder="${t('cust_search')}" value="${esc(cur ? custLabel(cur) : '')}" required><datalist id="os_cl">${cs.map(c => `<option value="${esc(custLabel(c))}"></option>`).join('')}</datalist></div>
+    <div id="os_new" class="hide"><p class="small muted" style="margin:-4px 0 10px">${t('new_cust_hint')}</p>
+      <div class="grid g2"><div class="field"><label>Instagram</label><input id="os_ig"></div><div class="field"><label>${t('phone')}</label><input id="os_ph" type="tel"></div></div>
+      <div class="field"><label>${t('country')}</label><select id="os_co"><option value="">—</option>${opts('country').map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join('')}</select></div></div>
+    <div class="field"><label>${t('address')}</label><select id="os_ad"><option value="">—</option></select></div>
+    <div class="field" id="os_adnew_f"><label>${t('new_address')}</label><input id="os_adnew" placeholder="Rruga …, Tiranë"></div>
+    <h3 style="margin-top:18px">2 · ${t('items')}</h3>
+    <div id="os_lines"></div>
+    <div class="field"><input id="os_pick" list="os_pl" placeholder="+ ${t('add_product_search')}"><datalist id="os_pl">${pool.map(v => `<option value="${esc(pickLabel(v))}"></option>`).join('')}</datalist></div>
+    <div class="grid g2"><div class="field"><label>${t('discount')} (€)</label><input id="os_disc" type="number" step="any" value="0"></div>
+    <div class="field"><label>${t('total')}</label><div id="os_tot" style="font-size:22px;font-weight:700;padding-top:4px">—</div></div></div>
+    <h3 style="margin-top:6px">3 · ${t('payments')}</h3>
+    <div class="field"><select id="os_pay"><option value="da_incassare">${t('pay_cod')}</option><option value="incassato">${t('pay_now')}</option></select></div>
+    <div class="grid g2"><div class="field"><label>${t('channel')}</label><select id="os_ch">${opts('channel').map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join('')}</select></div>
+    <div class="field"><label>${t('reserve_until')}</label><input id="os_until" type="datetime-local" value="${plus48h()}"></div></div>
+    <div class="field"><label>${t('notes')}</label><textarea id="os_notes" style="min-height:60px"></textarea></div>
+    <div class="row" style="justify-content:flex-end;margin-top:8px"><button type="button" data-x>${t('cancel')}</button>
+      <button type="button" class="${mode === 'riservato' ? 'primary' : 'accent'}" data-mode="riservato">${t('reserve')}</button>
+      <button type="button" class="${mode === 'riservato' ? 'accent' : 'primary'}" data-mode="confermato">${t('confirm_order')}</button></div>
+  </form>`);
+  const $m = s => m.querySelector(s);
+  const draw = () => {
+    $m('#os_lines').innerHTML = lines.map((l, i) => `<div class="card" style="padding:10px 12px;margin-bottom:8px;box-shadow:none">
+      <div class="row spread"><b style="min-width:0">${esc(vLabel(l.v))}</b><button type="button" class="link" data-rm="${i}">✕</button></div>
+      <div class="row" style="flex-wrap:nowrap;margin-top:6px"><div style="flex:1"><label>${t('sold_price')}</label><input type="number" step="any" data-pr="${i}" value="${esc(l.price)}"></div>
+      <div style="width:90px"><label>${t('qty')}</label><input type="number" min="1" max="${avail[l.v.id]}" data-q="${i}" value="${l.qty}"></div></div></div>`).join('') || `<p class="small muted">${t('no_items_yet')}</p>`;
+    const tot = lines.reduce((a, l) => a + (Number(l.price) || 0) * (Number(l.qty) || 0), 0) - (Number($m('#os_disc').value) || 0);
+    $m('#os_tot').textContent = eur(tot);
+  };
+  m.addEventListener('input', e => {
+    const i = e.target.dataset.pr ?? e.target.dataset.q;
+    if (e.target.dataset.pr != null) lines[i].price = e.target.value;
+    if (e.target.dataset.q != null) lines[i].qty = e.target.value;
+    if (i != null || e.target.id === 'os_disc'){ const tot = lines.reduce((a, l) => a + (Number(l.price) || 0) * (Number(l.qty) || 0), 0) - (Number($m('#os_disc').value) || 0); $m('#os_tot').textContent = eur(tot); }
+  });
+  m.addEventListener('click', e => { if (e.target.dataset.rm != null){ lines.splice(Number(e.target.dataset.rm), 1); draw(); } });
+  $m('#os_pick').addEventListener('change', e => { const v = pool.find(x => pickLabel(x) === e.target.value); if (v){ addLine(v); e.target.value = ''; draw(); } });
+  // cliente: esistente -> indirizzi; nuovo -> campi extra
+  let chosen = cur;
+  const onCust = async () => {
+    const typed = $m('#os_c').value.trim();
+    chosen = cs.find(c => custLabel(c) === typed) || null;
+    $m('#os_new').classList.toggle('hide', !!chosen || !typed);
+    const ad = $m('#os_ad'); ad.innerHTML = '<option value="">—</option>';
+    if (chosen){
+      const list = check(await sb.from('addresses').select('*').eq('customer_id', chosen.id).order('is_default', {ascending:false}));
+      ad.innerHTML += list.map(a => `<option value="${a.id}">${esc(a.line1)}, ${esc(a.city || '')}</option>`).join('');
+      if (list[0]) ad.value = list[0].id;
+    }
+  };
+  $m('#os_c').addEventListener('change', onCust); $m('#os_c').addEventListener('blur', onCust);
+  if (cur) onCust();
+  draw();
+  m.querySelector('[data-x]').onclick = () => m.remove();
+  m.querySelectorAll('[data-mode]').forEach(b => b.onclick = async () => {
+    const typed = $m('#os_c').value.trim();
+    if (!typed) return toast(t('customer') + '?', true);
+    if (!lines.length) return toast(t('no_items_yet'), true);
+    if (lines.some(l => l.price === '' || l.price == null)) return toast(t('sold_price') + '?', true);
+    m.querySelectorAll('button').forEach(x => x.disabled = true);
+    try {
+      let c = chosen || cs.find(x => x.full_name.toLowerCase() === typed.toLowerCase());
+      if (!c) c = check(await sb.from('customers').insert({full_name: typed, instagram: $m('#os_ig').value.replace(/^@/, '').trim() || null, phone: $m('#os_ph').value || null, country: $m('#os_co').value || null, source:'instagram_organico'}).select().single());
+      let addressId = $m('#os_ad').value ? Number($m('#os_ad').value) : null;
+      const newAd = $m('#os_adnew').value.trim();
+      if (newAd){ const a = check(await sb.from('addresses').insert({customer_id: c.id, line1: newAd, country: c.country, is_default: !addressId}).select().single()); addressId = a.id; }
+      const md = b.dataset.mode;
+      const until = $m('#os_until').value ? new Date($m('#os_until').value).toISOString() : null;
+      const pay = $m('#os_pay').value;
+      const id = check(await sb.rpc('crea_ordine', {p_customer_id: c.id, p_lines: lines.map(l => ({variant_id: l.v.id, qty: Number(l.qty) || 1, unit_price: Number(l.price)})),
+        p_mode: md, p_reserved_until: md === 'riservato' ? until : null, p_address_id: addressId, p_discount: Number($m('#os_disc').value) || 0,
+        p_channel: $m('#os_ch').value, p_notes: $m('#os_notes').value || null, p_pay_status: pay, p_pay_method: pay === 'incassato' ? 'contanti' : 'contanti_alla_consegna'}));
+      m.remove(); toast(t('saved')); location.hash = '#/ordine/' + id;
+    } catch (err){ console.error(err); m.querySelectorAll('button').forEach(x => x.disabled = false); }
+  });
 }
 const trackUrl = s => { const c = S.carriers.find(x => x.id === s.carrier_id); return c?.tracking_url_template && s.tracking_no ? c.tracking_url_template.replace('{n}', encodeURIComponent(s.tracking_no)) : null; };
+const hoursSince = d => d ? (Date.now() - new Date(d).getTime()) / 3600e3 : 0;
+const fdt = d => d ? new Date(d).toLocaleString(LANG === 'en' ? 'en-GB' : LANG === 'sq' ? 'sq-AL' : 'it-IT', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '';
+function orderActions(od, tt, ships){
+  const id = od.id;
+  const postman = S.carriers.find(c => c.name === 'Postman') || S.carriers[0];
+  if (od.status === 'bozza' || od.status === 'riservato'){
+    const expired = od.reserved_until && new Date(od.reserved_until) < new Date();
+    return `<div class="help" style="border-color:${expired ? 'var(--bad)' : 'var(--line)'}">
+      ${od.status === 'riservato' ? `<b>${t('reserved_until_lbl')} ${fdt(od.reserved_until)}</b>${expired ? ` · <span style="color:var(--bad)">${t('reservation_expired')}</span>` : ''}<br>` : ''}
+      <div class="row" style="margin-top:8px"><button class="primary" onclick="confirmReservation(${id})">${t('confirm_order')}</button>
+      ${od.status === 'riservato' ? `<button onclick="extendReservation(${id})">+24h</button>` : ''}
+      <button class="danger" onclick="cancelOrder(${id})">${t(od.status === 'riservato' ? 'cancel_reservation' : 'cancel_order')}</button></div></div>`;
+  }
+  if (od.status === 'confermato'){
+    if (od.delivery_mode === 'modus_vestendi') return `<div class="help"><b>${t('own_delivery')}</b><br>${t('own_delivery_hint')}
+      <div class="row" style="margin-top:8px"><button class="primary" onclick="markShipped(${id})">${t('mark_shipped')}</button><button onclick="setDelivery(${id}, null)">${t('change_delivery')}</button></div></div>`;
+    return `<div class="help"><b>${t('choose_delivery')}</b>
+      <div class="grid g2" style="margin-top:10px">
+        <button class="primary" style="justify-content:center;padding:12px" onclick="shipWithCarrier(${id})">${t('ship_with')} ${esc(postman?.name || '')} ↗</button>
+        <button class="accent" style="justify-content:center;padding:12px" onclick="setDelivery(${id}, 'modus_vestendi')">${t('deliver_ourselves')}</button>
+      </div><p class="small muted" style="margin:8px 0 0">${t('ship_hint')}</p></div>`;
+  }
+  if (od.status === 'spedito'){
+    const late = od.delivery_mode === 'modus_vestendi' && hoursSince(od.shipped_at) >= 24;
+    return `<div class="help" style="border-color:${late ? 'var(--warn)' : 'var(--line)'}">
+      <b>${od.delivery_mode === 'modus_vestendi' ? t('own_delivery') : t('with_courier')}</b> · ${t('shipped_at_lbl')} ${fdt(od.shipped_at)}
+      ${late ? `<br><span style="color:var(--warn)">${t('confirm_delivery_ask')}</span>` : ''}
+      <div class="row" style="margin-top:8px"><button class="primary" onclick="confirmDelivery(${id}, ${Number(tt.to_collect) || 0})">${t('confirm_delivery')}</button></div></div>`;
+  }
+  return '';
+}
 async function viewOrder(main, id){
   const [o, tot, pays, ships, rets] = await Promise.all([
-    sb.from('orders').select('*,customers(id,full_name,instagram,phone,country),addresses(*),order_lines(*,variants(id,sku,size,color,qty,models(id,name,brand_id)))').eq('id', id).single(),
+    sb.from('orders').select('*,customers(id,full_name,instagram,phone,country),addresses(*),order_lines(*,variants(id,sku,size,color,qty,models(id,name,brand_id,photos(path,is_main))))').eq('id', id).single(),
     sb.from('v_order_totals').select('*').eq('order_id', id).single(),
-    sb.from('payments').select('*').eq('order_id', id).order('id'),
+    sb.from('payments').select('*').eq('order_id', id).gt('amount', 0).order('id'),
     sb.from('shipments').select('*').eq('order_id', id).order('id'),
     sb.from('returns').select('*,order_lines!inner(order_id)').eq('order_lines.order_id', id)
   ]);
-  const od = check(o), tt = check(tot); window._order = od;
+  const od = check(o), tt = check(tot); window._order = od; od._due = tt.to_collect; window._ships = check(ships);
+  const mainPhoto = l => { const ps = l.variants.models.photos || []; return (ps.find(p => p.is_main) || ps[0])?.path; };
+  await signedUrls(od.order_lines.map(mainPhoto));
   let marg = null;
   if (can.admin()){ const r = await sb.from('v_order_margins').select('*').eq('order_id', id).maybeSingle(); marg = r.data; }
-  const draft = od.status === 'bozza';
-  const fx = Number(od.fx_rate) || 1;
-  const inCur = v => od.currency !== 'EUR' ? ` <span class="muted small">≈ ${(Number(v) * fx).toLocaleString(undefined, {maximumFractionDigits:0})} ${od.currency}</span>` : '';
+  const cu = od.customers;
   main.innerHTML = `<p><a href="#/ordini">← ${t('orders')}</a></p>
-  <div class="row spread"><div><h1>${esc(od.order_no)}</h1><div class="muted"><a href="#/cliente/${od.customers.id}">${esc(od.customers.full_name)}</a> · ${fdate(od.order_date)} · ${esc(ev('channel', od.channel))}</div></div>
-  <div class="row">${statusPill('order_status', od.status)}
-  ${draft ? `<button class="accent" onclick="confirmOrder(${id})">${t('confirm')}</button>` : ''}
-  ${!['annullato', 'consegnato', 'reso'].includes(od.status) ? `<button class="danger" onclick="cancelOrder(${id})">${t('cancel_order')}</button>` : ''}
-  <button onclick="editOrder(${id})">${t('edit')}</button></div></div>
-  ${od.addresses ? `<p class="small">📍 ${esc(od.addresses.line1)}, ${esc(od.addresses.zip || '')} ${esc(od.addresses.city || '')}, ${esc(od.addresses.country || '')}</p>` : ''}
-  <div class="card"><div class="row spread"><h3>${t('items')}</h3>${draft ? `<button onclick="addOrderLine(${id})">+ ${t('add_line')}</button>` : ''}</div>
-  <div class="table-wrap"><table><tr><th>${t('items')}</th><th class="right">${t('qty')}</th><th class="right">${t('price')}</th><th class="right">${t('total')}</th><th></th></tr>
-  ${od.order_lines.map(l => `<tr><td><a href="#/articolo/${l.variants.models.id}">${esc(brandName(l.variants.models.brand_id))} · ${esc(l.variants.models.name)}</a> <span class="muted small">${esc(l.variants.size || '')} ${esc(l.variants.color || '')} · ${esc(l.variants.sku || '')}</span></td><td class="right">${l.qty}</td><td class="right">${eur(l.unit_price)}</td><td class="right">${eur(l.qty * l.unit_price)}</td>
-  <td class="right">${draft ? `<button class="link" onclick="delRow('order_lines',${l.id})">${t('delete')}</button>` : (['spedito', 'consegnato', 'confermato'].includes(od.status) ? `<button class="link" onclick="returnLine(${l.id})">${t('return_item')}</button>` : '')}</td></tr>`).join('') || `<tr><td colspan="5" class="empty">${t('no_data')}</td></tr>`}
-  ${Number(od.discount) ? `<tr><td>${t('discount')}</td><td></td><td></td><td class="right">− ${eur(od.discount)}</td><td></td></tr>` : ''}
-  <tr><td><b>${t('total')}</b></td><td></td><td></td><td class="right"><b>${eur(tt.total)}</b>${inCur(tt.total)}</td><td></td></tr></table></div>
+  <div class="row spread"><div><h1>${esc(od.order_no)}</h1><div class="muted small">${fdate(od.order_date)} · ${esc(ev('channel', od.channel))}</div></div>
+  <div class="row">${statusPill('order_status', od.status)}<button onclick="editOrder(${id})">${t('edit')}</button></div></div>
+  ${orderActions(od, tt, window._ships)}
+  <div class="card"><div class="row spread"><div><div class="small muted">${t('customer')}</div><a href="#/cliente/${cu.id}"><b>${esc(cu.full_name)}</b></a>
+    <div class="small">${cu.instagram ? '@' + esc(cu.instagram) + ' · ' : ''}${esc(cu.phone || '')} ${esc(ev('country', cu.country))}</div>
+    ${od.addresses ? `<div class="small" style="margin-top:4px">${esc(od.addresses.line1)}, ${esc(od.addresses.zip || '')} ${esc(od.addresses.city || '')} ${esc(od.addresses.country || '')}</div>` : `<div class="small" style="color:var(--warn);margin-top:4px">${t('no_address')}</div>`}</div></div></div>
+  <div class="card"><h3>${t('items')}</h3>
+  ${od.order_lines.map(l => { const ph = mainPhoto(l); return `<div class="row" style="flex-wrap:nowrap;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)">
+    <a href="#/articolo/${l.variants.models.id}" style="flex:none;width:56px;height:74px;border-radius:8px;background:var(--accent-soft) center/cover;${ph && urlCache[ph] ? `background-image:url('${urlCache[ph]}')` : ''}"></a>
+    <div style="flex:1;min-width:0"><a href="#/articolo/${l.variants.models.id}"><b>${esc(brandName(l.variants.models.brand_id))} ${esc(l.variants.models.name)}</b></a>
+    <div class="small muted">${esc([l.variants.size, l.variants.color].filter(Boolean).join(' · '))} · ${l.qty} × ${eur(l.unit_price)}</div>
+    ${['spedito', 'consegnato', 'confermato'].includes(od.status) ? `<button class="link small" onclick="returnLine(${l.id})">${t('return_item')}</button>` : ''}</div>
+    <div class="right"><b>${eur(l.qty * l.unit_price)}</b></div></div>`; }).join('')}
+  ${Number(od.discount) ? `<div class="row spread small" style="padding-top:8px"><span>${t('discount')}</span><span>− ${eur(od.discount)}</span></div>` : ''}
+  <div class="row spread" style="padding-top:8px"><b>${t('total')}</b><b style="font-size:20px">${eur(tt.total)}</b></div>
   ${marg ? `<p class="small muted">${t('goods_cost')} ${eur(marg.goods_cost)} · ${t('shipping_cost')} ${eur(marg.shipping_cost)} · <b>${t('margin')} ${eur(marg.margin)}</b></p>` : ''}</div>
   <div class="grid g2">
   <div class="card"><div class="row spread"><h3>${t('payments')}</h3><button onclick="addPayment(${id})">+ ${t('add')}</button></div>
-  <p class="small">${t('paid')}: <b>${eur(tt.paid)}</b> · ${t('to_collect')}: <b>${eur(tt.to_collect)}</b> · Saldo: <b>${eur(Number(tt.total) - Number(tt.paid))}</b></p>
-  <table>${check(pays).map(p => `<tr><td>${esc(ev('pay_kind', p.kind))}<div class="small muted">${esc(ev('pay_method', p.method))}</div></td><td class="right">${eur(p.amount)}</td><td>${statusPill('pay_status', p.status)}</td><td class="right">${p.status === 'da_incassare' ? `<button class="link" onclick="markPaid(${p.id})">✓</button>` : ''}<button class="link" onclick="delRow('payments',${p.id})">${t('delete')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>
-  <div class="card"><div class="row spread"><h3>${t('shipments')}</h3><button onclick="editShipment(null,${id})">+ ${t('add')}</button></div>
-  ${check(ships).map(s => { const u = trackUrl(s); const c = S.carriers.find(x => x.id === s.carrier_id);
+  <p class="small">${t('paid')}: <b>${eur(tt.paid)}</b> · ${t('to_collect')}: <b>${eur(tt.to_collect)}</b></p>
+  <table>${check(pays).map(p => `<tr><td>${esc(ev('pay_kind', p.kind))}<div class="small muted">${esc(ev('pay_method', p.method))}</div></td><td class="right">${eur(p.amount)}</td><td>${statusPill('pay_status', p.status)}</td><td class="right">${p.status === 'da_incassare' ? `<button class="link" onclick="markPaid(${p.id})">✓</button>` : ''}</td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>
+  <div class="card"><h3>${t('shipments')}</h3>
+  ${od.delivery_mode === 'modus_vestendi' ? `<p class="small">${t('own_delivery')}${od.shipped_at ? ' · ' + t('shipped_at_lbl') + ' ' + fdt(od.shipped_at) : ''}${od.delivered_at ? ' · ' + t('delivered_at_lbl') + ' ' + fdt(od.delivered_at) : ''}</p>` : ''}
+  ${window._ships.map(s => { const u = trackUrl(s); const c = S.carriers.find(x => x.id === s.carrier_id);
     return `<div style="margin-bottom:12px"><div class="row spread"><b>${esc(c?.name || '')}</b>${statusPill('ship_status', s.status)}</div>
-    <div class="small">${t('tracking')}: ${esc(s.tracking_no || '—')} ${s.tracking_no ? `<button class="link" onclick="navigator.clipboard.writeText('${esc(s.tracking_no)}');toast('OK')">⧉</button>` : ''}</div>
-    <div class="small muted">${t('cost')} ${eur(s.cost)}${Number(s.duties) ? ' · ' + t('duties') + ' ' + eur(s.duties) : ''}${s.cod_amount ? ' · ' + t('cod') + ' ' + eur(s.cod_amount) : ''}${s.shipped_on ? ' · ' + fdate(s.shipped_on) : ''}</div>
-    <div class="row" style="margin-top:6px">${u ? `<a class="btn" href="${esc(u)}" target="_blank" rel="noopener">${t('track')} ↗</a>` : (s.tracking_no ? `<span class="small muted">${t('forgot_template')}</span>` : '')}<button onclick="editShipment(${s.id},${id})">${t('edit')}</button></div></div>`; }).join('') || `<div class="empty">${t('no_data')}</div>`}</div></div>
+    <div class="small">${t('tracking')}: ${esc(s.tracking_no || '—')} ${s.tracking_no ? `<button class="link" onclick="navigator.clipboard.writeText('${esc(s.tracking_no)}').then(()=>toast('OK'))">⧉</button>` : ''}</div>
+    <div class="small muted">${t('cost')} ${eur(s.cost)}${Number(s.duties) ? ' · ' + t('duties') + ' ' + eur(s.duties) : ''}${s.cod_amount ? ' · ' + t('cod') + ' ' + eur(s.cod_amount) : ''}</div>
+    <div class="row" style="margin-top:6px">${u ? `<a class="btn" href="${esc(u)}" target="_blank" rel="noopener">${t('track')} ↗</a>` : ''}<button onclick="editShipment(${s.id},${id})">${t('edit')}</button></div></div>`; }).join('') || (od.delivery_mode ? '' : `<div class="empty">${t('no_data')}</div>`)}</div></div>
   ${check(rets).length ? `<div class="card"><h3>${t('return_item')}</h3>${check(rets).map(r => `<div>${esc(ev('return_reason', r.reason))} · ${esc(ev('return_outcome', r.outcome))} ${r.back_to_stock ? '· ' + t('back_to_stock') : ''} ${r.notes ? '· ' + esc(r.notes) : ''}</div>`).join('')}</div>` : ''}
-  ${od.notes ? `<div class="card">${esc(od.notes)}</div>` : ''}`;
-  window._ships = check(ships);
+  ${od.notes ? `<div class="card">${esc(od.notes)}</div>` : ''}
+  ${!['annullato', 'consegnato', 'reso', 'riservato', 'bozza'].includes(od.status) ? `<p style="text-align:center"><button class="link" style="color:var(--bad)" onclick="cancelOrder(${id})">${t('cancel_order')}</button></p>` : ''}`;
+}
+function confirmReservation(id){
+  form({title:t('confirm_order'), submitLabel:t('confirm_order'), fields:[
+    {name:'pay', label:t('payments'), type:'select', empty:false, value:'da_incassare', options:[['da_incassare', t('pay_cod')], ['incassato', t('pay_now')]]}
+  ], onSubmit: async v => { check(await sb.rpc('conferma_prenotazione', {p_order_id: id, p_pay_status: v.pay, p_pay_method: v.pay === 'incassato' ? 'contanti' : 'contanti_alla_consegna'})); toast(t('saved')); route(); }});
+}
+async function extendReservation(id){
+  const base = Math.max(Date.now(), new Date(window._order.reserved_until || Date.now()).getTime());
+  check(await sb.from('orders').update({reserved_until: new Date(base + 24 * 3600e3).toISOString()}).eq('id', id)); route();
+}
+async function setDelivery(id, mode){ check(await sb.from('orders').update({delivery_mode: mode}).eq('id', id)); route(); }
+async function markShipped(id){ check(await sb.rpc('segna_spedito', {p_order_id: id, p_mode: 'modus_vestendi'})); toast(t('saved')); route(); }
+function confirmDelivery(id, due){
+  form({title:t('confirm_delivery'), submitLabel:t('confirm_delivery'), fields: due > 0 ? [
+    {name:'cash', label:`${t('cash_collected')} (${eur(due)})`, type:'checkbox', value:true}] : [],
+    onSubmit: async v => { check(await sb.rpc('conferma_consegna', {p_order_id: id, p_cash_collected: due > 0 ? !!v.cash : false})); toast(t('saved')); route(); }});
+}
+function shipWithCarrier(id){
+  const c = S.carriers.find(x => x.name === 'Postman') || S.carriers[0];
+  const url = c?.booking_url || c?.tracking_url_template;
+  const due = Number(window._order && window._order._due) || 0;
+  const m = form({title:`${t('ship_with')} ${c?.name || ''}`, submitLabel:t('save'), extra: url ? `<p><a class="btn primary" href="${esc(url)}" target="_blank" rel="noopener">1 · ${t('open_carrier')} ↗</a></p><p class="small muted">${t('carrier_steps')}</p>` : '', fields:[
+    {name:'carrier_id', label:t('carrier'), type:'select', empty:false, options:S.carriers.map(x => [x.id, x.name]), value:c?.id},
+    {name:'tracking_no', label:`2 · ${t('tracking')}`},
+    {name:'cost', label:`${t('cost')} (€) · ${t('cost_on_product')}`, type:'number', required:true},
+    {name:'cod_amount', label:`${t('cod')} (€)`, type:'number', value: due || ''},
+    {name:'duties', label:t('duties') + ' (€)', type:'number'}
+  ], onSubmit: async v => {
+    v.cost = v.cost || 0; v.duties = v.duties || 0;
+    check(await sb.from('shipments').insert({...v, order_id: id, status: 'spedito'}));
+    toast(t('saved')); route();
+  }});
+  // sposta il link del corriere in cima al modulo
+  const ex = m.querySelector('form > p'); if (ex){ const f = m.querySelector('form'); f.prepend(m.querySelector('form > p + p')); f.prepend(ex); }
 }
 async function editOrder(id){
   const od = window._order;
@@ -975,23 +1130,6 @@ async function editOrder(id){
     {name:'channel', label:t('channel'), type:'select', options:opts('channel'), empty:false},
     {name:'notes', label:t('notes'), type:'textarea'}
   ], values:od, onSubmit: async v => { v.discount = v.discount || 0; v.fx_rate = v.fx_rate || 1; check(await sb.from('orders').update(v).eq('id', id)); route(); }});
-}
-async function addOrderLine(oid){
-  const vs = (await allVariants()).filter(v => !v.models?.archived && v.qty > 0).sort((a, b) => variantLabel(a).localeCompare(variantLabel(b)));
-  const m = form({title:t('add_line'), fields:[
-    {name:'variant_id', label:t('items'), type:'select', options:vs.map(v => [v.id, `${variantLabel(v)} — ${v.qty} ${t('available')}`]), required:true},
-    {name:'qty', label:t('qty'), type:'number', value:1, required:true},
-    {name:'unit_price', label:t('price') + ' (€)', type:'number', required:true}
-  ], onSubmit: async v => { check(await sb.from('order_lines').insert({...v, order_id: oid})); route(); }});
-  const sel = m.querySelector('[name=variant_id]'), pr = m.querySelector('[name=unit_price]');
-  sel.onchange = () => { const v = vs.find(x => String(x.id) === sel.value); if (v?.sale_price && !pr.value) pr.value = v.sale_price; };
-}
-async function confirmOrder(id){
-  check(await sb.rpc('conferma_ordine', {p_order_id: id}));
-  const tt = check(await sb.from('v_order_totals').select('*').eq('order_id', id).single());
-  const pays = check(await sb.from('payments').select('id').eq('order_id', id));
-  if (!pays.length && Number(tt.total) > 0) check(await sb.from('payments').insert({order_id: id, method:'contanti_alla_consegna', kind:'saldo', amount: tt.total, status:'da_incassare'}));
-  toast(t('saved')); route();
 }
 async function cancelOrder(id){ if (!confirmBox()) return; check(await sb.rpc('annulla_ordine', {p_order_id: id})); route(); }
 function addPayment(oid){
