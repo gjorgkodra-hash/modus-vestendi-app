@@ -135,6 +135,16 @@ const T = {
   if_new_customer:['Cliente nuovo?','New customer?','Klient i ri?'], if_new_hint:['Compila solo se il cliente non è nella lista: viene creato con il nome scritto sopra.','Fill in only if the customer is not in the list: they are created with the name typed above.','Plotëso vetëm nëse klienti nuk është në listë: krijohet me emrin e shkruar sipër.'],
   no_stock:['Nessun pezzo disponibile: registra prima l\'arrivo in magazzino.','No items in stock: record the stock arrival first.','Nuk ka copë në gjendje: regjistro më parë hyrjen në magazinë.'],
   pay_cod:['Da incassare alla consegna','Collect on delivery','Paguhet në dorëzim'], pay_now:['Già pagato','Already paid','E paguar tashmë'],
+  take_photo:['Scatta foto','Take photo','Bëj foto'], from_gallery:['Dalla galleria','From gallery','Nga galeria'],
+  inside:['Dentro a','Inside','Brenda'], destination:['Destinazione','Destination','Destinacioni'], start:['Inizio','Start','Fillimi'], end:['Fine','End','Mbarimi'], people:['Persone','People','Personat'],
+  shipped_on:['Data spedizione','Ship date','Data e dërgimit'], delivered_on:['Data consegna','Delivery date','Data e dorëzimit'],
+  addr_label:['Etichetta (casa, ufficio)','Label (home, work)','Etiketa (shtëpi, punë)'], default:['Predefinito','Default','Kryesore'], size_guide:['Guida taglie','Size guide','Udhëzues masash'],
+  ig_no_at:['Instagram (senza @)','Instagram (without @)','Instagram (pa @)'], ig_link:['Link post Instagram','Instagram post link','Lidhja e postimit në Instagram'], max_price:['Prezzo max (€)','Max price (€)','Çmimi maksimal (€)'],
+  mv_in:['carico','stock in','hyrje'], mv_fix:['rettifica','adjustment','korrigjim'], mv_move:['trasferimento','transfer','transferim'],
+  trip_alloc_hint:['Questi costi si dividono su tutti gli acquisti del viaggio.','These costs are split across every purchase of the trip.','Këto kosto ndahen mbi të gjitha blerjet e udhëtimit.'],
+  report_hint:['Margine per marca = prezzo di vendita − costo reale; spedizioni e dazi sono nel margine per mese e per paese.','Brand margin = sale price − landed cost; shipping and duties are in the monthly and country margins.','Marzhi sipas markës = çmimi i shitjes − kosto reale; dërgesat dhe doganat janë te marzhi mujor dhe sipas shtetit.'],
+  users_hint:['Chi deve entrare si registra dalla pagina di accesso; qui gli assegni il ruolo.','New users sign up from the login page; assign their role here.','Kush duhet të hyjë regjistrohet nga faqja e hyrjes; këtu i cakton rolin.'],
+  backup_hint:['Scarica una copia leggibile dei dati e salvala nella cartella Drive condivisa.','Download a readable copy of the data and save it in the shared Drive folder.','Shkarko një kopje të lexueshme të të dhënave dhe ruaje në dosjen e përbashkët në Drive.'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -246,7 +256,7 @@ function form({title, fields, values = {}, onSubmit, submitLabel, extra = ''}){
     else if (f.type === 'datalist') input = `<input name="${f.name}" list="dl_${f.name}" value="${esc(v)}" autocomplete="off" placeholder="${esc(f.placeholder || '')}" ${f.required ? 'required' : ''}><datalist id="dl_${f.name}">${f.options.map(o => `<option value="${esc(o)}"></option>`).join('')}</datalist>`;
     else if (f.type === 'heading') { return `<h3 style="margin:18px 0 8px">${esc(f.label)}</h3>${f.hint ? `<p class="small muted" style="margin:-4px 0 10px">${esc(f.hint)}</p>` : ''}`; }
     else if (f.type === 'checkbox') input = `<input type="checkbox" name="${f.name}" style="width:auto" ${v ? 'checked' : ''}>`;
-    else if (f.type === 'file') input = `<label class="file-box"><span class="plus">+</span><span>${t('photo_hint')}</span><input type="file" name="${f.name}" accept="image/*" multiple class="hide" onchange="previewFiles(this)"></label><div class="file-prev"></div>`;
+    else if (f.type === 'file') input = `<div class="row" style="flex-wrap:nowrap"><label class="file-box" style="flex:1"><span class="plus" style="display:flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span>${t('take_photo')}</span><input type="file" name="${f.name}_cam" accept="image/*" capture="environment" class="hide" onchange="previewFiles(this)"></label><label class="file-box" style="flex:1"><span class="plus">+</span><span>${t('from_gallery')}</span><input type="file" name="${f.name}" accept="image/*" multiple class="hide" onchange="previewFiles(this)"></label></div><div class="file-prev"></div>`;
     else input = `<input name="${f.name}" type="${f.type || 'text'}" ${f.type === 'number' ? 'step="any"' : ''} value="${esc(v)}" ${f.required ? 'required' : ''}>`;
     return `<div class="field"><label>${esc(f.label)}</label>${input}</div>`;
   }).join('')}${extra}<div class="row" style="justify-content:flex-end;margin-top:8px"><button type="button" data-x>${t('cancel')}</button><button class="primary" type="submit">${esc(submitLabel || t('save'))}</button></div></form>`;
@@ -259,7 +269,7 @@ function form({title, fields, values = {}, onSubmit, submitLabel, extra = ''}){
       if (f.type === 'heading') return;
       const el = e.target.elements[f.name];
       if (f.type === 'checkbox') out[f.name] = el.checked;
-      else if (f.type === 'file') out[f.name] = [...el.files];
+      else if (f.type === 'file') out[f.name] = [...e.target.elements[f.name + '_cam'].files, ...el.files];
       else if (f.type === 'number') out[f.name] = num(el.value);
       else out[f.name] = el.value === '' ? null : el.value;
     });
@@ -314,7 +324,8 @@ async function loadRefs(){
     S.suppliers = s.data || []; S.trips = tr.data || [];
   }
 }
-const catLabel = id => { const c = S.categories.find(x => x.id === id); if (!c) return ''; const p = S.categories.find(x => x.id === c.parent_id); return p ? `${p.name} › ${c.name}` : c.name; };
+const catName = c => (LANG === 'en' && c.name_en) || (LANG === 'sq' && c.name_sq) || c.name;
+const catLabel = id => { const c = S.categories.find(x => x.id === id); if (!c) return ''; const p = S.categories.find(x => x.id === c.parent_id); return p ? `${catName(p)} › ${catName(c)}` : catName(c); };
 const catOptions = () => S.categories.map(c => [c.id, catLabel(c.id)]).sort((a, b) => a[1].localeCompare(b[1]));
 const brandName = id => S.brands.find(b => b.id === id)?.name || '';
 
@@ -458,7 +469,7 @@ function modelFields(){
     {name:'season', label:t('season')},
     {name:'list_price', label:t('list_price'), type:'number'},
     {name:'instagram_status', label:t('instagram'), type:'select', options:opts('instagram_status'), empty:false},
-    {name:'instagram_url', label:'Link post Instagram'},
+    {name:'instagram_url', label:t('ig_link')},
     {name:'description', label:t('description'), type:'textarea'}
   ];
 }
@@ -502,17 +513,13 @@ async function viewModel(main, id){
   <div class="row small" style="margin-bottom:12px">${m.season ? `<span class="pill grey">${esc(m.season)}</span>` : ''}${statusPill('instagram_status', m.instagram_status)}${m.instagram_url ? `<a href="${esc(m.instagram_url)}" target="_blank" rel="noopener">Instagram ↗</a>` : ''}${m.list_price ? `<span class="muted">${t('list_price')}: ${eur(m.list_price)}</span>` : ''}</div>
   ${m.description ? `<p>${esc(m.description)}</p>` : ''}
   <div class="card"><h3>${t('photos')}</h3>
-  <div class="photos">${w ? `<label class="photo-add"><span class="plus">+</span><span>${t('add_photo')}</span><input type="file" accept="image/*" multiple class="hide" id="pf"></label>` : ''}${m.photos.map(p => `<div class="p ${p.is_main ? 'main' : ''}" style="background-image:url('${urlCache[p.path] || ''}')" onclick="window.open('${urlCache[p.path] || ''}','_blank')">${w ? `<button onclick="event.stopPropagation();photoMenu(${p.id},${m.id})">⋯</button>` : ''}</div>`).join('') || (w ? '' : `<span class="muted small">${t('no_data')}</span>`)}</div></div>
+  <div class="photos">${w ? `<label class="photo-add"><span class="plus" style="display:flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span>${t('take_photo')}</span><input type="file" accept="image/*" capture="environment" class="hide" id="pfc"></label><label class="photo-add"><span class="plus">+</span><span>${t('from_gallery')}</span><input type="file" accept="image/*" multiple class="hide" id="pf"></label>` : ''}${m.photos.map(p => `<div class="p ${p.is_main ? 'main' : ''}" style="background-image:url('${urlCache[p.path] || ''}')" onclick="window.open('${urlCache[p.path] || ''}','_blank')">${w ? `<button onclick="event.stopPropagation();photoMenu(${p.id},${m.id})">⋯</button>` : ''}</div>`).join('') || (w ? '' : `<span class="muted small">${t('no_data')}</span>`)}</div></div>
   <div class="card"><div class="row spread"><h3>${t('variants')}</h3>${w ? `<button onclick="editVariant(null,${m.id})">+ ${t('add_variant')}</button>` : ''}</div>${matrix}
   <div class="table-wrap"><table><tr><th>${t('sku')}</th><th>${t('size')}</th><th>${t('color')}</th><th class="right">${t('qty')}</th><th>${t('status')}</th><th>${t('location')}</th><th class="right">${t('sale_price')}</th>${can.costs() ? `<th class="right">${t('landed_cost')}</th>` : ''}<th></th></tr>
   ${m.variants.map(v => `<tr><td class="small">${esc(v.sku)}</td><td>${esc(v.size)}</td><td>${esc(v.color)}</td><td class="right"><b>${v.qty}</b></td><td>${statusPill('variant_status', v.status)}</td><td class="small">${esc(ev('location', v.location))}</td><td class="right">${eur(v.sale_price)}</td>${can.costs() ? `<td class="right" title="${costs[v.id] ? `${t('purchase_price')} ${eur(costs[v.id].purchase_price)} + ${eur(costs[v.id].allocated_cost)}` : ''}">${eur(costs[v.id]?.landed_cost)}</td>` : ''}
   <td class="right">${w ? `<button class="link" onclick="editVariant(${v.id},${m.id})">${t('edit')}</button><button class="link" onclick="adjustStock(${v.id},${m.id})">±</button>` : ''}${can.sales() ? `${v.qty > 0 ? `<button class="link" onclick="sellFromModel(${v.id})">${t('sell')}</button>` : ''}<button class="link" onclick="reserveVariant(${v.id})">${t('reserve')}</button>` : ''}</td></tr>`).join('')}</table></div></div>`;
   window._model = m;
-  const pf = $('#pf');
-  if (pf) pf.onchange = async e => {
-    await uploadPhotos(m.id, [...e.target.files], m.photos.length);
-    route();
-  };
+  ['#pf', '#pfc'].forEach(sel => { const el = $(sel); if (el) el.onchange = async e => { await uploadPhotos(m.id, [...e.target.files], m.photos.length); route(); }; });
 }
 async function uploadPhotos(modelId, files, start = 0){
   if (!files || !files.length) return;
@@ -526,7 +533,8 @@ async function uploadPhotos(modelId, files, start = 0){
 }
 function previewFiles(input){
   const box = input.closest('.field').querySelector('.file-prev');
-  box.innerHTML = [...input.files].map(f => `<img src="${URL.createObjectURL(f)}" alt="">`).join('');
+  const all = [...input.closest('.field').querySelectorAll('input[type=file]')].flatMap(i => [...i.files]);
+  box.innerHTML = all.map(f => `<img src="${URL.createObjectURL(f)}" alt="">`).join('');
 }
 function editModel(id){
   const m = window._model;
@@ -572,7 +580,7 @@ function editVariant(vid, mid){
 }
 function adjustStock(vid){
   form({title:t('movements'), fields:[
-    {name:'kind', label:t('kind'), type:'select', options:[['carico','+ carico'],['rettifica','± rettifica'],['trasferimento','trasferimento']], empty:false},
+    {name:'kind', label:t('kind'), type:'select', options:[['carico','+ ' + t('mv_in')],['rettifica','± ' + t('mv_fix')],['trasferimento',t('mv_move')]], empty:false},
     {name:'qty', label:`${t('qty')} (+/−)`, type:'number', required:true},
     {name:'reference', label:t('notes')}
   ], onSubmit: async x => { check(await sb.from('stock_movements').insert({...x, variant_id: vid})); route(); }});
@@ -602,7 +610,7 @@ async function viewPurchases(main){
 }
 function editTrip(id){
   const tr = id ? S.trips.find(x => x.id === id) : {};
-  form({title:t('trip'), fields:[{name:'title', label:t('name'), required:true},{name:'destination', label:'Destinazione'},{name:'start_date', label:t('date'), type:'date'},{name:'end_date', label:'Fine', type:'date'},{name:'people', label:'Persone'},{name:'notes', label:t('notes'), type:'textarea'}],
+  form({title:t('trip'), fields:[{name:'title', label:t('name'), required:true},{name:'destination', label:t('destination')},{name:'start_date', label:t('date'), type:'date'},{name:'end_date', label:t('end'), type:'date'},{name:'people', label:t('people')},{name:'notes', label:t('notes'), type:'textarea'}],
     values:tr, onSubmit: async v => { if (id) check(await sb.from('trips').update(v).eq('id', id)); else check(await sb.from('trips').insert(v)); await loadRefs(); route(); }});
 }
 function editSupplier(id){
@@ -695,7 +703,7 @@ function addCost(target){
 async function tripCosts(tid){
   const tr = S.trips.find(x => x.id === tid);
   const cs = check(await sb.from('purchase_costs').select('*').eq('trip_id', tid).is('purchase_id', null));
-  const m = modal(`<h2>${t('costs')} · ${esc(tr.title)}</h2><p class="small muted">${t('allocation')}: tutti gli acquisti del viaggio.</p>
+  const m = modal(`<h2>${t('costs')} · ${esc(tr.title)}</h2><p class="small muted">${t('trip_alloc_hint')}</p>
   <table>${cs.map(c => `<tr><td>${esc(ev('cost_kind', c.kind))}</td><td>${esc(c.notes || '')}</td><td class="right">${eur(c.amount)}</td><td><button class="link" onclick="delRow('purchase_costs',${c.id})">${t('delete')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table>
   <div class="row" style="justify-content:flex-end;margin-top:12px"><button onclick="this.closest('.modal-bg').remove()">${t('close')}</button><button class="primary" id="ac">+ ${t('add')}</button></div>`);
   m.querySelector('#ac').onclick = () => { m.remove(); addCost({trip_id: tid}); };
@@ -720,7 +728,7 @@ function editCustomer(id){
   const c = id ? window._customer : {currency:'EUR'};
   form({title: id ? t('edit') : t('new_customer'), fields:[
     {name:'full_name', label:t('name'), required:true},
-    {name:'instagram', label:'Instagram (senza @)'},
+    {name:'instagram', label:t('ig_no_at')},
     {name:'phone', label:t('phone'), type:'tel'},
     {name:'email', label:t('email'), type:'email'},
     {name:'country', label:t('country'), type:'select', options:opts('country')},
@@ -766,7 +774,7 @@ async function viewCustomer(main, id){
   <div class="card"><div class="row spread"><h3>${t('requests')}</h3><button onclick="addRequest(${id})">+ ${t('add')}</button></div>
   ${check(rq).map(r => `<div class="row spread" style="margin-bottom:8px"><span>${esc(r.description)} ${r.size ? '· ' + esc(r.size) : ''} ${r.max_price ? '· max ' + eur(r.max_price) : ''}</span><span>${statusPill('req_status', r.status)} <button class="link" onclick="cycleRequest(${r.id},'${r.status}')">→</button></span></div>`).join('') || `<div class="empty">${t('no_data')}</div>`}</div>
   <div class="card"><h3>${t('messages')}</h3><label>${t('paste_dm')}</label><textarea id="dm" placeholder="Busto 88, vita 70, taglia M… / Rruga …, Tiranë / +355 …"></textarea>
-  <div class="row" style="margin:8px 0"><select id="dmdir" style="width:auto"><option value="in">← cliente</option><option value="out">→ noi</option></select><button class="accent" onclick="analyzeDM(${id})">${t('analyze')}</button></div><div id="dmres"></div>
+  <div class="row" style="margin:8px 0"><select id="dmdir" style="width:auto"><option value="in">← ${t('customer')}</option><option value="out">→ Modus Vestendi</option></select><button class="accent" onclick="analyzeDM(${id})">${t('analyze')}</button></div><div id="dmres"></div>
   ${check(msg).map(m => `<div class="msg ${m.direction}"><div class="small muted">${new Date(m.sent_at).toLocaleString()}</div>${esc(m.body)}</div>`).join('')}</div>`;
 }
 function editMeasurements(cid){
@@ -783,11 +791,11 @@ function editMeasurements(cid){
   }});
 }
 function editAddress(cid){
-  form({title:t('address'), fields:[{name:'label', label:'Etichetta (casa, ufficio)'},{name:'line1', label:t('address'), required:true},{name:'city', label:t('city')},{name:'zip', label:t('zip')},{name:'country', label:t('country')},{name:'is_default', label:'Predefinito', type:'checkbox'}],
+  form({title:t('address'), fields:[{name:'label', label:t('addr_label')},{name:'line1', label:t('address'), required:true},{name:'city', label:t('city')},{name:'zip', label:t('zip')},{name:'country', label:t('country')},{name:'is_default', label:t('default'), type:'checkbox'}],
     onSubmit: async v => { if (v.is_default) await sb.from('addresses').update({is_default:false}).eq('customer_id', cid); check(await sb.from('addresses').insert({...v, customer_id: cid})); route(); }});
 }
 function addRequest(cid){
-  form({title:t('requests'), fields:[{name:'description', label:t('description'), required:true},{name:'brand_id', label:t('brand'), type:'select', options:S.brands.map(b => [b.id, b.name])},{name:'size', label:t('size')},{name:'max_price', label:'Max €', type:'number'}],
+  form({title:t('requests'), fields:[{name:'description', label:t('description'), required:true},{name:'brand_id', label:t('brand'), type:'select', options:S.brands.map(b => [b.id, b.name])},{name:'size', label:t('size')},{name:'max_price', label:t('max_price'), type:'number'}],
     onSubmit: async v => { check(await sb.from('customer_requests').insert({...v, customer_id: cid})); route(); }});
 }
 async function cycleRequest(id, s){ const n = {aperta:'trovata', trovata:'chiusa', chiusa:'aperta'}[s]; check(await sb.from('customer_requests').update({status:n}).eq('id', id)); route(); }
@@ -1009,8 +1017,8 @@ function editShipment(sid, oid){
     {name:'cost', label:t('cost') + ' (€)', type:'number'},
     {name:'duties', label:t('duties') + ' (€)', type:'number'},
     {name:'cod_amount', label:t('cod') + ' (€)', type:'number'},
-    {name:'shipped_on', label:'Data spedizione', type:'date'},
-    {name:'delivered_on', label:'Data consegna', type:'date'},
+    {name:'shipped_on', label:t('shipped_on'), type:'date'},
+    {name:'delivered_on', label:t('delivered_on'), type:'date'},
     {name:'notes', label:t('notes')}
   ], values:s, onSubmit: async v => {
     v.cost = v.cost || 0; v.duties = v.duties || 0;
@@ -1042,7 +1050,7 @@ function addExpense(){
     onSubmit: async v => { check(await sb.from('expenses').insert(v)); route(); }});
 }
 function addCampaign(){
-  form({title:t('campaigns'), fields:[{name:'name', label:t('name'), required:true},{name:'start_date', label:'Inizio', type:'date'},{name:'end_date', label:'Fine', type:'date'},{name:'spend', label:t('spend') + ' (€)', type:'number'},{name:'notes', label:t('notes')}],
+  form({title:t('campaigns'), fields:[{name:'name', label:t('name'), required:true},{name:'start_date', label:t('start'), type:'date'},{name:'end_date', label:t('end'), type:'date'},{name:'spend', label:t('spend') + ' (€)', type:'number'},{name:'notes', label:t('notes')}],
     onSubmit: async v => { v.spend = v.spend || 0; check(await sb.from('campaigns').insert(v)); route(); }});
 }
 
@@ -1064,11 +1072,11 @@ async function viewReports(main){
   main.innerHTML = `<h1>${t('reports')}</h1>
   <div class="card"><h3>${t('by_month')}</h3><div class="table-wrap"><table><tr><th></th><th class="right">${t('orders')}</th><th class="right">${t('revenue')}</th><th class="right">${t('goods_cost')}</th><th class="right">${t('shipping_cost')}</th><th class="right">${t('margin')}</th><th class="right">${t('expenses')}</th><th class="right">${t('net')}</th></tr>
   ${Object.keys(months).sort().reverse().map(k => { const m = months[k]; return `<tr><td>${k}</td><td class="right">${m.n}</td><td class="right">${eur(m.rev)}</td><td class="right">${eur(m.goods)}</td><td class="right">${eur(m.ship)}</td><td class="right">${eur(m.marg)}</td><td class="right">${eur(m.exp)}</td><td class="right"><b>${eur(m.marg - m.exp)}</b></td></tr>`; }).join('') || `<tr><td colspan="8" class="empty">${t('no_data')}</td></tr>`}</table></div></div>
-  <div class="grid g2"><div class="card"><h3>${t('by_brand')}</h3><table><tr><th></th><th class="right">pz</th><th class="right">${t('revenue')}</th><th class="right">${t('margin')}</th></tr>
+  <div class="grid g2"><div class="card"><h3>${t('by_brand')}</h3><table><tr><th></th><th class="right">${t('qty')}</th><th class="right">${t('revenue')}</th><th class="right">${t('margin')}</th></tr>
   ${Object.entries(brands).sort((a, b) => b[1].rev - a[1].rev).map(([b, v]) => `<tr><td>${esc(b)}</td><td class="right">${v.q}</td><td class="right">${eur(v.rev)}</td><td class="right">${eur(v.rev - v.cost)}${v.rev ? ` <span class="muted small">${Math.round((v.rev - v.cost) / v.rev * 100)}%</span>` : ''}</td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>
   <div class="card"><h3>${t('by_country')}</h3><table><tr><th></th><th class="right">${t('orders')}</th><th class="right">${t('revenue')}</th><th class="right">${t('margin')}</th></tr>
   ${Object.entries(countries).sort((a, b) => b[1].rev - a[1].rev).map(([c, v]) => `<tr><td>${esc(c)}</td><td class="right">${v.n}</td><td class="right">${eur(v.rev)}</td><td class="right">${eur(v.marg)}</td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div></div>
-  <p class="small muted">Margine per marca = prezzo di vendita − costo reale; spedizioni e dazi sono nel margine per mese e per paese.</p>`;
+  <p class="small muted">${t('report_hint')}</p>`;
 }
 
 // ====== Impostazioni ======
@@ -1076,11 +1084,11 @@ async function viewSettings(main){
   let users = '';
   if (can.admin()){
     const ps = check(await sb.from('profiles').select('*').order('created_at'));
-    users = `<div class="card"><h3>${t('users')}</h3><p class="small muted">Chi deve entrare si registra dalla pagina di accesso; qui gli assegni il ruolo.</p><table>${ps.map(p => `<tr><td>${esc(p.full_name || '')}<div class="small muted">${esc(p.email || '')}</div></td><td><select onchange="setRole('${p.id}', this.value)" ${p.id === S.user.id ? 'disabled' : ''}><option value="">—</option>${opts('role').map(([k, l]) => `<option value="${k}" ${p.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select></td></tr>`).join('')}</table></div>`;
+    users = `<div class="card"><h3>${t('users')}</h3><p class="small muted">${t('users_hint')}</p><table>${ps.map(p => `<tr><td>${esc(p.full_name || '')}<div class="small muted">${esc(p.email || '')}</div></td><td><select onchange="setRole('${p.id}', this.value)" ${p.id === S.user.id ? 'disabled' : ''}><option value="">—</option>${opts('role').map(([k, l]) => `<option value="${k}" ${p.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select></td></tr>`).join('')}</table></div>`;
   }
   const carriers = can.sales() ? `<div class="card"><div class="row spread"><h3>${t('carriers')}</h3><button onclick="editCarrier()">+ ${t('add')}</button></div><table>${S.carriers.map(c => `<tr><td><b>${esc(c.name)}</b><div class="small muted">${esc(c.tracking_url_template || t('forgot_template'))}</div></td><td class="right"><button class="link" onclick="editCarrier(${c.id})">${t('edit')}</button></td></tr>`).join('')}</table></div>` : '';
   const cats = can.catalogWrite() ? `<div class="card"><div class="row spread"><h3>${t('category')} / ${t('brand')}</h3><div class="row"><button onclick="addCategory()">+ ${t('category')}</button><button onclick="addBrand()">+ ${t('brand')}</button></div></div><p class="small">${catOptions().map(c => esc(c[1])).join(' · ')}</p><p class="small muted">${S.brands.map(b => esc(b.name)).join(' · ')}</p></div>` : '';
-  const backup = can.admin() ? `<div class="card"><h3>${t('backup')}</h3><p class="small muted">Scarica una copia leggibile dei dati e salvala nella cartella Drive condivisa.</p><div class="chips">${['models','variants','variant_costs','purchases','purchase_lines','purchase_costs','customers','customer_measurements','addresses','orders','order_lines','payments','shipments','expenses','stock_movements','activity_log'].map(x => `<button onclick="exportCsv('${x}')">${x}</button>`).join('')}</div></div>` : '';
+  const backup = can.admin() ? `<div class="card"><h3>${t('backup')}</h3><p class="small muted">${t('backup_hint')}</p><div class="chips">${['models','variants','variant_costs','purchases','purchase_lines','purchase_costs','customers','customer_measurements','addresses','orders','order_lines','payments','shipments','expenses','stock_movements','activity_log'].map(x => `<button onclick="exportCsv('${x}')">${x}</button>`).join('')}</div></div>` : '';
   main.innerHTML = `<h1>${t('settings')}</h1><div class="card"><p>${esc(S.profile.full_name || '')} · ${esc(S.profile.email || '')} · <span class="pill">${esc(ev('role', S.profile.role))}</span></p><label>${t('language')}</label>${langSelect()}</div>${users}${carriers}${cats}${backup}`;
 }
 async function setRole(id, role){ check(await sb.from('profiles').update({role: role || null}).eq('id', id)); toast(t('saved')); }
@@ -1090,11 +1098,11 @@ function editCarrier(id){
     onSubmit: async v => { if (id) check(await sb.from('carriers').update(v).eq('id', id)); else check(await sb.from('carriers').insert(v)); await loadRefs(); route(); }});
 }
 function addCategory(){
-  form({title:t('category'), fields:[{name:'name', label:t('name'), required:true},{name:'parent_id', label:'Dentro a', type:'select', options:S.categories.filter(c => !c.parent_id).map(c => [c.id, c.name])}],
+  form({title:t('category'), fields:[{name:'name', label:t('name') + ' (IT)', required:true},{name:'name_en', label:t('name') + ' (EN)'},{name:'name_sq', label:t('name') + ' (SQ)'},{name:'parent_id', label:t('inside'), type:'select', options:S.categories.filter(c => !c.parent_id).map(c => [c.id, catName(c)])}],
     onSubmit: async v => { check(await sb.from('categories').insert(v)); await loadRefs(); route(); }});
 }
 function addBrand(){
-  form({title:t('brand'), fields:[{name:'name', label:t('name'), required:true},{name:'country', label:t('country')},{name:'size_guide', label:'Guida taglie', type:'textarea'}],
+  form({title:t('brand'), fields:[{name:'name', label:t('name'), required:true},{name:'country', label:t('country')},{name:'size_guide', label:t('size_guide'), type:'textarea'}],
     onSubmit: async v => { check(await sb.from('brands').insert(v)); await loadRefs(); route(); }});
 }
 async function exportCsv(table){
