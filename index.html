@@ -181,6 +181,8 @@ const T = {
   delete_order:['Elimina ordine','Delete order','Fshi porosinë'], delete_order_hint:['Se era confermato, i pezzi tornano prima in magazzino.','If it was confirmed, the items go back to stock first.','Nëse ishte konfirmuar, copët kthehen më parë në magazinë.'],
   archived:['Archiviati','Archived','Të arkivuara'], restore:['Ripristina','Restore','Rikthe'],
   of_which_ordered:['ordinati, da consegnare','ordered, to deliver','të porositura, për t\'u dorëzuar'],
+  qty_pieces:['Pezzi','Pieces','Copë'], sizes_hint:['Scegli un gruppo di taglie o scrivile a mano (lettere o numeri). TU = taglia unica. Le taglie con 0 pezzi restano visibili come esaurite.','Pick a size set or type sizes (letters or numbers). TU = one size. Sizes with 0 pieces stay visible as sold out.','Zgjidh një grup masash ose shkruaji vetë (shkronja ose numra). TU = masë e vetme. Masat me 0 copë mbeten si të mbaruara.'],
+  pick_size:['Scegli la taglia','Choose the size','Zgjidh masën'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -289,6 +291,7 @@ function form({title, fields, values = {}, onSubmit, submitLabel, extra = ''}){
     let input;
     if (f.type === 'select') input = `<select name="${f.name}" ${f.required ? 'required' : ''}>${f.empty !== false ? '<option value="">—</option>' : ''}${f.options.map(([k, l]) => `<option value="${esc(k)}" ${String(k) === String(v) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
     else if (f.type === 'textarea') input = `<textarea name="${f.name}">${esc(v)}</textarea>`;
+    else if (f.type === 'sizes') input = sizesEditor(f.name);
     else if (f.type === 'datalist') input = `<input name="${f.name}" list="dl_${f.name}" value="${esc(v)}" autocomplete="off" placeholder="${esc(f.placeholder || '')}" ${f.required ? 'required' : ''}><datalist id="dl_${f.name}">${f.options.map(o => `<option value="${esc(o)}"></option>`).join('')}</datalist>`;
     else if (f.type === 'heading') { return `<h3 style="margin:18px 0 8px">${esc(f.label)}</h3>${f.hint ? `<p class="small muted" style="margin:-4px 0 10px">${esc(f.hint)}</p>` : ''}`; }
     else if (f.type === 'checkbox') input = `<input type="checkbox" name="${f.name}" style="width:auto" ${v ? 'checked' : ''}>`;
@@ -303,6 +306,7 @@ function form({title, fields, values = {}, onSubmit, submitLabel, extra = ''}){
     const out = {};
     fields.forEach(f => {
       if (f.type === 'heading') return;
+      if (f.type === 'sizes'){ out[f.name] = [...e.target.querySelectorAll(`[data-sz="${f.name}"] .sz-row`)].map(r => ({size: r.querySelector('.sz-n').value.trim(), qty: Number(r.querySelector('.sz-q').value) || 0})).filter(r => r.size || r.qty); return; }
       const el = e.target.elements[f.name];
       if (f.type === 'checkbox') out[f.name] = el.checked;
       else if (f.type === 'file') out[f.name] = [...e.target.elements[f.name + '_cam'].files, ...el.files];
@@ -313,6 +317,19 @@ function form({title, fields, values = {}, onSubmit, submitLabel, extra = ''}){
     try { await onSubmit(out, m); m.remove(); } catch (err) { console.error(err); btn.disabled = false; }
   };
   return m;
+}
+const SIZE_SETS = [['XS','S','M','L','XL'], ['36','38','40','42','44','46'], ['TU']];
+function sizesEditor(name){
+  const row = (n = '', q = 1) => `<div class="sz-row row" style="flex-wrap:nowrap;margin-bottom:6px"><input class="sz-n" placeholder="${t('size')}" value="${esc(n)}" style="flex:1"><input class="sz-q" type="number" min="0" value="${q}" style="width:90px" aria-label="${t('qty')}"><button type="button" class="link" onclick="this.closest('.sz-row').remove()">✕</button></div>`;
+  window._szRow = row;
+  return `<div data-sz="${name}"><div class="row small muted" style="flex-wrap:nowrap;margin-bottom:4px"><span style="flex:1">${t('size')}</span><span style="width:110px">${t('qty_pieces')}</span></div>
+  <div class="sz-rows">${row('TU', 1)}</div>
+  <div class="chips" style="margin-top:6px">${SIZE_SETS.map(set => `<button type="button" class="small" onclick="fillSizes(this, ${esc(JSON.stringify(set))})">${set.join(' ')}</button>`).join('')}<button type="button" class="small" onclick="this.closest('[data-sz]').querySelector('.sz-rows').insertAdjacentHTML('beforeend', window._szRow('', 1))">+ ${t('add_size')}</button></div>
+  <p class="small muted" style="margin:6px 0 0">${t('sizes_hint')}</p></div>`;
+}
+function fillSizes(btn, set){
+  const box = btn.closest('[data-sz]').querySelector('.sz-rows');
+  box.innerHTML = set.map(sz => window._szRow(sz, set.length === 1 ? 1 : 0)).join('');
 }
 function confirmBox(msg){ return confirm(msg || t('sure')); }
 
@@ -534,20 +551,17 @@ function newModel(){
   const f = modelFields(); f[0].required = false;
   f.splice(4, 0, {name:'photos', label:t('photos'), type:'file'},
     {name:'sale_price', label:t('sale_price') + ' (€)', type:'number', required:true},
-    {name:'sizes', label:t('sizes_qty')},
-    {name:'qty', label:t('qty'), type:'number', value:1, required:true},
+    {name:'sizes', label:t('sizes_stock'), type:'sizes'},
     {name:'color', label:`${t('color')} (${t('optional')})`});
   form({title:t('new_model'), fields:f, values:{instagram_status:'non_pubblicato'}, onSubmit: async v => {
     await ensureBrand(v);
-    const files = v.photos, sizes = v.sizes || '', color = v.color, price = v.sale_price, baseQty = v.qty ?? 1;
-    delete v.photos; delete v.sizes; delete v.color; delete v.sale_price; delete v.qty;
+    const files = v.photos, sizes = v.sizes || [], color = v.color, price = v.sale_price;
+    delete v.photos; delete v.sizes; delete v.color; delete v.sale_price;
+    if (!sizes.length) sizes.push({size:'TU', qty:1});
     if (!v.list_price) v.list_price = price;
     const m = check(await sb.from('models').insert(v).select().single());
-    const parts = String(sizes).split(/[,;\n]+/).map(x => x.trim()).filter(Boolean);
-    for (const part of (parts.length ? parts : ['U'])){
-      const [sz, q] = part.split(':').map(x => x && x.trim());
-      if (!sz) continue;
-      const qty = q != null ? (Number(q) || 0) : baseQty;
+    for (const {size: sz0, qty} of sizes){
+      const sz = sz0 || 'TU';
       const nv = check(await sb.from('variants').insert({model_id: m.id, size: sz, color: color || null, sale_price: price, status:'in_magazzino', sku: skuFor(m, sz, color)}).select().single());
       if (qty) check(await sb.from('stock_movements').insert({variant_id: nv.id, kind:'carico', qty, reference:'carico iniziale'}));
     }
@@ -1027,6 +1041,7 @@ async function openOrderSheet({modelId, variantId, customerId, mode} = {}){
     <div class="field"><label>${t('address')}</label><select id="os_ad"><option value="">—</option></select></div>
     <div class="field" id="os_adnew_f"><label>${t('new_address')}</label><input id="os_adnew" placeholder="Rruga …, Tiranë"></div>
     <h3 style="margin-top:18px">2 · ${t('items')}</h3>
+    <div id="os_sizes"></div>
     <div id="os_lines"></div>
     <div class="field"><input id="os_pick" list="os_pl" placeholder="+ ${t('add_product_search')}"><datalist id="os_pl">${pool.map(v => `<option value="${esc(pickLabel(v))}"></option>`).join('')}</datalist></div>
     <div class="grid g2"><div class="field"><label>${t('discount')} (€)</label><input id="os_disc" type="number" step="any" value="0"></div>
@@ -1041,9 +1056,14 @@ async function openOrderSheet({modelId, variantId, customerId, mode} = {}){
       <button type="button" class="${mode === 'riservato' ? 'accent' : 'primary'}" data-mode="confermato">${t('confirm_order')}</button></div>
   </form>`);
   const $m = s => m.querySelector(s);
+  const szName = v => [v.size, v.color].filter(Boolean).join(' · ') || t('one_size');
+  const siblings = v => pool.filter(x => x.model_id === v.model_id);
   const draw = () => {
+    const chipModel = modelId && pool.filter(v => v.model_id === modelId).length > 1 ? modelId : null;
+    $m('#os_sizes').innerHTML = chipModel ? `<label>${t('pick_size')}</label><div class="chips" style="margin-bottom:10px">${pool.filter(v => v.model_id === chipModel).map(v => `<button type="button" class="${lines.some(l => l.v.id === v.id) ? 'primary' : ''}" data-addv="${v.id}">${esc(szName(v))} · ${avail[v.id]}</button>`).join('')}</div>` : '';
     $m('#os_lines').innerHTML = lines.map((l, i) => `<div class="card" style="padding:10px 12px;margin-bottom:8px;box-shadow:none">
-      <div class="row spread"><b style="min-width:0">${esc(vLabel(l.v))}</b><button type="button" class="link" data-rm="${i}">✕</button></div>
+      <div class="row spread"><b style="min-width:0">${esc(brandName(l.v.models?.brand_id))} ${esc(l.v.models?.name)}</b><button type="button" class="link" data-rm="${i}">✕</button></div>
+      <div style="margin-top:6px"><label>${t('size')}</label><select data-sz="${i}">${siblings(l.v).concat(siblings(l.v).some(x => x.id === l.v.id) ? [] : [l.v]).map(x => `<option value="${x.id}" ${x.id === l.v.id ? 'selected' : ''}>${esc(szName(x))} · ${avail[x.id] ?? 0} ${t('available')}</option>`).join('')}</select></div>
       <div class="row" style="flex-wrap:nowrap;margin-top:6px"><div style="flex:1"><label>${t('sold_price')}</label><input type="number" step="any" data-pr="${i}" value="${esc(l.price)}"></div>
       <div style="width:90px"><label>${t('qty')}</label><input type="number" min="1" max="${avail[l.v.id]}" data-q="${i}" value="${l.qty}"></div></div></div>`).join('') || `<p class="small muted">${t('no_items_yet')}</p>`;
     const tot = lines.reduce((a, l) => a + (Number(l.price) || 0) * (Number(l.qty) || 0), 0) - (Number($m('#os_disc').value) || 0);
@@ -1055,7 +1075,13 @@ async function openOrderSheet({modelId, variantId, customerId, mode} = {}){
     if (e.target.dataset.q != null) lines[i].qty = e.target.value;
     if (i != null || e.target.id === 'os_disc'){ const tot = lines.reduce((a, l) => a + (Number(l.price) || 0) * (Number(l.qty) || 0), 0) - (Number($m('#os_disc').value) || 0); $m('#os_tot').textContent = eur(tot); }
   });
-  m.addEventListener('click', e => { if (e.target.dataset.rm != null){ lines.splice(Number(e.target.dataset.rm), 1); draw(); } });
+  m.addEventListener('click', e => {
+    if (e.target.dataset.rm != null){ lines.splice(Number(e.target.dataset.rm), 1); draw(); }
+    if (e.target.dataset.addv != null){ const id = Number(e.target.dataset.addv); const ix = lines.findIndex(l => l.v.id === id); if (ix >= 0) lines.splice(ix, 1); else addLine(pool.find(v => v.id === id)); draw(); }
+  });
+  m.addEventListener('change', e => {
+    if (e.target.dataset.sz != null){ const i = Number(e.target.dataset.sz); const nv = pool.find(v => v.id === Number(e.target.value)); if (nv && !lines.some((l, j) => j !== i && l.v.id === nv.id)){ lines[i].v = nv; if (nv.sale_price) lines[i].price = nv.sale_price; } draw(); }
+  });
   $m('#os_pick').addEventListener('change', e => { const v = pool.find(x => pickLabel(x) === e.target.value); if (v){ addLine(v); e.target.value = ''; draw(); } });
   // cliente: esistente -> indirizzi; nuovo -> campi extra
   let chosen = cur;
