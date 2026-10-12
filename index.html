@@ -12,7 +12,7 @@
 <link rel="icon" type="image/png" href="icons/favicon.png">
 <title>Modus Vestendi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <style>
 :root{
@@ -22,9 +22,9 @@
   --radius:12px; --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.04);
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,sans-serif}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Nunito,"Segoe UI",system-ui,sans-serif}
 a{color:var(--accent)}
-h1,h2,h3{font-family:Jost,"Century Gothic",system-ui,sans-serif;font-weight:500;margin:0 0 .5em;letter-spacing:.01em}
+h1,h2,h3{font-family:Nunito,"Segoe UI",system-ui,sans-serif;font-weight:700;margin:0 0 .5em;letter-spacing:.01em}
 h1{font-size:26px} h2{font-size:21px} h3{font-size:17px}
 header.top{position:sticky;top:0;z-index:20;background:var(--bg);color:var(--ink);border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top) + 10px) 16px 0}
 .top-row{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:nowrap}
@@ -72,8 +72,14 @@ label{display:block;font-size:13px;color:var(--muted);margin:0 0 4px}
 .field{margin-bottom:12px}
 .search{max-width:340px}
 table{width:100%;border-collapse:collapse}
-th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}
+.card > table{display:block;overflow-x:auto}
+.card > table > tbody{display:table;width:100%}
+main > .row.spread{margin-bottom:14px}
+.help{background:var(--accent-soft);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;font-size:14px}
+.help b{color:var(--accent)}
+.sep{margin:6px 0 12px;font-size:13px;color:var(--muted);text-align:center}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:600}
 tr.click{cursor:pointer} tr.click:hover{background:var(--accent-soft)}
 .table-wrap{overflow-x:auto}
 .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
@@ -114,6 +120,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ====== Traduzioni IT / EN / SQ ======
 const T = {
+  or_new:['oppure scrivi un nome nuovo','or type a new name','ose shkruaj një emër të ri'], optional:['facoltativo','optional','opsionale'],
+  new_item_inline:['Oppure articolo nuovo','Or new item','Ose artikull i ri'], pick_or_new:['Scegli un articolo del catalogo o scrivi il nome di uno nuovo','Pick a catalogue item or type a new one','Zgjidh një artikull nga katalogu ose shkruaj emrin e një të riu'],
+  purch_help:['<b>Acquisto</b> = uno scontrino: i pezzi comprati in un negozio, con il prezzo pagato. <b>Punto d\'acquisto</b> = il negozio o outlet (si crea una volta e si riusa). <b>Viaggio</b> = facoltativo: un giro di acquisti con più negozi; benzina, pedaggi e hotel si dividono su tutti i pezzi del viaggio.','<b>Purchase</b> = one receipt: the items bought in one store, with the price paid. <b>Store</b> = the shop or outlet (created once, reused). <b>Trip</b> = optional: a buying trip across several stores; fuel, tolls and hotel are split across every item of the trip.','<b>Blerja</b> = një faturë: copët e blera në një dyqan, me çmimin e paguar. <b>Pika e blerjes</b> = dyqani ose outleti (krijohet një herë dhe ripërdoret). <b>Udhëtimi</b> = opsional: një xhiro blerjesh në disa dyqane; karburanti, pagesat rrugore dhe hoteli ndahen mbi të gjitha copët e udhëtimit.'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -556,12 +565,13 @@ async function reserveVariant(vid){
 // ====== Acquisti ======
 async function viewPurchases(main){
   const ps = check(await sb.from('purchases').select('*,suppliers(name),trips(title),purchase_lines(qty,unit_price)').order('purchase_date', {ascending:false}));
-  main.innerHTML = `<div class="row spread"><h1>${t('purchases')}</h1><div class="row"><button onclick="editTrip()">+ ${t('trip')}</button><button onclick="editSupplier()">+ ${t('supplier')}</button><button class="primary" onclick="newPurchase()">+ ${t('new_purchase')}</button></div></div>
+  main.innerHTML = `<div class="row spread"><h1>${t('purchases')}</h1><button class="primary" onclick="newPurchase()">+ ${t('new_purchase')}</button></div>
+  <div class="help">${t('purch_help')}</div>
   <div class="card"><div class="table-wrap"><table><tr><th>#</th><th>${t('date')}</th><th>${t('supplier')}</th><th>${t('trip')}</th><th class="right">${t('lines')}</th><th class="right">${t('total')}</th><th>${t('status')}</th></tr>
   ${ps.map(p => { const q = p.purchase_lines.reduce((a, l) => a + l.qty, 0), tot = p.purchase_lines.reduce((a, l) => a + l.qty * l.unit_price, 0);
     return `<tr class="click" onclick="location.hash='#/acquisto/${p.id}'"><td>${p.id}</td><td>${fdate(p.purchase_date)}</td><td>${esc(p.suppliers?.name)}</td><td>${esc(p.trips?.title)}</td><td class="right">${q}</td><td class="right">${eur(tot)}</td><td>${statusPill('purchase_status', p.status)}</td></tr>`; }).join('') || `<tr><td colspan="7" class="empty">${t('no_data')}</td></tr>`}</table></div></div>
-  <div class="card"><h3>${t('trips')}</h3><table>${S.trips.map(tr => `<tr><td>${esc(tr.title)}</td><td>${esc(tr.destination || '')}</td><td>${fdate(tr.start_date)}</td><td class="right"><button class="link" onclick="tripCosts(${tr.id})">${t('costs')}</button><button class="link" onclick="editTrip(${tr.id})">${t('edit')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>
-  <div class="card"><h3>${t('suppliers')}</h3><table>${S.suppliers.map(s => `<tr><td>${esc(s.name)}</td><td>${esc(s.city || '')} ${esc(s.country || '')}</td><td>${esc(ev('supplier_kind', s.kind))}</td><td class="right"><button class="link" onclick="editSupplier(${s.id})">${t('edit')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>`;
+  <div class="card"><div class="row spread"><h3>${t('trips')}</h3><button onclick="editTrip()">+ ${t('add')}</button></div><table>${S.trips.map(tr => `<tr><td>${esc(tr.title)}</td><td>${esc(tr.destination || '')}</td><td>${fdate(tr.start_date)}</td><td class="right"><button class="link" onclick="tripCosts(${tr.id})">${t('costs')}</button><button class="link" onclick="editTrip(${tr.id})">${t('edit')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>
+  <div class="card"><div class="row spread"><h3>${t('suppliers')}</h3><button onclick="editSupplier()">+ ${t('add')}</button></div><table>${S.suppliers.map(s => `<tr><td>${esc(s.name)}</td><td>${esc(s.city || '')} ${esc(s.country || '')}</td><td>${esc(ev('supplier_kind', s.kind))}</td><td class="right"><button class="link" onclick="editSupplier(${s.id})">${t('edit')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>`;
 }
 function editTrip(id){
   const tr = id ? S.trips.find(x => x.id === id) : {};
@@ -576,11 +586,17 @@ function editSupplier(id){
 function newPurchase(){
   form({title:t('new_purchase'), fields:[
     {name:'supplier_id', label:t('supplier'), type:'select', options:S.suppliers.map(s => [s.id, s.name])},
-    {name:'trip_id', label:t('trip'), type:'select', options:S.trips.map(x => [x.id, x.title])},
+    {name:'new_supplier', label:`${t('supplier')}: ${t('or_new')}`},
+    {name:'trip_id', label:`${t('trip')} (${t('optional')})`, type:'select', options:S.trips.map(x => [x.id, x.title])},
+    {name:'new_trip', label:`${t('trip')}: ${t('or_new')}`},
     {name:'purchase_date', label:t('date'), type:'date', value:today()},
-    {name:'status', label:t('status'), type:'select', options:opts('purchase_status'), empty:false, value:'ordinato'},
+    {name:'status', label:t('status'), type:'select', options:opts('purchase_status').filter(o => o[0] !== 'ricevuto'), empty:false, value:'ordinato'},
     {name:'notes', label:t('notes'), type:'textarea'}
-  ], onSubmit: async v => { const p = check(await sb.from('purchases').insert(v).select().single()); location.hash = '#/acquisto/' + p.id; }});
+  ], onSubmit: async v => {
+    if (v.new_supplier){ const n = check(await sb.from('suppliers').insert({name: v.new_supplier}).select().single()); v.supplier_id = n.id; }
+    if (v.new_trip){ const n = check(await sb.from('trips').insert({title: v.new_trip, start_date: v.purchase_date}).select().single()); v.trip_id = n.id; }
+    delete v.new_supplier; delete v.new_trip;
+    const p = check(await sb.from('purchases').insert(v).select().single()); await loadRefs(); location.hash = '#/acquisto/' + p.id; }});
 }
 async function allVariants(){
   return check(await sb.from('variants').select('id,sku,size,color,qty,sale_price,model_id,models(name,brand_id,archived)'));
@@ -616,10 +632,26 @@ function editPurchaseStatus(id){
 async function addPurchaseLine(pid){
   const vs = (await allVariants()).filter(v => !v.models?.archived).sort((a, b) => variantLabel(a).localeCompare(variantLabel(b)));
   form({title:t('add_line'), fields:[
-    {name:'variant_id', label:`${t('items')} (${t('catalog')})`, type:'select', options:vs.map(v => [v.id, variantLabel(v)]), required:true},
+    {name:'variant_id', label:`${t('items')} (${t('catalog')})`, type:'select', options:vs.map(v => [v.id, variantLabel(v)])},
+    {name:'brand_id', label:`${t('new_item_inline')} · ${t('brand')}`, type:'select', options:S.brands.map(b => [b.id, b.name])},
+    {name:'new_brand', label:`${t('brand')}: ${t('or_new')}`},
+    {name:'category_id', label:t('category'), type:'select', options:catOptions()},
+    {name:'name', label:t('name')},
+    {name:'size', label:t('size')},
+    {name:'color', label:t('color')},
+    {name:'sale_price', label:t('sale_price'), type:'number'},
     {name:'qty', label:t('qty'), type:'number', value:1, required:true},
     {name:'unit_price', label:t('purchase_price'), type:'number', required:true}
-  ], onSubmit: async v => { check(await sb.from('purchase_lines').insert({...v, purchase_id: pid})); route(); }});
+  ], onSubmit: async v => {
+    let vid = v.variant_id;
+    if (!vid){
+      if (!v.name){ toast(t('pick_or_new'), true); throw new Error('item'); }
+      await ensureBrand(v);
+      const m = check(await sb.from('models').insert({brand_id: v.brand_id, category_id: v.category_id, name: v.name}).select().single());
+      const nv = check(await sb.from('variants').insert({model_id: m.id, size: v.size, color: v.color, sale_price: v.sale_price, status:'ordinato', sku: skuFor(m, v.size, v.color)}).select().single());
+      vid = nv.id;
+    }
+    check(await sb.from('purchase_lines').insert({variant_id: vid, qty: v.qty, unit_price: v.unit_price, purchase_id: pid})); route(); }});
 }
 async function receivePurchase(id){ if (!confirmBox()) return; check(await sb.rpc('ricevi_acquisto', {p_purchase_id: id})); toast(t('saved')); route(); }
 function addCost(target){
