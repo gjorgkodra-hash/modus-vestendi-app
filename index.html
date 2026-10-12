@@ -3,32 +3,41 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1f1b18">
+<meta name="theme-color" content="#e6dfd5">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Modus Vestendi">
+<meta name="apple-mobile-web-app-title" content="MV">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/favicon.png">
 <title>Modus Vestendi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <style>
 :root{
-  --bg:#f7f4f0; --surface:#ffffff; --ink:#1f1b18; --muted:#6f665e; --line:#e6dfd6;
-  --accent:#8a5a3b; --accent-soft:#f1e6dc; --good:#2f7a4f; --warn:#b7791f; --bad:#b23b3b;
+  /* palette dal logo MV: crema, cuoio, cucitura marrone, inchiostro */
+  --bg:#e6dfd5; --surface:#faf7f2; --ink:#2c2527; --muted:#6e605a; --line:#d8ccbf;
+  --accent:#4c2f2a; --tan:#deb598; --accent-soft:#f1e1d2; --good:#3f7350; --warn:#a8711f; --bad:#a63d3d;
   --radius:12px; --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.04);
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,sans-serif}
 a{color:var(--accent)}
-h1,h2,h3{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;margin:0 0 .5em}
-h1{font-size:28px} h2{font-size:23px} h3{font-size:19px}
-header.top{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;padding:calc(env(safe-area-inset-top) + 10px) 16px 0}
-.top-row{display:flex;align-items:center;gap:12px;justify-content:space-between}
-.brand{font-family:"Cormorant Garamond",serif;font-size:22px;letter-spacing:.04em}
-.top-row select{background:transparent;color:#fff;border:1px solid #555;border-radius:8px;padding:4px 6px}
+h1,h2,h3{font-family:Jost,"Century Gothic",system-ui,sans-serif;font-weight:500;margin:0 0 .5em;letter-spacing:.01em}
+h1{font-size:26px} h2{font-size:21px} h3{font-size:17px}
+header.top{position:sticky;top:0;z-index:20;background:var(--bg);color:var(--ink);border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top) + 10px) 16px 0}
+.top-row{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:nowrap}
+.top-row .row{flex-wrap:nowrap}
+.brand{display:flex;align-items:center;gap:10px;font-family:Jost,"Century Gothic",sans-serif;font-size:17px;letter-spacing:.12em;text-transform:lowercase;color:var(--ink)}
+.brand img{height:30px;width:auto}
+.login-logo{display:block;width:150px;max-width:60%;margin:4px auto 6px}
+.tagline{text-align:center;font-family:Jost,sans-serif;letter-spacing:.18em;font-size:14px;color:var(--ink);margin:0 0 18px}
+.top-row select{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:4px 6px}
 nav.tabs{display:flex;gap:4px;overflow-x:auto;padding:10px 0 0;scrollbar-width:none}
 nav.tabs::-webkit-scrollbar{display:none}
-nav.tabs a{color:#d9cfc6;text-decoration:none;padding:8px 12px;border-radius:10px 10px 0 0;white-space:nowrap;font-size:14px}
-nav.tabs a.on{background:var(--bg);color:var(--ink);font-weight:600}
+nav.tabs a{color:var(--muted);text-decoration:none;padding:8px 12px;border-radius:10px 10px 0 0;white-space:nowrap;font-size:14px}
+nav.tabs a.on{background:var(--tan);color:var(--ink);font-weight:600}
 main{max-width:1100px;margin:0 auto;padding:16px 16px 80px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
 .grid{display:grid;gap:12px}
@@ -40,12 +49,12 @@ main{max-width:1100px;margin:0 auto;padding:16px 16px 80px}
 .spread{justify-content:space-between}
 .muted{color:var(--muted)} .small{font-size:13px}
 button,.btn{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:10px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
-button.primary,.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
-button.accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.primary,.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+button.accent{background:var(--tan);color:var(--ink);border-color:var(--accent)}
 button.danger{color:var(--bad);border-color:#e9c6c6}
 button.link{border:none;background:none;color:var(--accent);padding:4px}
 button:disabled{opacity:.5;cursor:default}
-input,select,textarea{font:inherit;width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+input,select,textarea{font:inherit;width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
 textarea{min-height:90px}
 label{display:block;font-size:13px;color:var(--muted);margin:0 0 4px}
 .field{margin-bottom:12px}
@@ -53,13 +62,13 @@ label{display:block;font-size:13px;color:var(--muted);margin:0 0 4px}
 table{width:100%;border-collapse:collapse}
 th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
-tr.click{cursor:pointer} tr.click:hover{background:#faf7f3}
+tr.click{cursor:pointer} tr.click:hover{background:var(--accent-soft)}
 .table-wrap{overflow-x:auto}
 .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
 .pill.good{background:#e3f1e8;color:var(--good)} .pill.warn{background:#fbf0dc;color:var(--warn)} .pill.bad{background:#f7e1e1;color:var(--bad)} .pill.grey{background:#eee;color:#666}
 .models{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(165px,1fr))}
-.model{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer}
-.model .ph{aspect-ratio:3/4;background:#eee6dd center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#b5a796;font-size:13px}
+.model{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer}
+.model .ph{aspect-ratio:3/4;background:var(--accent-soft) center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#b5a796;font-size:13px}
 .model .b{padding:10px}
 .model .n{font-weight:600;font-size:14px}
 .photos{display:flex;gap:8px;flex-wrap:wrap}
@@ -71,7 +80,7 @@ tr.click{cursor:pointer} tr.click:hover{background:#faf7f3}
 .modal-bg{position:fixed;inset:0;background:rgba(20,16,12,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center}
 .modal{background:var(--surface);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom))}
 @media(min-width:700px){.modal-bg{align-items:center}.modal{border-radius:16px}}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;z-index:60;max-width:90vw}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:10px;z-index:60;max-width:90vw}
 .toast.err{background:var(--bad)}
 .center{min-height:80vh;display:flex;align-items:center;justify-content:center}
 .login{max-width:380px;width:100%}
@@ -271,12 +280,12 @@ const catLabel = id => { const c = S.categories.find(x => x.id === id); if (!c) 
 const catOptions = () => S.categories.map(c => [c.id, catLabel(c.id)]).sort((a, b) => a[1].localeCompare(b[1]));
 const brandName = id => S.brands.find(b => b.id === id)?.name || '';
 
-function langSelect(){ return `<select onchange="setLang(this.value)">${['it','en','sq'].map(l => `<option value="${l}" ${l === LANG ? 'selected' : ''}>${l.toUpperCase()}</option>`).join('')}</select>`; }
+function langSelect(){ return `<select style="width:auto;padding:4px 8px" onchange="setLang(this.value)">${['it','en','sq'].map(l => `<option value="${l}" ${l === LANG ? 'selected' : ''}>${l.toUpperCase()}</option>`).join('')}</select>`; }
 async function setLang(l){ LANG = l; localStorage.setItem('mv_lang', l); if (S.profile) await sb.from('profiles').update({lang: l}).eq('id', S.user.id); location.reload(); }
 
 function renderLogin(mode = 'login'){
   $('#app').innerHTML = `<div class="center"><div class="card login">
-    <div class="row spread"><h1>Modus Vestendi</h1>${langSelect()}</div>
+    <div class="row" style="justify-content:flex-end">${langSelect()}</div><img class="login-logo" src="icons/mv-mark.png" alt="MV"><h1 style="text-align:center;font-size:24px;letter-spacing:.12em;margin:0">modus vestendi</h1><p class="tagline">your online closet</p>
     <form id="lf">
       ${mode === 'signup' ? `<div class="field"><label>${t('name')}</label><input name="name" required></div>` : ''}
       <div class="field"><label>${t('email')}</label><input name="email" type="email" required autocomplete="email"></div>
@@ -301,7 +310,7 @@ function renderLogin(mode = 'login'){
   };
 }
 function renderWaiting(){
-  $('#app').innerHTML = `<div class="center"><div class="card login"><h2>Modus Vestendi</h2><p>${t('waiting_role')}</p><button onclick="logout()">${t('logout')}</button></div></div>`;
+  $('#app').innerHTML = `<div class="center"><div class="card login"><img class="login-logo" src="icons/mv-mark.png" alt="MV"><p>${t('waiting_role')}</p><button onclick="logout()">${t('logout')}</button></div></div>`;
 }
 async function logout(){ await sb.auth.signOut(); location.hash = ''; boot(); }
 
@@ -313,7 +322,7 @@ function navItems(){
   return all.filter(a => allowed.includes(a[0]));
 }
 function renderShell(){
-  $('#app').innerHTML = `<header class="top"><div class="top-row"><div class="brand">Modus Vestendi</div><div class="row">${langSelect()}<button class="link" style="color:#d9cfc6" onclick="logout()">${t('logout')}</button></div></div>
+  $('#app').innerHTML = `<header class="top"><div class="top-row"><div class="brand"><img src="icons/mv-mark.png" alt="MV"><span>modus vestendi</span></div><div class="row">${langSelect()}<button class="link" onclick="logout()">${t('logout')}</button></div></div>
   <nav class="tabs">${navItems().map(([k, h]) => `<a href="${h}" data-k="${k}">${t(k)}</a>`).join('')}</nav></header><main id="main"></main>`;
 }
 window.addEventListener('hashchange', () => S.profile?.role && route());
@@ -927,7 +936,7 @@ async function viewSettings(main){
   const carriers = can.sales() ? `<div class="card"><div class="row spread"><h3>${t('carriers')}</h3><button onclick="editCarrier()">+ ${t('add')}</button></div><table>${S.carriers.map(c => `<tr><td><b>${esc(c.name)}</b><div class="small muted">${esc(c.tracking_url_template || t('forgot_template'))}</div></td><td class="right"><button class="link" onclick="editCarrier(${c.id})">${t('edit')}</button></td></tr>`).join('')}</table></div>` : '';
   const cats = can.catalogWrite() ? `<div class="card"><div class="row spread"><h3>${t('category')} / ${t('brand')}</h3><div class="row"><button onclick="addCategory()">+ ${t('category')}</button><button onclick="addBrand()">+ ${t('brand')}</button></div></div><p class="small">${catOptions().map(c => esc(c[1])).join(' · ')}</p><p class="small muted">${S.brands.map(b => esc(b.name)).join(' · ')}</p></div>` : '';
   const backup = can.admin() ? `<div class="card"><h3>${t('backup')}</h3><p class="small muted">Scarica una copia leggibile dei dati e salvala nella cartella Drive condivisa.</p><div class="chips">${['models','variants','variant_costs','purchases','purchase_lines','purchase_costs','customers','customer_measurements','addresses','orders','order_lines','payments','shipments','expenses','stock_movements','activity_log'].map(x => `<button onclick="exportCsv('${x}')">${x}</button>`).join('')}</div></div>` : '';
-  main.innerHTML = `<h1>${t('settings')}</h1><div class="card"><p>${esc(S.profile.full_name || '')} · ${esc(S.profile.email || '')} · <span class="pill">${esc(ev('role', S.profile.role))}</span></p><label>${t('language')}</label>${langSelect().replace('<select', '<select style="max-width:160px;color:var(--ink);border-color:var(--line)"')}</div>${users}${carriers}${cats}${backup}`;
+  main.innerHTML = `<h1>${t('settings')}</h1><div class="card"><p>${esc(S.profile.full_name || '')} · ${esc(S.profile.email || '')} · <span class="pill">${esc(ev('role', S.profile.role))}</span></p><label>${t('language')}</label>${langSelect()}</div>${users}${carriers}${cats}${backup}`;
 }
 async function setRole(id, role){ check(await sb.from('profiles').update({role: role || null}).eq('id', id)); toast(t('saved')); }
 function editCarrier(id){
