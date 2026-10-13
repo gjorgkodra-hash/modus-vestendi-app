@@ -202,6 +202,9 @@ const T = {
   sold_items:['Pezzi venduti nel periodo','Items sold in the period','Copët e shitura në periudhë'],
   weight:['Peso (kg)','Weight (kg)','Pesha (kg)'],
   period:['Periodo','Period','Periudha'],
+  campaign:['Campagna','Campaign','Fushatë'], expense:['Spesa','Expense','Shpenzim'], budget:['Budget','Budget','Buxheti'], spent:['Speso','Spent','Shpenzuar'],
+  spent_real:['Speso finora (reale)','Spent so far (actual)','Shpenzuar deri tani (real)'], spent_real_stop:['Quanto hai speso davvero','How much you actually spent','Sa ke shpenzuar realisht'],
+  stop_now:['Ferma campagna','Stop campaign','Ndalo fushatën'], end_planned:['Fine prevista','Planned end','Mbarimi i planifikuar'], platform:['Piattaforma','Platform','Platforma'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Dashboard','Dashboard','Dashboard'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -273,6 +276,7 @@ const E = {
   return_outcome:{rimborso:['Rimborso','Refund','Rimbursim'],cambio:['Cambio','Exchange','Ndërrim'],credito:['Credito','Store credit','Kredi']},
   expense_cat:{tasse:['Tasse','Taxes','Taksat'],gestione:['Gestione','Operations','Menaxhimi'],marketing:['Marketing','Marketing','Marketing'],packaging:['Packaging','Packaging','Paketimi'],abbonamenti:['Abbonamenti','Subscriptions','Abonimet'],altro:['Altro','Other','Tjetër']},
   role:{admin:['Amministratore','Administrator','Administrator'],vendite:['Vendite','Sales','Shitje'],magazzino:['Magazzino / acquisti','Warehouse / buying','Magazina / blerje']},
+  camp_status:{attiva:['Attiva','Active','Aktive'],fermata:['Fermata','Stopped','E ndalur'],conclusa:['Conclusa','Finished','E përfunduar']},
   req_status:{aperta:['Aperta','Open','E hapur'],trovata:['Trovata','Found','U gjet'],chiusa:['Chiusa','Closed','E mbyllur']}
 };
 const ev = (group, v) => v == null ? '' : (E[group] && E[group][v] ? E[group][v][LANGS[LANG]] : v);
@@ -295,9 +299,9 @@ const can = {
   admin: () => S.profile?.role === 'admin'
 };
 function statusPill(group, v){
-  const good = ['in_magazzino','consegnato','incassato','consegnato_dal_corriere','ricevuto','trovata'];
+  const good = ['in_magazzino','consegnato','incassato','consegnato_dal_corriere','ricevuto','trovata','attiva'];
   const warn = ['bozza','da_incassare','da_spedire','in_arrivo','ordinato','riservato','in_dogana','aperta','da_ordinare'];
-  const bad = ['annullato','problema','reso','venduto'];
+  const bad = ['annullato','problema','reso','venduto','fermata'];
   const cls = good.includes(v) ? 'good' : warn.includes(v) ? 'warn' : bad.includes(v) ? 'bad' : '';
   return `<span class="pill ${cls}">${esc(ev(group, v))}</span>`;
 }
@@ -1332,20 +1336,48 @@ function returnLine(lid){
 async function viewExpenses(main){
   const [ex, ca] = await Promise.all([sb.from('expenses').select('*').order('expense_date', {ascending:false}).limit(300), sb.from('campaigns').select('*').order('start_date', {ascending:false})]);
   const custs = check(await sb.from('customers').select('id,campaign_id').not('campaign_id', 'is', null));
-  main.innerHTML = `<div class="row spread"><h1>${t('expenses')}</h1><div class="row"><button onclick="addCampaign()">+ ${t('campaigns')}</button><button class="primary" onclick="addExpense()">+ ${t('expenses')}</button></div></div>
-  <div class="card"><div class="table-wrap"><table><tr><th>${t('date')}</th><th>${t('category')}</th><th>${t('description')}</th><th class="right">${t('amount')}</th><th></th></tr>
-  ${check(ex).map(e => `<tr><td>${fdate(e.expense_date)}</td><td>${esc(ev('expense_cat', e.category))}</td><td>${esc(e.description || '')}</td><td class="right">${eur(e.amount)}</td><td class="right"><button class="link" onclick="delRow('expenses',${e.id})">${t('delete')}</button></td></tr>`).join('') || `<tr><td colspan="5" class="empty">${t('no_data')}</td></tr>`}</table></div></div>
-  <div class="card"><h3>${t('campaigns')}</h3><table><tr><th>${t('name')}</th><th>${t('date')}</th><th class="right">${t('spend')}</th><th class="right">${t('customers')}</th><th></th></tr>
-  ${check(ca).map(c => `<tr><td>${esc(c.name)}</td><td>${fdate(c.start_date)} – ${fdate(c.end_date)}</td><td class="right">${eur(c.spend)}</td><td class="right">${custs.filter(x => x.campaign_id === c.id).length}</td><td class="right"><button class="link" onclick="delRow('campaigns',${c.id})">${t('delete')}</button></td></tr>`).join('') || `<tr><td colspan="5" class="empty">${t('no_data')}</td></tr>`}</table></div>`;
+  window._camps = check(ca); window._exps = check(ex);
+  const row = (left, sub, right, actions) => `<div class="row" style="flex-wrap:nowrap;padding:10px 0;border-top:1px solid var(--line)"><div style="flex:1;min-width:0">${left}<div class="small muted">${sub}</div><div>${actions}</div></div><div class="right" style="flex:none">${right}</div></div>`;
+  main.innerHTML = `<div class="row spread"><h1>${t('expenses')}</h1><div class="row"><button onclick="editCampaign()">+ ${t('campaign')}</button><button class="primary" onclick="editExpense()">+ ${t('expense')}</button></div></div>
+  <div class="card"><h3>${t('campaigns')}</h3>
+  ${window._camps.map(c => row(`<b>${esc(c.name)}</b> ${statusPill('camp_status', c.status)}`,
+    `${esc(c.platform || '')} ${fdate(c.start_date)} – ${fdate(c.end_date)}${c.budget ? ` · ${t('budget')} ${eur(c.budget)}` : ''} · ${custs.filter(x => x.campaign_id === c.id).length} ${t('customers').toLowerCase()}`,
+    `<div class="small muted">${t('spent')}</div><b>${eur(c.spend)}</b>`,
+    `${c.status === 'attiva' ? `<button class="link" style="color:var(--bad)" onclick="stopCampaign(${c.id})">■ ${t('stop_now')}</button>` : ''}<button class="link" onclick="editCampaign(${c.id})">${t('edit')}</button><button class="link" onclick="delRow('campaigns',${c.id})">${t('delete')}</button>`)).join('') || `<div class="empty">${t('no_data')}</div>`}</div>
+  <div class="card"><h3>${t('expenses')}</h3>
+  ${window._exps.map(e => row(`<b>${esc(ev('expense_cat', e.category))}</b>`, `${fdate(e.expense_date)}${e.description ? ' · ' + esc(e.description) : ''}`, `<b>${eur(e.amount)}</b>`,
+    `<button class="link" onclick="editExpense(${e.id})">${t('edit')}</button><button class="link" onclick="delRow('expenses',${e.id})">${t('delete')}</button>`)).join('') || `<div class="empty">${t('no_data')}</div>`}</div>`;
 }
-function addExpense(){
-  form({title:t('expenses'), fields:[{name:'category', label:t('category'), type:'select', options:opts('expense_cat'), empty:false},{name:'amount', label:t('amount') + ' (€)', type:'number', required:true},{name:'expense_date', label:t('date'), type:'date', value:today()},{name:'description', label:t('description')}],
-    onSubmit: async v => { check(await sb.from('expenses').insert(v)); route(); }});
+function editExpense(id){
+  const e = id ? window._exps.find(x => x.id === id) : {expense_date: today()};
+  form({title:t('expense'), fields:[{name:'category', label:t('category'), type:'select', options:opts('expense_cat'), empty:false},{name:'amount', label:t('amount') + ' (€)', type:'number', required:true},{name:'expense_date', label:t('date'), type:'date'},{name:'description', label:t('description')}],
+    values:e, onSubmit: async v => { if (id) check(await sb.from('expenses').update(v).eq('id', id)); else check(await sb.from('expenses').insert(v)); route(); }});
 }
-function addCampaign(){
-  form({title:t('campaigns'), fields:[{name:'name', label:t('name'), required:true},{name:'start_date', label:t('start'), type:'date'},{name:'end_date', label:t('end'), type:'date'},{name:'spend', label:t('spend') + ' (€)', type:'number'},{name:'notes', label:t('notes')}],
-    onSubmit: async v => { v.spend = v.spend || 0; check(await sb.from('campaigns').insert(v)); route(); }});
+function editCampaign(id){
+  const c = id ? window._camps.find(x => x.id === id) : {start_date: today(), status:'attiva', platform:'Instagram'};
+  form({title:t('campaign'), fields:[
+    {name:'name', label:t('name'), required:true},
+    {name:'platform', label:t('platform')},
+    {name:'start_date', label:t('start'), type:'date'},
+    {name:'end_date', label:t('end_planned'), type:'date'},
+    {name:'budget', label:t('budget') + ' (€)', type:'number'},
+    {name:'spend', label:t('spent_real') + ' (€)', type:'number'},
+    {name:'status', label:t('status'), type:'select', options:opts('camp_status'), empty:false},
+    {name:'notes', label:t('notes'), type:'textarea'}
+  ], values:c, onSubmit: async v => {
+    v.spend = v.spend ?? (id ? c.spend : 0) ?? 0;
+    if (id) check(await sb.from('campaigns').update(v).eq('id', id)); else check(await sb.from('campaigns').insert(v));
+    route(); }});
 }
+function stopCampaign(id){
+  const c = window._camps.find(x => x.id === id);
+  form({title:`${t('stop_now')}: ${c.name}`, submitLabel:t('stop_now'), fields:[
+    {name:'spend', label:t('spent_real_stop') + ' (€)', type:'number', value: c.spend, required:true},
+    {name:'end_date', label:t('end'), type:'date', value: today()}
+  ], onSubmit: async v => { check(await sb.from('campaigns').update({...v, status:'fermata'}).eq('id', id)); toast(t('saved')); route(); }});
+}
+function addExpense(){ return editExpense(); }
+function addCampaign(){ return editCampaign(); }
 
 // ====== Report (admin) ======
 let repF = {preset:'ytd', from:'', to:''};
