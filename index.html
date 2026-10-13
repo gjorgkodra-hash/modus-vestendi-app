@@ -183,6 +183,10 @@ const T = {
   of_which_ordered:['ordinati, da consegnare','ordered, to deliver','të porositura, për t\'u dorëzuar'],
   qty_pieces:['Pezzi','Pieces','Copë'], sizes_hint:['Scegli un gruppo di taglie o scrivile a mano (lettere o numeri). TU = taglia unica. Le taglie con 0 pezzi restano visibili come esaurite.','Pick a size set or type sizes (letters or numbers). TU = one size. Sizes with 0 pieces stay visible as sold out.','Zgjidh një grup masash ose shkruaji vetë (shkronja ose numra). TU = masë e vetme. Masat me 0 copë mbeten si të mbaruara.'],
   pick_size:['Scegli la taglia','Choose the size','Zgjidh masën'],
+  removed_from_catalog:['tolto dal catalogo','removed from catalogue','hequr nga katalogu'], edit_price:['Correggi prezzo','Fix price','Korrigjo çmimin'],
+  variant_has_history:['Questa taglia ha acquisti o ordini: non si elimina per non perdere lo storico. Usa Modifica per cambiare taglia o ± per mettere 0 pezzi.','This size has purchases or orders: it cannot be deleted, to keep the history. Use Edit to change the size or ± to set 0 pieces.','Kjo masë ka blerje ose porosi: nuk fshihet që të ruhet historiku. Përdor Ndrysho për të ndryshuar masën ose ± për ta bërë 0.'],
+  model_has_history:['Questo prodotto ha acquisti o ordini: puoi solo archiviarlo, così lo storico resta.','This product has purchases or orders: you can only archive it, so the history stays.','Ky produkt ka blerje ose porosi: mund vetëm ta arkivosh, që të mbetet historiku.'],
+  purchase_history:['Storico pezzi acquistati','Purchased items history','Historiku i copëve të blera'], receipts:['Acquisti (scontrini)','Purchases (receipts)','Blerjet (faturat)'], in_stock_short:['in magazzino','in stock','në magazinë'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -613,11 +617,10 @@ async function viewModel(main, id){
   ['#pf', '#pfc'].forEach(sel => { const el = $(sel); if (el) el.onchange = async e => { await uploadPhotos(m.id, [...e.target.files], m.photos.length); route(); }; });
 }
 async function deleteVariant(vid){
-  const used = check(await sb.from('order_lines').select('id').eq('variant_id', vid).limit(1));
-  if (used.length) return toast(t('variant_has_orders'), true);
+  const [used, bought] = await Promise.all([sb.from('order_lines').select('id').eq('variant_id', vid).limit(1).then(check), sb.from('purchase_lines').select('id').eq('variant_id', vid).limit(1).then(check)]);
+  if (used.length || bought.length) return toast(t('variant_has_history'), true);
   const v = window._model.variants.find(x => x.id === vid);
   if (!confirm(`${t('delete')}: ${[v.size, v.color].filter(Boolean).join(' · ') || t('one_size')}?\n${t('delete_variant_hint')}`)) return;
-  check(await sb.from('purchase_lines').delete().eq('variant_id', vid));
   check(await sb.from('variants').delete().eq('id', vid));
   toast(t('saved')); route();
 }
@@ -690,9 +693,15 @@ function reserveVariant(vid){ return sellFromModel(vid, 'riservato'); }
 
 // ====== Acquisti ======
 async function viewPurchases(main){
-  const ps = check(await sb.from('purchases').select('*,suppliers(name),trips(title),purchase_lines(qty,unit_price)').order('purchase_date', {ascending:false}));
+  const ps = check(await sb.from('purchases').select('*,suppliers(name),trips(title),purchase_lines(id,qty,unit_price,allocated_unit_cost,item_label,variant_id,variants(qty,model_id))').order('purchase_date', {ascending:false}));
+  const hist = ps.flatMap(p => p.purchase_lines.map(l => ({...l, p})));
   main.innerHTML = `<div class="row spread"><h1>${t('purchases')}</h1><button class="primary" onclick="newPurchase()">+ ${t('new_purchase')}</button></div>
   <div class="help">${t('purch_help')}</div>
+  <div class="card"><h3>${t('purchase_history')}</h3>
+  ${hist.map(l => `<div class="row" style="flex-wrap:nowrap;padding:9px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='${l.variants ? '#/articolo/' + l.variants.model_id : '#/acquisto/' + l.p.id}'">
+    <div style="flex:1;min-width:0"><b>${esc(l.item_label || '—')}</b><div class="small muted">${fdate(l.p.purchase_date)} · ${esc(l.p.suppliers?.name || '')}${l.p.trips ? ' · ' + esc(l.p.trips.title) : ''} · ${l.qty} × ${eur(l.unit_price)}</div></div>
+    <div class="right" style="flex:none"><b>${eur(Number(l.unit_price) + Number(l.allocated_unit_cost))}</b><div class="small">${!l.variants ? `<span class="muted">${t('removed_from_catalog')}</span>` : l.variants.qty > 0 ? `<span style="color:var(--good)">${t('in_stock_short')}</span>` : `<span class="muted">${t('sold_short')}</span>`}</div></div></div>`).join('') || `<div class="empty">${t('no_data')}</div>`}</div>
+  <h3>${t('receipts')}</h3>
   <div class="card"><div class="table-wrap"><table><tr><th>#</th><th>${t('date')}</th><th>${t('supplier')}</th><th>${t('trip')}</th><th class="right">${t('lines')}</th><th class="right">${t('total')}</th><th>${t('status')}</th></tr>
   ${ps.map(p => { const q = p.purchase_lines.reduce((a, l) => a + l.qty, 0), tot = p.purchase_lines.reduce((a, l) => a + l.qty * l.unit_price, 0);
     return `<tr class="click" onclick="location.hash='#/acquisto/${p.id}'"><td>${p.id}</td><td>${fdate(p.purchase_date)}</td><td>${esc(p.suppliers?.name)}</td><td>${esc(p.trips?.title)}</td><td class="right">${q}</td><td class="right">${eur(tot)}</td><td>${p.status === 'ricevuto' && p.buy_mode !== 'online' ? `<span class="pill good">${t('collected')}</span>` : statusPill('purchase_status', p.status)}</td></tr>`; }).join('') || `<tr><td colspan="7" class="empty">${t('no_data')}</td></tr>`}</table></div></div>
@@ -743,7 +752,7 @@ async function allVariants(){
 }
 const variantLabel = v => `${brandName(v.models?.brand_id)} · ${v.models?.name} · ${v.size || ''} ${v.color || ''} (${v.sku || v.id})`;
 async function viewPurchase(main, id){
-  const p = check(await sb.from('purchases').select('*,suppliers(name),trips(title),purchase_lines(*,variants(sku,size,color,models(name,brand_id))),purchase_costs(*)').eq('id', id).single());
+  const p = check(await sb.from('purchases').select('*,suppliers(name),trips(title),purchase_lines(*,variants(sku,size,color,model_id,models(name,brand_id))),purchase_costs(*)').eq('id', id).single());
   const tot = p.purchase_lines.reduce((a, l) => a + l.qty * l.unit_price, 0);
   const ctot = p.purchase_costs.reduce((a, c) => a + Number(c.amount), 0);
   window._purchase = p;
@@ -755,9 +764,9 @@ async function viewPurchase(main, id){
   <div class="card"><div class="row spread"><h3>${t('lines')}</h3><button class="primary" onclick="addPurchaseLine(${p.id})">+ ${t('add_line')}</button></div>
   ${p.status === 'ricevuto' ? `<p class="small muted" style="margin:0 0 6px">${t('received_add_hint')}</p>` : ''}
   ${p.purchase_lines.map(l => `<div class="row" style="flex-wrap:nowrap;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)">
-    <div style="flex:1;min-width:0"><b>${esc(brandName(l.variants.models.brand_id))} ${esc(l.variants.models.name)}</b>
-    <div class="small muted">${esc([l.variants.size, l.variants.color].filter(Boolean).join(' · '))} · ${l.qty} × ${eur(l.unit_price)}${Number(l.allocated_unit_cost) ? ` + ${eur(l.allocated_unit_cost)} ${t('costs').toLowerCase()}` : ''}</div>
-    ${p.status !== 'ricevuto' ? `<button class="link small" onclick="delRow('purchase_lines',${l.id})">${t('delete')}</button>` : ''}</div>
+    <div style="flex:1;min-width:0">${l.variants ? `<a href="#/articolo/${l.variants.model_id}"><b>${esc(brandName(l.variants.models.brand_id))} ${esc(l.variants.models.name)}</b></a>
+    <div class="small muted">${esc([l.variants.size, l.variants.color].filter(Boolean).join(' · '))} · ` : `<b>${esc(l.item_label || '—')}</b> <span class="pill grey">${t('removed_from_catalog')}</span><div class="small muted">`}${l.qty} × ${eur(l.unit_price)}${Number(l.allocated_unit_cost) ? ` + ${eur(l.allocated_unit_cost)} ${t('costs').toLowerCase()}` : ''}</div>
+    <button class="link small" onclick="editPurchaseLine(${l.id}, ${l.unit_price})">${t('edit_price')}</button>${p.status !== 'ricevuto' ? `<button class="link small" onclick="delRow('purchase_lines',${l.id})">${t('delete')}</button>` : ''}</div>
     <div class="right" style="flex:none"><div class="small muted">${t('landed_cost')}</div><b>${eur(Number(l.unit_price) + Number(l.allocated_unit_cost))}</b></div></div>`).join('') || `<div class="empty">${t('no_data')}</div>`}
   <div class="row spread" style="padding-top:10px;border-top:1px solid var(--line)"><b>${t('total')}</b><span><b>${eur(tot)}</b>${ctot ? ` <span class="small muted">+ ${eur(ctot)} ${t('costs').toLowerCase()}</span>` : ''}</span></div></div>
   <div class="card"><div class="row spread"><h3>${t('costs')}</h3><button onclick="addCost({purchase_id:${p.id}})">+ ${t('add')}</button></div>
@@ -827,11 +836,10 @@ async function addPurchaseLine(pid){
 async function deleteModel(id){
   const m = window._model;
   const vids = m.variants.map(v => v.id).concat([0]);
-  const used = check(await sb.from('order_lines').select('id').in('variant_id', vids).limit(1));
-  if (used.length) return toast(t('model_has_orders'), true);
+  const [used, bought] = await Promise.all([sb.from('order_lines').select('id').in('variant_id', vids).limit(1).then(check), sb.from('purchase_lines').select('id').in('variant_id', vids).limit(1).then(check)]);
+  if (used.length || bought.length) return toast(t('model_has_history'), true);
   if (!confirm(`${t('delete')}: ${brandName(m.brand_id)} ${m.name}?\n${t('delete_model_hint')}`)) return;
   if (m.photos.length) await sb.storage.from('foto').remove(m.photos.map(p => p.path));
-  check(await sb.from('purchase_lines').delete().in('variant_id', vids));
   check(await sb.from('models').delete().eq('id', m.id));
   toast(t('saved')); location.hash = '#/catalogo';
 }
@@ -841,6 +849,10 @@ async function deleteOrder(id){
   if (!['annullato', 'bozza', 'riservato'].includes(od.status)) check(await sb.rpc('annulla_ordine', {p_order_id: id}));
   check(await sb.from('orders').delete().eq('id', id));
   toast(t('saved')); location.hash = '#/ordini';
+}
+function editPurchaseLine(id, price){
+  form({title:t('edit_price'), fields:[{name:'unit_price', label:t('purchase_price') + ' (€)', type:'number', value:price, required:true}],
+    onSubmit: async v => { check(await sb.from('purchase_lines').update({unit_price: v.unit_price}).eq('id', id)); route(); }});
 }
 async function receivePurchase(id){ if (!confirmBox()) return; check(await sb.rpc('ricevi_acquisto', {p_purchase_id: id})); toast(t('saved')); route(); }
 function addCost(target){
