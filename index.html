@@ -188,6 +188,9 @@ const T = {
   model_has_history:['Questo prodotto ha acquisti o ordini: puoi solo archiviarlo, così lo storico resta.','This product has purchases or orders: you can only archive it, so the history stays.','Ky produkt ka blerje ose porosi: mund vetëm ta arkivosh, që të mbetet historiku.'],
   purchase_history:['Storico pezzi acquistati','Purchased items history','Historiku i copëve të blera'], receipts:['Acquisti (scontrini)','Purchases (receipts)','Blerjet (faturat)'], in_stock_short:['in magazzino','in stock','në magazinë'],
   or_pct:['se compilato sostituisce lo sconto in €','if filled, replaces the € discount','nëse plotësohet, zëvendëson zbritjen në €'],
+  margins_delivery:['Margini degli ordini in consegna','Margins on orders being delivered','Marzhet e porosive në dorëzim'],
+  margins_hint:['Prezzo − sconto − costo reale (acquisto + costi d\'acquisto) − spedizione. Tocca una riga per aprire l\'ordine.','Price − discount − landed cost (purchase + buying costs) − shipping. Tap a row to open the order.','Çmimi − zbritja − kosto reale (blerja + kostot e blerjes) − dërgesa. Prek një rresht për të hapur porosinë.'],
+  cost_missing:['manca acquisto','no purchase cost','mungon kostoja'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -498,7 +501,23 @@ async function viewDashboard(main){
     const ro = check(await sb.from('orders').select('id,order_no,order_date,status,customers(full_name)').neq('status', 'annullato').order('created_at', {ascending:false}).limit(8));
     recent = `<div class="card"><h3>${t('recent_orders')}</h3>${ro.length ? `<div class="table-wrap"><table>${ro.map(o => `<tr class="click" onclick="location.hash='#/ordine/${o.id}'"><td>${esc(o.order_no)}</td><td>${esc(o.customers?.full_name)}</td><td>${fdate(o.order_date)}</td><td>${statusPill('order_status', o.status)}</td></tr>`).join('')}</table></div>` : `<div class="empty">${t('no_data')}</div>`}</div>`;
   }
-  main.innerHTML = `<h1>${t('dashboard')}</h1>${alerts}<div class="grid g4">${kpis}</div>${recent}
+  let margins = '';
+  if (can.admin()){
+    const ml = check(await sb.from('v_line_margins').select('*').in('status', ['confermato','spedito']).order('order_id'));
+    if (ml.length){
+      const sum = k => ml.reduce((a, r) => a + Number(r[k] || 0), 0);
+      const cost = r => Number(r.qty) * Number(r.landed_cost || 0);
+      const net = sum('gross') - sum('discount_share');
+      const pct = (mg, n) => n ? ` <span class="small muted">${Math.round(mg / n * 100)}%</span>` : '';
+      margins = `<div class="card"><h3>${t('margins_delivery')}</h3><p class="small muted" style="margin-top:-4px">${t('margins_hint')}</p>
+      <div class="table-wrap"><table><tr><th>${t('items')}</th><th>${t('customer')}</th><th class="right">${t('price')}</th><th class="right">${t('discount')}</th><th class="right">${t('cost')}</th><th class="right">${t('shipping_cost')}</th><th class="right">${t('margin')}</th></tr>
+      ${ml.map(r => `<tr class="click" onclick="location.hash='#/ordine/${r.order_id}'"><td>${esc(r.item)}<div class="small muted">${esc(r.order_no)}</div></td><td>${esc(r.customer)}</td><td class="right">${eur(r.gross)}</td><td class="right">${Number(r.discount_share) ? '− ' + eur(r.discount_share) : '—'}</td>
+        <td class="right">${r.landed_cost == null ? `<span style="color:var(--warn)">${t('cost_missing')}</span>` : eur(cost(r))}</td><td class="right">${Number(r.shipping_share) ? eur(r.shipping_share) : '—'}</td>
+        <td class="right"><b style="color:${Number(r.margin) >= 0 ? 'var(--good)' : 'var(--bad)'}">${eur(r.margin)}</b>${pct(Number(r.margin), Number(r.gross) - Number(r.discount_share))}</td></tr>`).join('')}
+      <tr><td><b>${t('total')}</b></td><td></td><td class="right"><b>${eur(sum('gross'))}</b></td><td class="right">${sum('discount_share') ? '− ' + eur(sum('discount_share')) : '—'}</td><td class="right"><b>${eur(ml.reduce((a, r) => a + cost(r), 0))}</b></td><td class="right">${eur(sum('shipping_share'))}</td><td class="right"><b>${eur(sum('margin'))}</b>${pct(sum('margin'), net)}</td></tr></table></div></div>`;
+    }
+  }
+  main.innerHTML = `<h1>${t('dashboard')}</h1>${alerts}<div class="grid g4">${kpis}</div>${margins}${recent}
   <div class="card"><h3>${t('low_stock')}</h3>${low.length ? `<table>${low.map(v => `<tr class="click" onclick="location.hash='#/articolo/${v.models.id}'"><td>${esc(brandName(v.models.brand_id))} · ${esc(v.models.name)}</td><td>${esc(v.size || '')} ${esc(v.color || '')}</td><td class="right">${v.qty}</td></tr>`).join('')}</table>` : `<div class="empty">${t('no_data')}</div>`}</div>`;
 }
 
