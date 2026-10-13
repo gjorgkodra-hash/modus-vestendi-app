@@ -130,7 +130,7 @@ const T = {
   new_item_inline:['Oppure articolo nuovo','Or new item','Ose artikull i ri'], pick_or_new:['Scegli un articolo del catalogo o scrivi il nome di uno nuovo','Pick a catalogue item or type a new one','Zgjidh një artikull nga katalogu ose shkruaj emrin e një të riu'],
   purch_help:['<b>Acquisto</b> = uno scontrino: i pezzi comprati in un negozio, con il prezzo pagato. <b>Punto d\'acquisto</b> = il negozio o outlet (si crea una volta e si riusa). <b>Viaggio</b> = facoltativo: un giro di acquisti con più negozi; benzina, pedaggi e hotel si dividono su tutti i pezzi del viaggio.','<b>Purchase</b> = one receipt: the items bought in one store, with the price paid. <b>Store</b> = the shop or outlet (created once, reused). <b>Trip</b> = optional: a buying trip across several stores; fuel, tolls and hotel are split across every item of the trip.','<b>Blerja</b> = një faturë: copët e blera në një dyqan, me çmimin e paguar. <b>Pika e blerjes</b> = dyqani ose outleti (krijohet një herë dhe ripërdoret). <b>Udhëtimi</b> = opsional: një xhiro blerjesh në disa dyqane; karburanti, pagesat rrugore dhe hoteli ndahen mbi të gjitha copët e udhëtimit.'],
   photo_hint:['Scatta o scegli foto','Take or choose photos','Bëj ose zgjidh foto'], uploading:['Caricamento foto…','Uploading photos…','Po ngarkohen fotot…'],
-  sell:['Registra ordine','Record order','Regjistro porosinë'], sold_price:['Prezzo di vendita (con eventuale sconto)','Sold price (after any discount)','Çmimi i shitjes (me zbritjen nëse ka)'],
+  sell:['Registra ordine','Record order','Regjistro porosinë'], sold_price:['Prezzo di vendita','Sale price','Çmimi i shitjes'],
   cust_search:['Cerca nome, @instagram o telefono…','Search name, @instagram or phone…','Kërko emrin, @instagram ose telefonin…'],
   if_new_customer:['Cliente nuovo?','New customer?','Klient i ri?'], if_new_hint:['Compila solo se il cliente non è nella lista: viene creato con il nome scritto sopra.','Fill in only if the customer is not in the list: they are created with the name typed above.','Plotëso vetëm nëse klienti nuk është në listë: krijohet me emrin e shkruar sipër.'],
   no_stock:['Nessun pezzo disponibile: registra prima l\'arrivo in magazzino.','No items in stock: record the stock arrival first.','Nuk ka copë në gjendje: regjistro më parë hyrjen në magazinë.'],
@@ -187,6 +187,7 @@ const T = {
   variant_has_history:['Questa taglia ha acquisti o ordini: non si elimina per non perdere lo storico. Usa Modifica per cambiare taglia o ± per mettere 0 pezzi.','This size has purchases or orders: it cannot be deleted, to keep the history. Use Edit to change the size or ± to set 0 pieces.','Kjo masë ka blerje ose porosi: nuk fshihet që të ruhet historiku. Përdor Ndrysho për të ndryshuar masën ose ± për ta bërë 0.'],
   model_has_history:['Questo prodotto ha acquisti o ordini: puoi solo archiviarlo, così lo storico resta.','This product has purchases or orders: you can only archive it, so the history stays.','Ky produkt ka blerje ose porosi: mund vetëm ta arkivosh, që të mbetet historiku.'],
   purchase_history:['Storico pezzi acquistati','Purchased items history','Historiku i copëve të blera'], receipts:['Acquisti (scontrini)','Purchases (receipts)','Blerjet (faturat)'], in_stock_short:['in magazzino','in stock','në magazinë'],
+  or_pct:['se compilato sostituisce lo sconto in €','if filled, replaces the € discount','nëse plotësohet, zëvendëson zbritjen në €'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -1056,7 +1057,7 @@ async function openOrderSheet({modelId, variantId, customerId, mode} = {}){
     <div id="os_sizes"></div>
     <div id="os_lines"></div>
     <div class="field"><input id="os_pick" list="os_pl" placeholder="+ ${t('add_product_search')}"><datalist id="os_pl">${pool.map(v => `<option value="${esc(pickLabel(v))}"></option>`).join('')}</datalist></div>
-    <div class="grid g2"><div class="field"><label>${t('discount')} (€)</label><input id="os_disc" type="number" step="any" value="0"></div>
+    <div class="grid g2"><div class="field"><label>${t('discount')}</label><div class="row" style="flex-wrap:nowrap"><input id="os_disc" type="number" step="any" min="0" value="0" style="flex:1"><select id="os_dt" style="width:76px"><option value="eur">€</option><option value="pct">%</option></select></div><div id="os_dinfo" class="small muted"></div></div>
     <div class="field"><label>${t('total')}</label><div id="os_tot" style="font-size:22px;font-weight:700;padding-top:4px">—</div></div></div>
     <h3 style="margin-top:6px">3 · ${t('payments')}</h3>
     <div class="field"><select id="os_pay"><option value="da_incassare">${t('pay_cod')}</option><option value="incassato">${t('pay_now')}</option></select></div>
@@ -1078,20 +1079,23 @@ async function openOrderSheet({modelId, variantId, customerId, mode} = {}){
       <div style="margin-top:6px"><label>${t('size')}</label><select data-sz="${i}">${siblings(l.v).concat(siblings(l.v).some(x => x.id === l.v.id) ? [] : [l.v]).map(x => `<option value="${x.id}" ${x.id === l.v.id ? 'selected' : ''}>${esc(szName(x))} · ${avail[x.id] ?? 0} ${t('available')}</option>`).join('')}</select></div>
       <div class="row" style="flex-wrap:nowrap;margin-top:6px"><div style="flex:1"><label>${t('sold_price')}</label><input type="number" step="any" data-pr="${i}" value="${esc(l.price)}"></div>
       <div style="width:90px"><label>${t('qty')}</label><input type="number" min="1" max="${avail[l.v.id]}" data-q="${i}" value="${l.qty}"></div></div></div>`).join('') || `<p class="small muted">${t('no_items_yet')}</p>`;
-    const tot = lines.reduce((a, l) => a + (Number(l.price) || 0) * (Number(l.qty) || 0), 0) - (Number($m('#os_disc').value) || 0);
-    $m('#os_tot').textContent = eur(tot);
+    showTot();
   };
+  const subtotal = () => lines.reduce((a, l) => a + (Number(l.price) || 0) * (Number(l.qty) || 0), 0);
+  const discEur = () => { const d = Number($m('#os_disc').value) || 0; return $m('#os_dt').value === 'pct' ? Math.round(subtotal() * Math.min(d, 100)) / 100 : d; };
+  const showTot = () => { const de = discEur(); $m('#os_tot').textContent = eur(subtotal() - de); $m('#os_dinfo').textContent = de ? `− ${eur(de)}${$m('#os_dt').value === 'eur' && subtotal() ? ` (${Math.round(de / subtotal() * 1000) / 10}%)` : ''}` : ''; };
   m.addEventListener('input', e => {
     const i = e.target.dataset.pr ?? e.target.dataset.q;
     if (e.target.dataset.pr != null) lines[i].price = e.target.value;
     if (e.target.dataset.q != null) lines[i].qty = e.target.value;
-    if (i != null || e.target.id === 'os_disc'){ const tot = lines.reduce((a, l) => a + (Number(l.price) || 0) * (Number(l.qty) || 0), 0) - (Number($m('#os_disc').value) || 0); $m('#os_tot').textContent = eur(tot); }
+    if (i != null || e.target.id === 'os_disc') showTot();
   });
   m.addEventListener('click', e => {
     if (e.target.dataset.rm != null){ lines.splice(Number(e.target.dataset.rm), 1); draw(); }
     if (e.target.dataset.addv != null){ const id = Number(e.target.dataset.addv); const ix = lines.findIndex(l => l.v.id === id); if (ix >= 0) lines.splice(ix, 1); else addLine(pool.find(v => v.id === id)); draw(); }
   });
   m.addEventListener('change', e => {
+    if (e.target.id === 'os_dt') showTot();
     if (e.target.dataset.sz != null){ const i = Number(e.target.dataset.sz); const nv = pool.find(v => v.id === Number(e.target.value)); if (nv && !lines.some((l, j) => j !== i && l.v.id === nv.id)){ lines[i].v = nv; if (nv.sale_price) lines[i].price = nv.sale_price; } draw(); }
   });
   $m('#os_pick').addEventListener('change', e => { const v = pool.find(x => pickLabel(x) === e.target.value); if (v){ addLine(v); e.target.value = ''; draw(); } });
@@ -1128,7 +1132,7 @@ async function openOrderSheet({modelId, variantId, customerId, mode} = {}){
       const until = $m('#os_until').value ? new Date($m('#os_until').value).toISOString() : null;
       const pay = $m('#os_pay').value;
       const id = check(await sb.rpc('crea_ordine', {p_customer_id: c.id, p_lines: lines.map(l => ({variant_id: l.v.id, qty: Number(l.qty) || 1, unit_price: Number(l.price)})),
-        p_mode: md, p_reserved_until: md === 'riservato' ? until : null, p_address_id: addressId, p_discount: Number($m('#os_disc').value) || 0,
+        p_mode: md, p_reserved_until: md === 'riservato' ? until : null, p_address_id: addressId, p_discount: discEur(),
         p_channel: $m('#os_ch').value, p_notes: $m('#os_notes').value || null, p_pay_status: pay, p_pay_method: pay === 'incassato' ? 'contanti' : 'contanti_alla_consegna'}));
       m.remove(); toast(t('saved')); location.hash = '#/ordine/' + id;
     } catch (err){ console.error(err); m.querySelectorAll('button').forEach(x => x.disabled = false); }
@@ -1254,9 +1258,13 @@ async function editOrder(id){
     {name:'currency', label:t('currency'), type:'select', options:opts('currency'), empty:false},
     {name:'fx_rate', label:t('fx_rate'), type:'number'},
     {name:'discount', label:t('discount') + ' (€)', type:'number'},
+    {name:'discount_pct', label:t('discount') + ' (%) · ' + t('or_pct'), type:'number'},
     {name:'channel', label:t('channel'), type:'select', options:opts('channel'), empty:false},
     {name:'notes', label:t('notes'), type:'textarea'}
-  ], values:od, onSubmit: async v => { v.discount = v.discount || 0; v.fx_rate = v.fx_rate || 1; check(await sb.from('orders').update(v).eq('id', id)); route(); }});
+  ], values:od, onSubmit: async v => {
+    const sub = od.order_lines.reduce((a, l) => a + l.qty * l.unit_price, 0);
+    if (v.discount_pct) v.discount = Math.round(sub * Math.min(v.discount_pct, 100)) / 100;
+    delete v.discount_pct; v.discount = v.discount || 0; v.fx_rate = v.fx_rate || 1; check(await sb.from('orders').update(v).eq('id', id)); route(); }});
 }
 async function cancelOrder(id){ if (!confirmBox()) return; check(await sb.rpc('annulla_ordine', {p_order_id: id})); route(); }
 function addPayment(oid){
