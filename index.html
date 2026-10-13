@@ -76,6 +76,8 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertic
 .card > table{display:block;overflow-x:auto}
 .card > table > tbody{display:table;width:100%}
 main > .row.spread{margin-bottom:14px}
+.card > table.pnl{display:table}
+.pnl td:first-child{white-space:normal}
 .help{background:var(--accent-soft);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;font-size:14px}
 .help b{color:var(--accent)}
 .sep{margin:6px 0 12px;font-size:13px;color:var(--muted);text-align:center}
@@ -191,9 +193,18 @@ const T = {
   margins_delivery:['Margini degli ordini in consegna','Margins on orders being delivered','Marzhet e porosive në dorëzim'],
   margins_hint:['Prezzo − sconto − costo reale (acquisto + costi d\'acquisto) − spedizione. Tocca una riga per aprire l\'ordine.','Price − discount − landed cost (purchase + buying costs) − shipping. Tap a row to open the order.','Çmimi − zbritja − kosto reale (blerja + kostot e blerjes) − dërgesa. Prek një rresht për të hapur porosinë.'],
   cost_missing:['manca acquisto','no purchase cost','mungon kostoja'],
+  margin_open:['Margine ordini in consegna','Margin on orders being delivered','Marzhi i porosive në dorëzim'],
+  p_month:['Questo mese','This month','Ky muaj'], p_last_month:['Mese scorso','Last month','Muaji i kaluar'], p_last12:['Ultimi 12 mesi','Last 12 months','12 muajt e fundit'], p_custom:['Dal… al…','From… to…','Nga… deri…'],
+  yoy_vs:['Confronto con lo stesso periodo dell\'anno prima:','Compared with the same period last year:','Krahasuar me të njëjtën periudhë një vit më parë:'], prev_year:['anno prima','last year','viti i kaluar'],
+  revenue_net:['Fatturato netto','Net revenue','Të ardhura neto'], gross_margin:['Margine lordo','Gross margin','Marzhi bruto'], net_profit:['Utile netto','Net profit','Fitimi neto'],
+  pnl:['Conto economico','Profit and loss','Pasqyra e fitimit'], gross_lbl:['lordo','gross','bruto'], goods_bought:['Merce acquistata nel periodo (con costi d\'acquisto)','Goods bought in the period (with buying costs)','Malli i blerë në periudhë (me kostot e blerjes)'],
+  pnl_hint:['Le vendite contano dalla data dell\'ordine (confermati, spediti, consegnati). Il costo merce è quello dei pezzi venduti; la merce comprata ma non venduta resta in magazzino.','Sales count from the order date (confirmed, shipped, delivered). Cost of goods is for items sold; goods bought but unsold stay in stock.','Shitjet llogariten nga data e porosisë (të konfirmuara, të dërguara, të dorëzuara). Kosto e mallit është ajo e copëve të shitura; malli i blerë e pa shitur mbetet në magazinë.'],
+  sold_items:['Pezzi venduti nel periodo','Items sold in the period','Copët e shitura në periudhë'],
+  weight:['Peso (kg)','Weight (kg)','Pesha (kg)'],
+  period:['Periodo','Period','Periudha'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
-  reports:['Report','Reports','Raportet'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
+  reports:['Dashboard','Dashboard','Dashboard'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
   login:['Accedi','Log in','Hyr'], signup:['Registrati','Sign up','Regjistrohu'], email:['Email','Email','Email'], password:['Password','Password','Fjalëkalimi'],
   name:['Nome','Name','Emri'], save:['Salva','Save','Ruaj'], cancel:['Annulla','Cancel','Anulo'], add:['Aggiungi','Add','Shto'], edit:['Modifica','Edit','Ndrysho'],
   delete:['Elimina','Delete','Fshi'], search:['Cerca…','Search…','Kërko…'], brand:['Marca','Brand','Marka'], category:['Categoria','Category','Kategoria'],
@@ -501,23 +512,12 @@ async function viewDashboard(main){
     const ro = check(await sb.from('orders').select('id,order_no,order_date,status,customers(full_name)').neq('status', 'annullato').order('created_at', {ascending:false}).limit(8));
     recent = `<div class="card"><h3>${t('recent_orders')}</h3>${ro.length ? `<div class="table-wrap"><table>${ro.map(o => `<tr class="click" onclick="location.hash='#/ordine/${o.id}'"><td>${esc(o.order_no)}</td><td>${esc(o.customers?.full_name)}</td><td>${fdate(o.order_date)}</td><td>${statusPill('order_status', o.status)}</td></tr>`).join('')}</table></div>` : `<div class="empty">${t('no_data')}</div>`}</div>`;
   }
-  let margins = '';
   if (can.admin()){
-    const ml = check(await sb.from('v_line_margins').select('*').in('status', ['confermato','spedito']).order('order_id'));
-    if (ml.length){
-      const sum = k => ml.reduce((a, r) => a + Number(r[k] || 0), 0);
-      const cost = r => Number(r.qty) * Number(r.landed_cost || 0);
-      const net = sum('gross') - sum('discount_share');
-      const pct = (mg, n) => n ? ` <span class="small muted">${Math.round(mg / n * 100)}%</span>` : '';
-      margins = `<div class="card"><h3>${t('margins_delivery')}</h3><p class="small muted" style="margin-top:-4px">${t('margins_hint')}</p>
-      <div class="table-wrap"><table><tr><th>${t('items')}</th><th>${t('customer')}</th><th class="right">${t('price')}</th><th class="right">${t('discount')}</th><th class="right">${t('cost')}</th><th class="right">${t('shipping_cost')}</th><th class="right">${t('margin')}</th></tr>
-      ${ml.map(r => `<tr class="click" onclick="location.hash='#/ordine/${r.order_id}'"><td>${esc(r.item)}<div class="small muted">${esc(r.order_no)}</div></td><td>${esc(r.customer)}</td><td class="right">${eur(r.gross)}</td><td class="right">${Number(r.discount_share) ? '− ' + eur(r.discount_share) : '—'}</td>
-        <td class="right">${r.landed_cost == null ? `<span style="color:var(--warn)">${t('cost_missing')}</span>` : eur(cost(r))}</td><td class="right">${Number(r.shipping_share) ? eur(r.shipping_share) : '—'}</td>
-        <td class="right"><b style="color:${Number(r.margin) >= 0 ? 'var(--good)' : 'var(--bad)'}">${eur(r.margin)}</b>${pct(Number(r.margin), Number(r.gross) - Number(r.discount_share))}</td></tr>`).join('')}
-      <tr><td><b>${t('total')}</b></td><td></td><td class="right"><b>${eur(sum('gross'))}</b></td><td class="right">${sum('discount_share') ? '− ' + eur(sum('discount_share')) : '—'}</td><td class="right"><b>${eur(ml.reduce((a, r) => a + cost(r), 0))}</b></td><td class="right">${eur(sum('shipping_share'))}</td><td class="right"><b>${eur(sum('margin'))}</b>${pct(sum('margin'), net)}</td></tr></table></div></div>`;
-    }
+    const ml = check(await sb.from('v_line_margins').select('margin').in('status', ['confermato','spedito']));
+    const tot = ml.reduce((a, r) => a + Number(r.margin || 0), 0);
+    kpis += `<div class="card kpi" style="cursor:pointer;border-color:var(--accent)" onclick="showMarginDetail()"><div class="v" style="color:${tot >= 0 ? 'var(--good)' : 'var(--bad)'}">${eur(tot)}</div><div class="l">${t('margin_open')} ›</div></div>`;
   }
-  main.innerHTML = `<h1>${t('dashboard')}</h1>${alerts}<div class="grid g4">${kpis}</div>${margins}${recent}
+  main.innerHTML = `<h1>${t('dashboard')}</h1>${alerts}<div class="grid g4">${kpis}</div>${recent}
   <div class="card"><h3>${t('low_stock')}</h3>${low.length ? `<table>${low.map(v => `<tr class="click" onclick="location.hash='#/articolo/${v.models.id}'"><td>${esc(brandName(v.models.brand_id))} · ${esc(v.models.name)}</td><td>${esc(v.size || '')} ${esc(v.color || '')}</td><td class="right">${v.qty}</td></tr>`).join('')}</table>` : `<div class="empty">${t('no_data')}</div>`}</div>`;
 }
 
@@ -949,7 +949,7 @@ async function viewCustomer(main, id){
   ${cu.notes ? `<div class="card">${esc(cu.notes)}</div>` : ''}
   <div class="grid g2">
   <div class="card"><div class="row spread"><h3>${t('measurements')}</h3><button onclick="editMeasurements(${id})">${meas ? t('edit') : '+ ' + t('add')}</button></div>
-  ${meas ? `<table class="small"><tr><td>${t('bust')}</td><td>${meas.bust_cm ?? ''}</td></tr><tr><td>${t('waist')}</td><td>${meas.waist_cm ?? ''}</td></tr><tr><td>${t('hips')}</td><td>${meas.hips_cm ?? ''}</td></tr><tr><td>${t('height')}</td><td>${meas.height_cm ?? ''}</td></tr><tr><td>${t('shoe')}</td><td>${esc(meas.shoe_size || '')}</td></tr><tr><td>${t('usual_size')}</td><td>${esc(meas.usual_size || '')}</td></tr>
+  ${meas ? `<table class="small"><tr><td>${t('bust')}</td><td>${meas.bust_cm ?? ''}</td></tr><tr><td>${t('waist')}</td><td>${meas.waist_cm ?? ''}</td></tr><tr><td>${t('hips')}</td><td>${meas.hips_cm ?? ''}</td></tr><tr><td>${t('height')}</td><td>${meas.height_cm ?? ''}</td></tr><tr><td>${t('weight')}</td><td>${meas.weight_kg ?? ''}</td></tr><tr><td>${t('shoe')}</td><td>${esc(meas.shoe_size || '')}</td></tr><tr><td>${t('usual_size')}</td><td>${esc(meas.usual_size || '')}</td></tr>
   ${Object.entries(meas.brand_sizes || {}).map(([b, s]) => `<tr><td>${esc(b)}</td><td>${esc(s)}</td></tr>`).join('')}</table><p class="small muted">${fdate(meas.taken_on)}${meas.notes ? ' · ' + esc(meas.notes) : ''}</p>` : `<div class="empty">${t('no_data')}</div>`}</div>
   <div class="card"><div class="row spread"><h3>${t('addresses')}</h3><button onclick="editAddress(${id})">+ ${t('add')}</button></div>
   ${check(ad).map(a => `<div style="margin-bottom:10px">${a.is_default ? '★ ' : ''}<b>${esc(a.label || '')}</b> ${esc(a.line1)}, ${esc(a.zip || '')} ${esc(a.city || '')}, ${esc(a.country || '')} <button class="link" onclick="delRow('addresses',${a.id})">${t('delete')}</button></div>`).join('') || `<div class="empty">${t('no_data')}</div>`}</div></div>
@@ -966,7 +966,7 @@ function editMeasurements(cid){
   const bs = Object.entries(m.brand_sizes || {}).map(([b, s]) => `${b}: ${s}`).join(', ');
   form({title:t('measurements'), fields:[
     {name:'bust_cm', label:t('bust'), type:'number'}, {name:'waist_cm', label:t('waist'), type:'number'}, {name:'hips_cm', label:t('hips'), type:'number'},
-    {name:'height_cm', label:t('height'), type:'number'}, {name:'shoe_size', label:t('shoe')}, {name:'usual_size', label:t('usual_size')},
+    {name:'height_cm', label:t('height'), type:'number'}, {name:'weight_kg', label:t('weight'), type:'number'}, {name:'shoe_size', label:t('shoe')}, {name:'usual_size', label:t('usual_size')},
     {name:'brand_sizes', label:t('sizes_by_brand'), value:bs}, {name:'notes', label:t('notes')}
   ], values:{...m, brand_sizes: bs}, onSubmit: async v => {
     const obj = {}; (v.brand_sizes || '').split(',').forEach(p => { const [b, s] = p.split(':').map(x => x && x.trim()); if (b && s) obj[b] = s; });
@@ -994,6 +994,7 @@ function extractFromText(txt){
   out.waist_cm = pick(['vita', 'waist', 'bel[ii]?', 'mesi']);
   out.hips_cm = pick(['fianchi', 'hips?', 'vithe[t]?', 'ijet?']);
   out.height_cm = pick(['altezza', 'alta', 'height', 'gjatësi[a]?', 'gjatesi[a]?']);
+  out.weight_kg = pick(['peso', 'pesa', 'weight', 'kg', 'peshë', 'pesha', 'peshe']);
   const sz = txt.match(/(?:taglia|size|masa|masë|mase)\s*[:=]?\s*(XXS|XS|S|M|L|XL|XXL|\d{2})\b/i); if (sz) out.usual_size = sz[1].toUpperCase();
   const sh = txt.match(/(?:scarpe|numero|shoe|shoes|këpucë|kepuce|numri)\s*[:=]?\s*(\d{2}(?:[.,]5)?)/i); if (sh) out.shoe_size = sh[1];
   const ph = txt.match(/(\+?\d[\d\s\-]{7,}\d)/); if (ph) out.phone = ph[1].replace(/[\s\-]/g, '');
@@ -1007,18 +1008,18 @@ async function analyzeDM(cid){
   check(await sb.from('messages').insert({customer_id: cid, body: txt, direction: $('#dmdir').value, extracted: x, source:'manuale'}));
   const keys = Object.keys(x);
   if (!keys.length){ toast(t('saved')); return route(); }
-  const labels = {bust_cm:t('bust'), waist_cm:t('waist'), hips_cm:t('hips'), height_cm:t('height'), usual_size:t('usual_size'), shoe_size:t('shoe'), phone:t('phone'), address:t('address')};
+  const labels = {bust_cm:t('bust'), waist_cm:t('waist'), hips_cm:t('hips'), height_cm:t('height'), weight_kg:t('weight'), usual_size:t('usual_size'), shoe_size:t('shoe'), phone:t('phone'), address:t('address')};
   const m = modal(`<h3>${t('extracted')}</h3><form>${keys.map(k => `<div class="field"><label><input type="checkbox" name="${k}" checked style="width:auto"> ${labels[k]}</label><input name="v_${k}" value="${esc(x[k])}"></div>`).join('')}
   <div class="row" style="justify-content:flex-end"><button type="button" data-x>${t('close')}</button><button class="primary">${t('apply')}</button></div></form>`);
   m.querySelector('[data-x]').onclick = () => { m.remove(); route(); };
   m.querySelector('form').onsubmit = async e => {
     e.preventDefault(); const f = e.target.elements; const on = k => f[k] && f[k].checked; const val = k => f['v_' + k].value;
     const meas = {};
-    ['bust_cm', 'waist_cm', 'hips_cm', 'height_cm'].forEach(k => { if (on(k)) meas[k] = num(val(k)); });
+    ['bust_cm', 'waist_cm', 'hips_cm', 'height_cm', 'weight_kg'].forEach(k => { if (on(k)) meas[k] = num(val(k)); });
     ['usual_size', 'shoe_size'].forEach(k => { if (on(k)) meas[k] = val(k); });
     if (Object.keys(meas).length){
       const prev = window._meas || {};
-      const base = {bust_cm:prev.bust_cm, waist_cm:prev.waist_cm, hips_cm:prev.hips_cm, height_cm:prev.height_cm, shoe_size:prev.shoe_size, usual_size:prev.usual_size, brand_sizes:prev.brand_sizes || {}};
+      const base = {bust_cm:prev.bust_cm, waist_cm:prev.waist_cm, hips_cm:prev.hips_cm, height_cm:prev.height_cm, weight_kg:prev.weight_kg, shoe_size:prev.shoe_size, usual_size:prev.usual_size, brand_sizes:prev.brand_sizes || {}};
       check(await sb.from('customer_measurements').insert({...base, ...meas, customer_id: cid, notes:'da DM'}));
     }
     if (on('phone')) check(await sb.from('customers').update({phone: val('phone')}).eq('id', cid));
@@ -1347,28 +1348,101 @@ function addCampaign(){
 }
 
 // ====== Report (admin) ======
+let repF = {preset:'ytd', from:'', to:''};
+const isoD = d => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 10); };
+function repRange(){
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth();
+  switch (repF.preset){
+    case 'month': return [isoD(new Date(y, m, 1)), isoD(now)];
+    case 'last_month': return [isoD(new Date(y, m - 1, 1)), isoD(new Date(y, m, 0))];
+    case 'ytd': return [isoD(new Date(y, 0, 1)), isoD(now)];
+    case 'last12': return [isoD(new Date(y - 1, m, now.getDate() + 1)), isoD(now)];
+    case 'all': return ['2000-01-01', isoD(now)];
+    default: return [repF.from || isoD(new Date(y, 0, 1)), repF.to || isoD(now)];
+  }
+}
+const prevYear = d => { const [a, b, c] = d.split('-'); return `${Number(a) - 1}-${b}-${c}`; };
 async function viewReports(main){
-  const [mg, ex, lines] = await Promise.all([
-    sb.from('v_order_margins').select('*'),
-    sb.from('expenses').select('amount,expense_date'),
-    sb.from('order_lines').select('qty,unit_price,orders!inner(status),order_line_costs(landed_cost),variants(models(brand_id,category_id))').not('orders.status', 'in', '(bozza,annullato)')
+  const [from, to] = repRange();
+  const pf = prevYear(from), pt = prevYear(to);
+  const okSt = ['confermato','spedito','consegnato','reso'];
+  const [lines, exps, camps, buys] = await Promise.all([
+    sb.from('v_line_margins').select('*').in('status', okSt).gte('order_date', pf).lte('order_date', to).then(check),
+    sb.from('expenses').select('*').gte('expense_date', pf).lte('expense_date', to).then(check),
+    sb.from('campaigns').select('*').then(check),
+    sb.from('purchase_lines').select('qty,unit_price,allocated_unit_cost,purchases!inner(purchase_date)').gte('purchases.purchase_date', pf).lte('purchases.purchase_date', to).then(check)
   ]);
-  const rows = check(mg), exps = check(ex);
+  const inR = (d, a, b) => d && d >= a && d <= b;
+  const calc = (a, b) => {
+    const L = lines.filter(l => inR(l.order_date, a, b));
+    const gross = L.reduce((s, l) => s + Number(l.gross), 0), disc = L.reduce((s, l) => s + Number(l.discount_share), 0);
+    const cogs = L.reduce((s, l) => s + Number(l.qty) * Number(l.landed_cost || 0), 0), ship = L.reduce((s, l) => s + Number(l.shipping_share), 0);
+    const margin = L.reduce((s, l) => s + Number(l.margin), 0);
+    const E = exps.filter(e => inR(e.expense_date, a, b)), exp = E.reduce((s, e) => s + Number(e.amount), 0);
+    const C = camps.filter(c => inR(c.start_date || c.end_date, a, b)), camp = C.reduce((s, c) => s + Number(c.spend), 0);
+    const bought = buys.filter(x => inR(x.purchases.purchase_date, a, b)).reduce((s, x) => s + x.qty * (Number(x.unit_price) + Number(x.allocated_unit_cost)), 0);
+    const orders = new Set(L.map(l => l.order_id)).size;
+    return {L, E, gross, disc, net: gross - disc, cogs, ship, margin, exp, camp, profit: margin - exp - camp, bought, orders, pieces: L.reduce((s, l) => s + l.qty, 0)};
+  };
+  const cur = calc(from, to), prev = calc(pf, pt);
+  const delta = (a, b) => { if (!b) return ''; const d = (a - b) / Math.abs(b) * 100; return `<span class="small" style="color:${d >= 0 ? 'var(--good)' : 'var(--bad)'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(Math.round(d))}%</span>`; };
+  const kpi = (label, a, b, money = true) => `<div class="card kpi"><div class="v">${money ? eur(a) : a}</div><div class="l">${label}</div><div class="small muted">${t('prev_year')}: ${money ? eur(b) : b} ${money ? delta(a, b) : ''}</div></div>`;
+  const pct = (a, b) => b ? Math.round(a / b * 1000) / 10 + '%' : '—';
+  // per mese
   const months = {};
-  rows.forEach(r => { const k = r.order_date.slice(0, 7); months[k] = months[k] || {rev:0, goods:0, ship:0, marg:0, exp:0, n:0}; const m = months[k]; m.rev += +r.total; m.goods += +r.goods_cost; m.ship += +r.shipping_cost; m.marg += +r.margin; m.n++; });
-  exps.forEach(e => { const k = e.expense_date.slice(0, 7); months[k] = months[k] || {rev:0, goods:0, ship:0, marg:0, exp:0, n:0}; months[k].exp += +e.amount; });
+  cur.L.forEach(l => { const k = l.order_date.slice(0, 7); const m = months[k] = months[k] || {net:0, cogs:0, ship:0, margin:0, exp:0, camp:0}; m.net += Number(l.gross) - Number(l.discount_share); m.cogs += l.qty * Number(l.landed_cost || 0); m.ship += Number(l.shipping_share); m.margin += Number(l.margin); });
+  cur.E.forEach(e => { const k = e.expense_date.slice(0, 7); (months[k] = months[k] || {net:0, cogs:0, ship:0, margin:0, exp:0, camp:0}).exp += Number(e.amount); });
+  camps.filter(c => inR(c.start_date || c.end_date, from, to)).forEach(c => { const k = (c.start_date || c.end_date).slice(0, 7); (months[k] = months[k] || {net:0, cogs:0, ship:0, margin:0, exp:0, camp:0}).camp += Number(c.spend); });
+  // per marca / categoria spese
   const brands = {};
-  check(lines).forEach(l => { const b = brandName(l.variants.models.brand_id) || '—'; brands[b] = brands[b] || {rev:0, cost:0, q:0}; brands[b].rev += l.qty * l.unit_price; brands[b].cost += l.qty * (+(l.order_line_costs?.landed_cost) || 0); brands[b].q += l.qty; });
-  const countries = {};
-  rows.forEach(r => { const c = ev('country', r.country) || '—'; countries[c] = countries[c] || {rev:0, marg:0, n:0}; countries[c].rev += +r.total; countries[c].marg += +r.margin; countries[c].n++; });
+  cur.L.forEach(l => { const b = (l.item || '').split(' ')[0] || '—'; const x = brands[b] = brands[b] || {q:0, net:0, margin:0}; x.q += l.qty; x.net += Number(l.gross) - Number(l.discount_share); x.margin += Number(l.margin); });
+  const expCat = {};
+  cur.E.forEach(e => { expCat[e.category] = (expCat[e.category] || 0) + Number(e.amount); });
+  const presets = [['month', t('p_month')], ['last_month', t('p_last_month')], ['ytd', 'YTD'], ['last12', t('p_last12')], ['all', t('all')], ['custom', t('p_custom')]];
   main.innerHTML = `<h1>${t('reports')}</h1>
-  <div class="card"><h3>${t('by_month')}</h3><div class="table-wrap"><table><tr><th></th><th class="right">${t('orders')}</th><th class="right">${t('revenue')}</th><th class="right">${t('goods_cost')}</th><th class="right">${t('shipping_cost')}</th><th class="right">${t('margin')}</th><th class="right">${t('expenses')}</th><th class="right">${t('net')}</th></tr>
-  ${Object.keys(months).sort().reverse().map(k => { const m = months[k]; return `<tr><td>${k}</td><td class="right">${m.n}</td><td class="right">${eur(m.rev)}</td><td class="right">${eur(m.goods)}</td><td class="right">${eur(m.ship)}</td><td class="right">${eur(m.marg)}</td><td class="right">${eur(m.exp)}</td><td class="right"><b>${eur(m.marg - m.exp)}</b></td></tr>`; }).join('') || `<tr><td colspan="8" class="empty">${t('no_data')}</td></tr>`}</table></div></div>
-  <div class="grid g2"><div class="card"><h3>${t('by_brand')}</h3><table><tr><th></th><th class="right">${t('qty')}</th><th class="right">${t('revenue')}</th><th class="right">${t('margin')}</th></tr>
-  ${Object.entries(brands).sort((a, b) => b[1].rev - a[1].rev).map(([b, v]) => `<tr><td>${esc(b)}</td><td class="right">${v.q}</td><td class="right">${eur(v.rev)}</td><td class="right">${eur(v.rev - v.cost)}${v.rev ? ` <span class="muted small">${Math.round((v.rev - v.cost) / v.rev * 100)}%</span>` : ''}</td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>
-  <div class="card"><h3>${t('by_country')}</h3><table><tr><th></th><th class="right">${t('orders')}</th><th class="right">${t('revenue')}</th><th class="right">${t('margin')}</th></tr>
-  ${Object.entries(countries).sort((a, b) => b[1].rev - a[1].rev).map(([c, v]) => `<tr><td>${esc(c)}</td><td class="right">${v.n}</td><td class="right">${eur(v.rev)}</td><td class="right">${eur(v.marg)}</td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div></div>
-  <p class="small muted">${t('report_hint')}</p>`;
+  <div class="chips" style="margin-bottom:10px">${presets.map(([k, l]) => `<button class="${repF.preset === k ? 'primary' : ''}" onclick="repF.preset='${k}';route()">${l}</button>`).join('')}</div>
+  <div class="row" style="margin-bottom:6px;flex-wrap:nowrap"><input type="date" id="rf" value="${from}"><span>→</span><input type="date" id="rt" value="${to}"></div>
+  <p class="small muted" style="margin:0 0 14px">${t('yoy_vs')} ${fdate(pf)} – ${fdate(pt)}</p>
+  <div class="grid g4">
+    ${kpi(t('revenue_net'), cur.net, prev.net)}
+    ${kpi(t('gross_margin'), cur.margin, prev.margin)}
+    ${kpi(t('net_profit'), cur.profit, prev.profit)}
+    ${kpi(t('orders') + ' · ' + t('qty_pieces').toLowerCase(), `${cur.orders} · ${cur.pieces}`, `${prev.orders} · ${prev.pieces}`, false)}
+  </div>
+  <div class="card"><h3>${t('pnl')}</h3><table class="pnl"><tr><th></th><th class="right">${t('period')}</th><th class="right">${t('prev_year')}</th></tr>
+    <tr><td>${t('revenue')} (${t('gross_lbl')})</td><td class="right">${eur(cur.gross)}</td><td class="right small muted">${eur(prev.gross)}</td></tr>
+    <tr><td>− ${t('discount')}</td><td class="right">${eur(cur.disc)}</td><td class="right small muted">${eur(prev.disc)}</td></tr>
+    <tr><td><b>${t('revenue_net')}</b></td><td class="right"><b>${eur(cur.net)}</b></td><td class="right small muted">${eur(prev.net)}</td></tr>
+    <tr><td>− ${t('goods_cost')}</td><td class="right">${eur(cur.cogs)}</td><td class="right small muted">${eur(prev.cogs)}</td></tr>
+    <tr><td>− ${t('shipping_cost')}</td><td class="right">${eur(cur.ship)}</td><td class="right small muted">${eur(prev.ship)}</td></tr>
+    <tr><td><b>${t('gross_margin')}</b> <span class="small muted">${pct(cur.margin, cur.net)}</span></td><td class="right"><b>${eur(cur.margin)}</b></td><td class="right small muted">${eur(prev.margin)}</td></tr>
+    <tr><td>− ${t('expenses')}</td><td class="right">${eur(cur.exp)}</td><td class="right small muted">${eur(prev.exp)}</td></tr>
+    <tr><td>− ${t('campaigns')}</td><td class="right">${eur(cur.camp)}</td><td class="right small muted">${eur(prev.camp)}</td></tr>
+    <tr><td><b>${t('net_profit')}</b> <span class="small muted">${pct(cur.profit, cur.net)}</span></td><td class="right"><b style="color:${cur.profit >= 0 ? 'var(--good)' : 'var(--bad)'}">${eur(cur.profit)}</b></td><td class="right small muted">${eur(prev.profit)}</td></tr>
+    <tr><td class="small muted">${t('goods_bought')}</td><td class="right small muted">${eur(cur.bought)}</td><td class="right small muted">${eur(prev.bought)}</td></tr>
+  </table><p class="small muted">${t('pnl_hint')}</p></div>
+  <div class="card"><h3>${t('by_month')}</h3><div class="table-wrap"><table><tr><th></th><th class="right">${t('revenue_net')}</th><th class="right">${t('goods_cost')}</th><th class="right">${t('gross_margin')}</th><th class="right">${t('expenses')}</th><th class="right">${t('campaigns')}</th><th class="right">${t('net_profit')}</th></tr>
+  ${Object.keys(months).sort().reverse().map(k => { const m = months[k]; return `<tr><td>${k}</td><td class="right">${eur(m.net)}</td><td class="right">${eur(m.cogs + m.ship)}</td><td class="right">${eur(m.margin)}</td><td class="right">${eur(m.exp)}</td><td class="right">${eur(m.camp)}</td><td class="right"><b>${eur(m.margin - m.exp - m.camp)}</b></td></tr>`; }).join('') || `<tr><td colspan="7" class="empty">${t('no_data')}</td></tr>`}</table></div></div>
+  <div class="grid g2">
+  <div class="card"><h3>${t('by_brand')}</h3><table>${Object.entries(brands).sort((a, b) => b[1].margin - a[1].margin).map(([b, x]) => `<tr><td>${esc(b)} <span class="small muted">${x.q} pz</span></td><td class="right">${eur(x.net)}</td><td class="right"><b>${eur(x.margin)}</b> <span class="small muted">${pct(x.margin, x.net)}</span></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>
+  <div class="card"><h3>${t('expenses')} · ${t('campaigns')}</h3><table>${Object.entries(expCat).map(([k, v]) => `<tr><td>${esc(ev('expense_cat', k))}</td><td class="right">${eur(v)}</td></tr>`).join('')}
+    ${camps.filter(c => inR(c.start_date || c.end_date, from, to)).map(c => `<tr><td>${esc(c.name)} <span class="small muted">${t('campaigns').toLowerCase()}</span></td><td class="right">${eur(c.spend)}</td></tr>`).join('')}
+    ${!Object.keys(expCat).length && !cur.camp ? `<tr><td class="empty">${t('no_data')}</td></tr>` : ''}</table></div></div>
+  <div class="card"><h3>${t('sold_items')}</h3><div class="table-wrap"><table><tr><th>${t('date')}</th><th>${t('items')}</th><th>${t('customer')}</th><th class="right">${t('revenue_net')}</th><th class="right">${t('cost')}</th><th class="right">${t('margin')}</th></tr>
+  ${cur.L.sort((a, b) => b.order_date.localeCompare(a.order_date)).map(l => `<tr class="click" onclick="location.hash='#/ordine/${l.order_id}'"><td>${fdate(l.order_date)}</td><td>${esc(l.item)}</td><td>${esc(l.customer)}</td><td class="right">${eur(Number(l.gross) - Number(l.discount_share))}</td><td class="right">${l.landed_cost == null ? `<span style="color:var(--warn)">${t('cost_missing')}</span>` : eur(l.qty * Number(l.landed_cost) + Number(l.shipping_share))}</td><td class="right"><b>${eur(l.margin)}</b></td></tr>`).join('') || `<tr><td colspan="6" class="empty">${t('no_data')}</td></tr>`}</table></div></div>`;
+  const onD = () => { repF = {preset:'custom', from: $('#rf').value, to: $('#rt').value}; route(); };
+  $('#rf').onchange = onD; $('#rt').onchange = onD;
+}
+async function showMarginDetail(){
+  const ml = check(await sb.from('v_line_margins').select('*').in('status', ['confermato','spedito']).order('order_id'));
+  const sum = k => ml.reduce((a, r) => a + Number(r[k] || 0), 0);
+  const m = modal(`<h2>${t('margins_delivery')}</h2><p class="small muted">${t('margins_hint')}</p>
+  ${ml.map(r => `<div class="row" style="flex-wrap:nowrap;padding:10px 0;border-top:1px solid var(--line);cursor:pointer" onclick="this.closest('.modal-bg').remove();location.hash='#/ordine/${r.order_id}'">
+    <div style="flex:1;min-width:0"><b>${esc(r.item)}</b><div class="small muted">${esc(r.order_no)} · ${esc(r.customer)}</div>
+    <div class="small">${eur(r.gross)}${Number(r.discount_share) ? ` − ${eur(r.discount_share)} ${t('discount').toLowerCase()}` : ''} − ${r.landed_cost == null ? `<span style="color:var(--warn)">${t('cost_missing')}</span>` : `${eur(r.qty * Number(r.landed_cost))} ${t('cost').toLowerCase()}`}${Number(r.shipping_share) ? ` − ${eur(r.shipping_share)} ${t('shipments').toLowerCase()}` : ''}</div></div>
+    <div class="right" style="flex:none"><b style="color:${Number(r.margin) >= 0 ? 'var(--good)' : 'var(--bad)'}">${eur(r.margin)}</b></div></div>`).join('') || `<div class="empty">${t('no_data')}</div>`}
+  <div class="row spread" style="padding-top:10px;border-top:1px solid var(--line)"><b>${t('total')}</b><b style="font-size:20px">${eur(sum('margin'))}</b></div>
+  <div class="row" style="justify-content:flex-end;margin-top:12px"><button onclick="this.closest('.modal-bg').remove();location.hash='#/report'">${t('reports')} →</button><button class="primary" onclick="this.closest('.modal-bg').remove()">${t('close')}</button></div>`);
 }
 
 // ====== Impostazioni ======
