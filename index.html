@@ -210,6 +210,13 @@ const T = {
   add_color:['Aggiungi colore','Add colour','Shto ngjyrë'], no_color:['Senza colore','No colour','Pa ngjyrë'],
   sold_no_cost:['venduto senza costo','sold without cost','shitur pa kosto'], edit_line:['Correggi pezzo o prezzo','Fix item or price','Korrigjo copën ose çmimin'],
   order_no_cost:['Manca il costo d\'acquisto: il margine non è reale. Aggiungi il pezzo a un acquisto (con "Già nel catalogo", stessa taglia e colore).','Purchase cost missing: the margin is not real. Add the item to a purchase ("Already in catalogue", same size and colour).','Mungon kostoja e blerjes: marzhi nuk është real. Shtoje copën në një blerje ("Tashmë në katalog", e njëjta masë dhe ngjyrë).'],
+  defect:['Difetto','Defect','Defekt'], defects:['Difetti e resi al fornitore','Defects and returns to supplier','Defektet dhe kthimet te furnitori'], defect_save:['Togli dalla vendita','Take off sale','Hiqe nga shitja'],
+  defect_desc:['Che difetto ha?','What is the defect?','Çfarë defekti ka?'], defect_hint:['Il pezzo esce dal magazzino vendibile e resta in "Difetti" finché non lo restituisci al negozio o decidi cosa farne.','The item leaves sellable stock and stays in "Defects" until you return it to the store or decide what to do.','Copa del nga magazina e shitshme dhe mbetet te "Defektet" derisa ta kthesh në dyqan ose të vendosësh çfarë të bësh.'],
+  return_to:['da restituire a','return to','për t\'u kthyer te'], refund:['Rimborso','Refund','Rimbursim'], mark_sent:['Segna inviato al fornitore','Mark sent to supplier','Shëno si dërguar te furnitori'], close_defect:['Chiudi','Close','Mbyll'], outcome:['Esito','Outcome','Rezultati'],
+  dc_refunded:['Rimborsato dal negozio','Refunded by the store','Rimbursuar nga dyqani'], dc_replaced:['Sostituito con un pezzo nuovo (torna in magazzino)','Replaced with a new piece (back in stock)','Zëvendësuar me copë të re (kthehet në magazinë)'],
+  dc_kept:['Lo teniamo e lo vendiamo come difettato','We keep it and sell it as flawed','E mbajmë dhe e shesim me defekt'], dc_lost:['Nessun rimborso: perdita','No refund: loss','Pa rimbursim: humbje'],
+  cancel_defect:['Annulla per difetto','Cancel for defect','Anulo për defekt'], cancel_defect_hint:['L\'ordine viene annullato e il pezzo va in "Difetti", non torna in vendita.','The order is cancelled and the item goes to "Defects", not back on sale.','Porosia anulohet dhe copa shkon te "Defektet", nuk kthehet në shitje.'],
+  defect_loss:['Perdite per difetti','Defect losses','Humbje nga defektet'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Dashboard','Dashboard','Dashboard'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -281,6 +288,7 @@ const E = {
   return_outcome:{rimborso:['Rimborso','Refund','Rimbursim'],cambio:['Cambio','Exchange','Ndërrim'],credito:['Credito','Store credit','Kredi']},
   expense_cat:{tasse:['Tasse','Taxes','Taksat'],gestione:['Gestione','Operations','Menaxhimi'],marketing:['Marketing','Marketing','Marketing'],packaging:['Packaging','Packaging','Paketimi'],abbonamenti:['Abbonamenti','Subscriptions','Abonimet'],altro:['Altro','Other','Tjetër']},
   role:{admin:['Amministratore','Administrator','Administrator'],vendite:['Vendite','Sales','Shitje'],magazzino:['Magazzino / acquisti','Warehouse / buying','Magazina / blerje']},
+  defect_status:{da_restituire:['Da restituire','To return','Për t\'u kthyer'],inviato:['Inviato al fornitore','Sent to supplier','Dërguar te furnitori'],rimborsato:['Rimborsato','Refunded','Rimbursuar'],sostituito:['Sostituito','Replaced','Zëvendësuar'],tenuto:['Tenuto (in vendita)','Kept (on sale)','Mbajtur (në shitje)'],perso:['Perso','Written off','Humbur']},
   camp_status:{attiva:['Attiva','Active','Aktive'],fermata:['Fermata','Stopped','E ndalur'],conclusa:['Conclusa','Finished','E përfunduar']},
   req_status:{aperta:['Aperta','Open','E hapur'],trovata:['Trovata','Found','U gjet'],chiusa:['Chiusa','Closed','E mbyllur']}
 };
@@ -513,7 +521,9 @@ async function viewDashboard(main){
       else if (o.status === 'confermato') items.push(['warn', o, `${o.delivery_mode === 'modus_vestendi' ? t('to_deliver_own') : t('to_ship_choose')}: ${nm}`]);
       else if (o.status === 'spedito' && o.delivery_mode === 'modus_vestendi' && hoursSince(o.shipped_at) >= 24) items.push(['bad', o, `${t('confirm_delivery_ask')}: ${nm}`]);
     });
-    if (items.length) alerts = `<div class="card"><h3>${t('to_do')}</h3>${items.map(([c, o, txt]) => `<div class="row" style="flex-wrap:nowrap;padding:9px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='#/ordine/${o.id}'"><span class="pill ${c}" style="flex:none">${esc(o.order_no)}</span><span style="min-width:0">${txt}</span></div>`).join('')}</div>`;
+    const defs = check(await sb.from('defects').select('id,item_label,status,variant_id,variants(model_id)').in('status', ['da_restituire','inviato']));
+    defs.forEach(d => items.push([d.status === 'inviato' ? 'warn' : 'bad', {order_no: t('defect'), id: null, _model: d.variants?.model_id}, `${esc(ev('defect_status', d.status))}: ${esc(d.item_label || '')}`]));
+    if (items.length) alerts = `<div class="card"><h3>${t('to_do')}</h3>${items.map(([c, o, txt]) => `<div class="row" style="flex-wrap:nowrap;padding:9px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='${o.id ? '#/ordine/' + o.id : '#/articolo/' + o._model}'"><span class="pill ${c}" style="flex:none">${esc(o.order_no)}</span><span style="min-width:0">${txt}</span></div>`).join('')}</div>`;
     const toShip = check(await sb.from('orders').select('id', {count:'exact', head:false}).eq('status', 'confermato'));
     const pays = check(await sb.from('payments').select('amount,kind').eq('status', 'da_incassare'));
     const due = pays.filter(p => p.kind !== 'rimborso').reduce((a, p) => a + Number(p.amount), 0);
@@ -613,6 +623,8 @@ async function viewModel(main, id){
     can.sales() ? sb.from('order_lines').select('id,qty,unit_price,variant_id,orders!inner(id,order_no,order_date,status,reserved_until,customers(id,full_name,instagram))').in('variant_id', vids).then(check) : Promise.resolve([])
   ]);
   const ST = Object.fromEntries(stock.map(x => [x.variant_id, x]));
+  const defects = check(await sb.from('defects').select('*,suppliers(name)').in('variant_id', vids).order('id', {ascending:false}));
+  window._defects = defects;
   await signedUrls(m.photos.map(p => p.path));
   let costs = {};
   if (can.costs()){
@@ -633,11 +645,12 @@ async function viewModel(main, id){
   <div class="card"><div class="row spread"><h3>${t('sizes_stock')}</h3>${w ? `<button class="primary" onclick="addColor()">+ ${t('add_color')}</button>` : ''}</div>
   ${colorGroups(m.variants).map(([col, vs]) => { const tot = vs.reduce((a, v) => a + Math.max(0, (ST[v.id] || {available: v.qty}).available), 0); return `<div style="border-top:2px solid var(--line);margin-top:8px;padding-top:10px">
     <div class="row spread"><b style="font-size:16px">${esc(col || t('no_color'))}</b><span class="row"><span class="pill ${tot ? 'good' : 'grey'}">${tot} ${t('available')}</span>${w ? `<button class="link" onclick="editVariant(null,${m.id},${esc(JSON.stringify(col))})">+ ${t('add_size')}</button>` : ''}</span></div>
-    ${vs.map(v => { const s = ST[v.id] || {available: v.qty, reserved: 0}; return `<div class="row" style="flex-wrap:nowrap;padding:9px 0 9px 10px;border-top:1px solid var(--line)">
+    ${vs.map(v => { const s = ST[v.id] || {available: v.qty, reserved: 0}; return `<div style="padding:9px 0 6px 10px;border-top:1px solid var(--line)"><div class="row" style="flex-wrap:nowrap">
     <div style="flex:1;min-width:0"><b>${esc(v.size || t('one_size'))}</b> <span class="small muted">${esc(v.sku || '')}</span>
-    <div class="small">${eur(v.sale_price)}${can.costs() && costs[v.id] ? ` · <span class="muted">${t('landed_cost')} ${eur(costs[v.id].landed_cost)}</span>` : ''} · ${esc(ev('location', v.location))}</div></div>
-    <div class="right" style="flex:none"><span class="pill ${s.available > 0 ? 'good' : 'grey'}">${Math.max(0, s.available)} ${t('available')}</span>${s.reserved ? `<div class="small" style="color:var(--warn)">${s.reserved} ${t('reserved_short')}</div>` : ''}
-    <div>${can.sales() && s.available > 0 ? `<button class="link" onclick="sellFromModel(${v.id})">${t('sell')}</button>` : ''}${w ? `<button class="link" onclick="editVariant(${v.id},${m.id})">${t('edit')}</button><button class="link" onclick="adjustStock(${v.id},${m.id})">±</button><button class="link" style="color:var(--bad)" onclick="deleteVariant(${v.id})">${t('delete')}</button>` : ''}</div></div></div>`; }).join('')}</div>`; }).join('') || `<div class="empty">${t('no_data')}</div>`}</div>
+    <div class="small">${eur(v.sale_price)}${can.costs() && costs[v.id] ? ` · <span class="muted">${t('landed_cost')} ${eur(costs[v.id].landed_cost)}</span>` : ''} · ${esc(ev('location', v.location))}${v.condition === 'difetto' ? ` · <span style="color:var(--warn)">${t('defect')}</span>` : ''}</div></div>
+    <div class="right" style="flex:none"><span class="pill ${s.available > 0 ? 'good' : 'grey'}">${Math.max(0, s.available)} ${t('available')}</span>${s.reserved ? `<div class="small" style="color:var(--warn)">${s.reserved} ${t('reserved_short')}</div>` : ''}</div></div>
+    <div class="row" style="justify-content:flex-end;gap:0">${can.sales() && s.available > 0 ? `<button class="link" onclick="sellFromModel(${v.id})">${t('sell')}</button>` : ''}${w ? `<button class="link" onclick="editVariant(${v.id},${m.id})">${t('edit')}</button><button class="link" onclick="adjustStock(${v.id},${m.id})">±</button>` : ''}${v.qty > 0 ? `<button class="link" style="color:var(--warn)" onclick="reportDefect(${v.id})">${t('defect')}</button>` : ''}${w ? `<button class="link" style="color:var(--bad)" onclick="deleteVariant(${v.id})">${t('delete')}</button>` : ''}</div></div>`; }).join('')}</div>`; }).join('') || `<div class="empty">${t('no_data')}</div>`}</div>
+  ${defects.length ? `<div class="card"><h3>${t('defects')}</h3>${defects.map(defectRow).join('')}</div>` : ''}
   ${can.sales() ? `<div class="card"><h3>${t('sales_reservations')}</h3>
   ${sales.sort((a, b) => b.orders.id - a.orders.id).map(s => { const v = m.variants.find(x => x.id === s.variant_id); return `<div class="row" style="flex-wrap:nowrap;padding:9px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='#/ordine/${s.orders.id}'">
     <div style="flex:1;min-width:0"><b>${esc(s.orders.customers?.full_name || '')}</b>${s.orders.customers?.instagram ? ` <span class="small muted">@${esc(s.orders.customers.instagram)}</span>` : ''}
@@ -654,6 +667,38 @@ async function deleteVariant(vid){
   if (!confirm(`${t('delete')}: ${[v.size, v.color].filter(Boolean).join(' · ') || t('one_size')}?\n${t('delete_variant_hint')}`)) return;
   check(await sb.from('variants').delete().eq('id', vid));
   toast(t('saved')); route();
+}
+const defectRow = d => `<div class="row" style="flex-wrap:nowrap;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)">
+  <div style="flex:1;min-width:0"><b>${esc(d.item_label || '')}</b> ${statusPill('defect_status', d.status)}
+  <div class="small">${esc(d.description)}</div>
+  <div class="small muted">${fdate(d.found_on)} · ${d.qty} pz${d.suppliers ? ' · ' + t('return_to') + ' ' + esc(d.suppliers.name) : ''}${d.purchase_id ? ` · <a href="#/acquisto/${d.purchase_id}">${t('purchases')} #${d.purchase_id}</a>` : ''}${d.return_tracking ? ' · ' + esc(d.return_tracking) : ''}${d.refund_amount != null ? ' · ' + t('refund') + ' ' + eur(d.refund_amount) : ''}</div>
+  ${['da_restituire','inviato'].includes(d.status) ? `<div>${d.status === 'da_restituire' ? `<button class="link" onclick="defectSent(${d.id})">${t('mark_sent')}</button>` : ''}<button class="link" onclick="closeDefect(${d.id})">${t('close_defect')}</button></div>` : ''}</div>
+  <div class="right" style="flex:none">${d.unit_cost != null ? `<div class="small muted">${t('cost')}</div><b>${eur(d.qty * d.unit_cost)}</b>` : ''}</div></div>`;
+function reportDefect(vid){
+  const v = window._model.variants.find(x => x.id === vid);
+  form({title:`${t('defect')}: ${[v.size, v.color].filter(Boolean).join(' · ')}`, submitLabel:t('defect_save'), fields:[
+    {name:'description', label:t('defect_desc'), type:'textarea', required:true},
+    {name:'qty', label:t('qty'), type:'number', value:1, required:true}
+  ], extra:`<p class="small muted">${t('defect_hint')}</p>`, onSubmit: async x => { check(await sb.rpc('segnala_difetto', {p_variant_id: vid, p_qty: x.qty || 1, p_description: x.description})); toast(t('saved')); route(); }});
+}
+function defectSent(id){
+  form({title:t('mark_sent'), fields:[{name:'return_tracking', label:t('tracking') + ' / ' + t('notes')}], onSubmit: async x => { check(await sb.from('defects').update({status:'inviato', return_tracking: x.return_tracking}).eq('id', id)); route(); }});
+}
+function closeDefect(id){
+  const d = (window._defects || []).find(x => x.id === id) || {};
+  form({title:t('close_defect'), fields:[
+    {name:'status', label:t('outcome'), type:'select', empty:false, options:[['rimborsato', t('dc_refunded')], ['sostituito', t('dc_replaced')], ['tenuto', t('dc_kept')], ['perso', t('dc_lost')]]},
+    {name:'refund', label:t('refund') + ' (€)', type:'number', value: d.unit_cost != null ? d.qty * d.unit_cost : ''},
+    {name:'notes', label:t('notes')}
+  ], onSubmit: async x => { check(await sb.rpc('risolvi_difetto', {p_id: id, p_status: x.status, p_refund: x.status === 'rimborsato' ? x.refund : null, p_notes: x.notes})); toast(t('saved')); route(); }});
+}
+function cancelForDefect(id){
+  const od = window._order;
+  form({title:t('cancel_defect'), submitLabel:t('cancel_defect'), fields:[{name:'description', label:t('defect_desc'), type:'textarea', required:true}],
+    extra:`<p class="small muted">${t('cancel_defect_hint')}</p>`, onSubmit: async x => {
+      check(await sb.rpc('annulla_ordine', {p_order_id: id}));
+      for (const l of od.order_lines) check(await sb.rpc('segnala_difetto', {p_variant_id: l.variants.id, p_qty: l.qty, p_description: x.description, p_order_id: id}));
+      toast(t('saved')); route(); }});
 }
 async function uploadPhotos(modelId, files, start = 0){
   if (!files || !files.length) return;
@@ -1282,7 +1327,7 @@ async function viewOrder(main, id){
     <div class="row" style="margin-top:6px">${u ? `<a class="btn" href="${esc(u)}" target="_blank" rel="noopener">${t('track')} ↗</a>` : ''}<button onclick="editShipment(${s.id},${id})">${t('edit')}</button></div></div>`; }).join('') || (od.delivery_mode ? '' : `<div class="empty">${t('no_data')}</div>`)}</div></div>
   ${check(rets).length ? `<div class="card"><h3>${t('return_item')}</h3>${check(rets).map(r => `<div>${esc(ev('return_reason', r.reason))} · ${esc(ev('return_outcome', r.outcome))} ${r.back_to_stock ? '· ' + t('back_to_stock') : ''} ${r.notes ? '· ' + esc(r.notes) : ''}</div>`).join('')}</div>` : ''}
   ${od.notes ? `<div class="card">${esc(od.notes)}</div>` : ''}
-  <p class="row" style="justify-content:center">${!['annullato', 'consegnato', 'reso', 'riservato', 'bozza'].includes(od.status) ? `<button class="link" style="color:var(--bad)" onclick="cancelOrder(${id})">${t('cancel_order')}</button>` : ''}<button class="link" style="color:var(--bad)" onclick="deleteOrder(${id})">${t('delete_order')}</button></p>`;
+  <p class="row" style="justify-content:center">${!['annullato', 'consegnato', 'reso', 'riservato', 'bozza'].includes(od.status) ? `<button class="link" style="color:var(--bad)" onclick="cancelOrder(${id})">${t('cancel_order')}</button>` : ''}${['confermato','spedito','riservato'].includes(od.status) ? `<button class="link" style="color:var(--warn)" onclick="cancelForDefect(${id})">${t('cancel_defect')}</button>` : ''}<button class="link" style="color:var(--bad)" onclick="deleteOrder(${id})">${t('delete_order')}</button></p>`;
 }
 function confirmReservation(id){
   form({title:t('confirm_order'), submitLabel:t('confirm_order'), fields:[
@@ -1449,11 +1494,12 @@ async function viewReports(main){
   const [from, to] = repRange();
   const pf = prevYear(from), pt = prevYear(to);
   const okSt = ['confermato','spedito','consegnato','reso'];
-  const [lines, exps, camps, buys] = await Promise.all([
+  const [lines, exps, camps, buys, defs] = await Promise.all([
     sb.from('v_line_margins').select('*').in('status', okSt).gte('order_date', pf).lte('order_date', to).then(check),
     sb.from('expenses').select('*').gte('expense_date', pf).lte('expense_date', to).then(check),
     sb.from('campaigns').select('*').then(check),
-    sb.from('purchase_lines').select('qty,unit_price,allocated_unit_cost,purchases!inner(purchase_date)').gte('purchases.purchase_date', pf).lte('purchases.purchase_date', to).then(check)
+    sb.from('purchase_lines').select('qty,unit_price,allocated_unit_cost,purchases!inner(purchase_date)').gte('purchases.purchase_date', pf).lte('purchases.purchase_date', to).then(check),
+    sb.from('defects').select('*').in('status', ['rimborsato','perso']).gte('resolved_on', pf).lte('resolved_on', to).then(check)
   ]);
   const inR = (d, a, b) => d && d >= a && d <= b;
   const calc = (a, b) => {
@@ -1465,7 +1511,8 @@ async function viewReports(main){
     const C = camps.filter(c => inR(c.start_date || c.end_date, a, b)), camp = C.reduce((s, c) => s + Number(c.spend), 0);
     const bought = buys.filter(x => inR(x.purchases.purchase_date, a, b)).reduce((s, x) => s + x.qty * (Number(x.unit_price) + Number(x.allocated_unit_cost)), 0);
     const orders = new Set(L.map(l => l.order_id)).size;
-    return {L, E, gross, disc, net: gross - disc, cogs, ship, margin, exp, camp, profit: margin - exp - camp, bought, orders, pieces: L.reduce((s, l) => s + l.qty, 0)};
+    const loss = defs.filter(d => inR(d.resolved_on, a, b)).reduce((s, d) => s + Math.max(0, d.qty * Number(d.unit_cost || 0) - Number(d.refund_amount || 0)), 0);
+    return {L, E, gross, disc, net: gross - disc, cogs, ship, margin, exp, camp, loss, profit: margin - exp - camp - loss, bought, orders, pieces: L.reduce((s, l) => s + l.qty, 0)};
   };
   const cur = calc(from, to), prev = calc(pf, pt);
   const delta = (a, b) => { if (!b) return ''; const d = (a - b) / Math.abs(b) * 100; return `<span class="small" style="color:${d >= 0 ? 'var(--good)' : 'var(--bad)'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(Math.round(d))}%</span>`; };
@@ -1501,6 +1548,7 @@ async function viewReports(main){
     <tr><td><b>${t('gross_margin')}</b> <span class="small muted">${pct(cur.margin, cur.net)}</span></td><td class="right"><b>${eur(cur.margin)}</b></td><td class="right small muted">${eur(prev.margin)}</td></tr>
     <tr><td>− ${t('expenses')}</td><td class="right">${eur(cur.exp)}</td><td class="right small muted">${eur(prev.exp)}</td></tr>
     <tr><td>− ${t('campaigns')}</td><td class="right">${eur(cur.camp)}</td><td class="right small muted">${eur(prev.camp)}</td></tr>
+    <tr><td>− ${t('defect_loss')}</td><td class="right">${eur(cur.loss)}</td><td class="right small muted">${eur(prev.loss)}</td></tr>
     <tr><td><b>${t('net_profit')}</b> <span class="small muted">${pct(cur.profit, cur.net)}</span></td><td class="right"><b style="color:${cur.profit >= 0 ? 'var(--good)' : 'var(--bad)'}">${eur(cur.profit)}</b></td><td class="right small muted">${eur(prev.profit)}</td></tr>
     <tr><td class="small muted">${t('goods_bought')}</td><td class="right small muted">${eur(cur.bought)}</td><td class="right small muted">${eur(prev.bought)}</td></tr>
   </table><p class="small muted">${t('pnl_hint')}</p></div>
