@@ -220,7 +220,7 @@ const T = {
   sale_value:['Valore di vendita','Sale value','Vlera e shitjes'], pieces_no_cost:['pezzi senza costo d\'acquisto','pieces without purchase cost','copë pa kosto blerjeje'],
   pieces_no_cost_title:['Pezzi senza costo d\'acquisto','Pieces without purchase cost','Copë pa kosto blerjeje'],
   pieces_no_cost_hint:['Collegali a un acquisto: Acquisti → Aggiungi pezzo → Già nel catalogo, stessa taglia e colore. Finché manca il costo, il valore del magazzino e i margini sono sottostimati.','Link them to a purchase: Purchases → Add item → Already in catalogue, same size and colour. Until then, stock value and margins are understated.','Lidhi me një blerje: Blerjet → Shto copë → Tashmë në katalog, e njëjta masë dhe ngjyrë. Deri atëherë, vlera e magazinës dhe marzhet janë të pasakta.'],
-  color_dot:['Colore del pallino','Dot colour','Ngjyra e pikës'], edit_color:['Modifica colore','Edit colour','Ndrysho ngjyrën'], all_sizes:['tutte le taglie','all sizes','të gjitha masat'],
+  color_dot:['Colore del pallino','Dot colour','Ngjyra e pikës'], color_dot_hint:['Scrivi il colore: il pallino si accende da solo. Oppure tocca il pallino e scegli la tinta: il nome si compila da solo.','Type the colour and the dot lights up. Or tap the dot to pick a shade and the name fills in.','Shkruaj ngjyrën dhe pika ndizet vetë. Ose prek pikën dhe zgjidh ngjyrën: emri plotësohet vetë.'], edit_color:['Modifica colore','Edit colour','Ndrysho ngjyrën'], all_sizes:['tutte le taglie','all sizes','të gjitha masat'],
   max_avail:['Quantità oltre la disponibilità','Quantity above availability','Sasia mbi gjendjen'], max:['max','max','maks'],
   dc_coupon:['Buono spesa del negozio','Store credit voucher','Kupon blerjeje nga dyqani'], dc_other:['Cambiato con un altro pezzo','Exchanged for a different item','Ndërruar me një copë tjetër'],
   dc_other_hint:['Il pezzo nuovo entra in catalogo e in magazzino con il costo del pezzo difettoso:','The new item enters the catalogue and stock with the defective item\'s cost:','Copa e re hyn në katalog dhe magazinë me koston e copës me defekt:'],
@@ -340,6 +340,7 @@ function form({title, fields, values = {}, onSubmit, submitLabel, extra = ''}){
     else if (f.type === 'textarea') input = `<textarea name="${f.name}">${esc(v)}</textarea>`;
     else if (f.type === 'sizes') input = sizesEditor(f.name);
     else if (f.type === 'datalist') input = `<input name="${f.name}" list="dl_${f.name}" value="${esc(v)}" autocomplete="off" placeholder="${esc(f.placeholder || '')}" ${f.required ? 'required' : ''}><datalist id="dl_${f.name}">${f.options.map(o => `<option value="${esc(o)}"></option>`).join('')}</datalist>`;
+    else if (f.type === 'colorname') input = colorNameInput(f, v, f.hex ?? values[f.name + '_hex']);
     else if (f.type === 'heading') { return `<h3 style="margin:18px 0 8px">${esc(f.label)}</h3>${f.hint ? `<p class="small muted" style="margin:-4px 0 10px">${esc(f.hint)}</p>` : ''}`; }
     else if (f.type === 'checkbox') input = `<input type="checkbox" name="${f.name}" style="width:auto" ${v ? 'checked' : ''}>`;
     else if (f.type === 'file') input = `<div class="row" style="flex-wrap:nowrap"><label class="file-box" style="flex:1"><span class="plus" style="display:flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span>${t('take_photo')}</span><input type="file" name="${f.name}_cam" accept="image/*" capture="environment" class="hide" onchange="previewFiles(this)"></label><label class="file-box" style="flex:1"><span class="plus">+</span><span>${t('from_gallery')}</span><input type="file" name="${f.name}" accept="image/*" multiple class="hide" onchange="previewFiles(this)"></label></div><div class="file-prev"></div>`;
@@ -347,6 +348,7 @@ function form({title, fields, values = {}, onSubmit, submitLabel, extra = ''}){
     return `<div class="field"><label>${esc(f.label)}</label>${input}</div>`;
   }).join('')}${extra}<div class="row" style="justify-content:flex-end;margin-top:8px"><button type="button" data-x>${t('cancel')}</button><button class="primary" type="submit">${esc(submitLabel || t('save'))}</button></div></form>`;
   const m = modal(html);
+  bindColorFields(m);
   m.querySelector('[data-x]').onclick = () => m.remove();
   m.querySelector('form').onsubmit = async e => {
     e.preventDefault();
@@ -355,6 +357,7 @@ function form({title, fields, values = {}, onSubmit, submitLabel, extra = ''}){
       if (f.type === 'heading') return;
       if (f.type === 'sizes'){ out[f.name] = [...e.target.querySelectorAll(`[data-sz="${f.name}"] .sz-row`)].map(r => ({size: r.querySelector('.sz-n').value.trim(), qty: Number(r.querySelector('.sz-q').value) || 0})).filter(r => r.size || r.qty); return; }
       const el = e.target.elements[f.name];
+      if (f.type === 'colorname'){ out[f.name] = el.value.trim() || null; out[f.name + '_hex'] = e.target.elements[f.name + '_hex'].value || null; return; }
       if (f.type === 'checkbox') out[f.name] = el.checked;
       else if (f.type === 'file') out[f.name] = [...e.target.elements[f.name + '_cam'].files, ...el.files];
       else if (f.type === 'number') out[f.name] = num(el.value);
@@ -612,17 +615,17 @@ function newModel(){
   f.splice(4, 0, {name:'photos', label:t('photos'), type:'file'},
     {name:'sale_price', label:t('sale_price') + ' (€)', type:'number', required:true},
     {name:'sizes', label:t('sizes_stock'), type:'sizes'},
-    {name:'color', label:`${t('color')} (${t('optional')})`});
+    {name:'color', label:`${t('color')} (${t('optional')})`, type:'colorname'});
   form({title:t('new_model'), fields:f, values:{instagram_status:'non_pubblicato'}, onSubmit: async v => {
     await ensureBrand(v);
-    const files = v.photos, sizes = v.sizes || [], color = v.color, price = v.sale_price;
-    delete v.photos; delete v.sizes; delete v.color; delete v.sale_price;
+    const files = v.photos, sizes = v.sizes || [], color = v.color, colorHx = v.color_hex, price = v.sale_price;
+    delete v.photos; delete v.sizes; delete v.color; delete v.color_hex; delete v.sale_price;
     if (!sizes.length) sizes.push({size:'TU', qty:1});
     if (!v.list_price) v.list_price = price;
     const m = check(await sb.from('models').insert(v).select().single());
     for (const {size: sz0, qty} of sizes){
       const sz = sz0 || 'TU';
-      const nv = check(await sb.from('variants').insert({model_id: m.id, size: sz, color: color || null, sale_price: price, status:'in_magazzino', sku: skuFor(m, sz, color)}).select().single());
+      const nv = check(await sb.from('variants').insert({model_id: m.id, size: sz, color: color || null, color_hex: colorHx, sale_price: price, status:'in_magazzino', sku: skuFor(m, sz, color)}).select().single());
       if (qty) check(await sb.from('stock_movements').insert({variant_id: nv.id, kind:'carico', qty, reference:'carico iniziale'}));
     }
     await uploadPhotos(m.id, files);
@@ -743,7 +746,7 @@ async function replaceWithOther(id){
     {name:'brand_id', label:t('brand'), type:'select', options:S.brands.map(b => [b.id, b.name])},
     {name:'new_brand', label:`${t('brand')}: ${t('or_new')}`},
     {name:'category_id', label:t('category'), type:'select', options:catOptions()},
-    {name:'name', label:t('name')}, {name:'size', label:t('size')}, {name:'color', label:t('color')},
+    {name:'name', label:t('name')}, {name:'size', label:t('size')}, {name:'color', label:t('color'), type:'colorname'},
     {name:'sale_price', label:t('sale_price') + ' (€)', type:'number'},
     {name:'photos', label:t('photos'), type:'file'}
   ], onSubmit: async x => {
@@ -753,7 +756,7 @@ async function replaceWithOther(id){
       await ensureBrand(x);
       const md = check(await sb.from('models').insert({brand_id: x.brand_id, category_id: x.category_id, name: x.name, list_price: x.sale_price}).select().single());
       await uploadPhotos(md.id, x.photos);
-      const nv = check(await sb.from('variants').insert({model_id: md.id, size: x.size || 'TU', color: x.color, sale_price: x.sale_price, status:'in_magazzino', sku: skuFor(md, x.size, x.color)}).select().single());
+      const nv = check(await sb.from('variants').insert({model_id: md.id, size: x.size || 'TU', color: x.color, color_hex: x.color_hex, sale_price: x.sale_price, status:'in_magazzino', sku: skuFor(md, x.size, x.color)}).select().single());
       vid = nv.id; modelId = md.id;
     } else if (!vid){ toast(t('pick_or_new'), true); throw new Error('item'); }
     else modelId = vs.find(v => v.id === vid)?.model_id;
@@ -814,7 +817,49 @@ const COLOR_MAP = {nero:'#1f1b1b',zeze:'#1f1b1b',black:'#1f1b1b',bianco:'#f7f5f0
   viola:'#6a3d8f',vjollce:'#6a3d8f',purple:'#6a3d8f',lilla:'#b79fd1',oro:'#c9a54b',gold:'#c9a54b',argento:'#c0c0c0',silver:'#c0c0c0'};
 const normCol = c => String(c || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z ]/g, '').trim();
 const colorHex = (name, hex) => hex || COLOR_MAP[normCol(name)] || COLOR_MAP[normCol(name).split(' ')[0]] || COLOR_MAP[normCol(name).split(' ').pop()] || null;
-const swatch = (name, hex, size = 16) => { const h = colorHex(name, hex); return `<span style="display:inline-block;flex:none;width:${size}px;height:${size}px;border-radius:50%;vertical-align:-3px;border:1px solid var(--line);background:${h || 'conic-gradient(#e8a3b5,#e8c33d,#7fb3e0,#2e6b3f,#e8a3b5)'}"></span>`; };
+const COLOR_NAMES = [
+  ['#1f1b1b','Nero','Black','E zezë'],['#f7f5f0','Bianco','White','E bardhë'],['#efe6d2','Panna','Cream','Krem'],['#6d1a2a','Bordeaux','Burgundy','Bordo'],
+  ['#c0272d','Rosso','Red','E kuqe'],['#e8a3b5','Rosa','Pink','Rozë'],['#c2185b','Fucsia','Fuchsia','Fuksia'],['#1f3c88','Blu','Blue','Blu'],['#1b2a4a','Blu navy','Navy','Blu e errët'],
+  ['#7fb3e0','Azzurro','Light blue','Blu e çelët'],['#2e6b3f','Verde','Green','E gjelbër'],['#8a8455','Kaki','Khaki','Kaki'],['#56583c','Verde militare','Olive','Ulliri'],
+  ['#d9c3a5','Beige','Beige','Bezhë'],['#b8875a','Cammello','Camel','Kamel'],['#6b4430','Marrone','Brown','Kafe'],['#4a2c20','Cioccolato','Chocolate','Çokollatë'],['#a89a8a','Tortora','Taupe','Taupe'],
+  ['#8c8c8c','Grigio','Grey','Gri'],['#3d3d40','Antracite','Charcoal','Antracit'],['#e8c33d','Giallo','Yellow','E verdhë'],['#c9a227','Senape','Mustard','Mustardë'],['#e07b2a','Arancione','Orange','Portokalli'],
+  ['#6a3d8f','Viola','Purple','Vjollcë'],['#b79fd1','Lilla','Lilac','Lejla'],['#c9a54b','Oro','Gold','Ari'],['#c0c0c0','Argento','Silver','Argjend']];
+COLOR_NAMES.forEach(([h, ...ns]) => ns.forEach(n => { const k = normCol(n); if (k && !COLOR_MAP[k]) COLOR_MAP[k] = h; }));
+const hexRgb = h => { const n = parseInt(String(h).slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+function nearestColorName(hex){
+  const [r, g, b] = hexRgb(hex); let best = null, bd = 1e9;
+  COLOR_NAMES.forEach(c => { const [r2, g2, b2] = hexRgb(c[0]); const d = 2 * (r - r2) ** 2 + 4 * (g - g2) ** 2 + 3 * (b - b2) ** 2; if (d < bd){ bd = d; best = c; } });
+  return best ? best[1 + LANGS[LANG]] : '';
+}
+const RAINBOW = 'conic-gradient(#e8a3b5,#e8c33d,#7fb3e0,#2e6b3f,#e8a3b5)';
+function colorNameInput(f, v, hex){
+  const h = colorHex(v, hex);
+  return `<div class="row cn-wrap" style="flex-wrap:nowrap;gap:10px;align-items:center">
+    <label class="cn-dot" title="${esc(t('color_dot'))}" style="position:relative;flex:none;width:40px;height:40px;border-radius:50%;border:2px solid var(--line);cursor:pointer;background:${h || RAINBOW};box-shadow:0 0 0 3px var(--bg, #fff) inset">
+      <input type="color" class="cn-pick" value="${h || '#d9c3a5'}" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:0;padding:0">
+      <input type="hidden" name="${f.name}_hex" value="${h || ''}"></label>
+    <input name="${f.name}" class="cn-name" value="${esc(v)}" list="dl_colnames" autocomplete="off" style="flex:1" ${f.required ? 'required' : ''} data-auto="${v ? '' : '1'}">
+    <datalist id="dl_colnames">${COLOR_NAMES.map(c => `<option value="${esc(c[1 + LANGS[LANG]])}"></option>`).join('')}</datalist></div>
+    <p class="small muted" style="margin:6px 0 0">${t('color_dot_hint')}</p>`;
+}
+function bindColorFields(root){
+  root.querySelectorAll('.cn-wrap').forEach(w => {
+    const name = w.querySelector('.cn-name'), pick = w.querySelector('.cn-pick'), hid = w.querySelector('input[type=hidden]'), dot = w.querySelector('.cn-dot');
+    let manualHex = !!hid.value && !colorHex(name.value);
+    const paint = h => { hid.value = h || ''; dot.style.background = h || RAINBOW; if (h) pick.value = h; };
+    name.addEventListener('input', () => {
+      name.dataset.auto = '';
+      const h = colorHex(name.value);
+      if (h){ manualHex = false; paint(h); }
+      else if (!manualHex) paint(null);
+    });
+    pick.addEventListener('input', () => {
+      manualHex = true; paint(pick.value);
+      if (!name.value.trim() || name.dataset.auto === '1'){ name.value = nearestColorName(pick.value); name.dataset.auto = '1'; }
+    });
+  });
+}
+const swatch = (name, hex, size = 16) => { const h = colorHex(name, hex); return `<span style="display:inline-block;flex:none;width:${size}px;height:${size}px;border-radius:50%;vertical-align:-3px;border:1px solid var(--line);background:${h || RAINBOW}"></span>`; };
 const SIZE_ORDER = ['XXS','XS','S','M','L','XL','XXL','XXXL','TU','U'];
 const sizeRank = z => { const u = String(z || '').toUpperCase(); const i = SIZE_ORDER.indexOf(u); return i >= 0 ? i : (isNaN(Number(u)) ? 100 : 200 + Number(u)); };
 function colorGroups(vs){
@@ -825,8 +870,7 @@ function colorGroups(vs){
 function editColor(col){
   const m = window._model; const vs = m.variants.filter(v => (v.color || '').trim().toLowerCase() === (col || '').toLowerCase());
   form({title:`${t('edit_color')}: ${col || t('no_color')}`, fields:[
-    {name:'color', label:t('color'), value: col},
-    {name:'color_hex', label:t('color_dot'), type:'color', value: colorHex(col, vs.find(v => v.color_hex)?.color_hex) || '#d9c3a5'},
+    {name:'color', label:t('color'), value: col, type:'colorname', hex: vs.find(v => v.color_hex)?.color_hex},
     {name:'sale_price', label:t('sale_price') + ' (€) · ' + t('all_sizes'), type:'number', value: vs[0]?.sale_price ?? ''}
   ], onSubmit: async x => { check(await sb.from('variants').update({color: x.color ? x.color.trim() : null, color_hex: x.color_hex, sale_price: x.sale_price}).in('id', vs.map(v => v.id))); toast(t('saved')); route(); }});
 }
@@ -834,8 +878,7 @@ function addColor(){
   const m = window._model;
   const base = m.variants[0] || {};
   form({title:t('add_color'), fields:[
-    {name:'color', label:t('color'), required:true},
-    {name:'color_hex', label:t('color_dot'), type:'color', value:'#d9c3a5'},
+    {name:'color', label:t('color'), required:true, type:'colorname'},
     {name:'sale_price', label:t('sale_price') + ' (€)', type:'number', value: base.sale_price ?? m.list_price ?? ''},
     {name:'sizes', label:t('sizes_stock'), type:'sizes'},
     {name:'photos', label:t('photos'), type:'file'}
@@ -848,13 +891,11 @@ function addColor(){
     await uploadPhotos(m.id, v.photos, m.photos.length);
     toast(t('saved')); route();
   }});
-  const fm = document.querySelector('.modal-bg:last-child'); const ci = fm.querySelector('[name=color]'), ch = fm.querySelector('[name=color_hex]');
-  ci.addEventListener('input', () => { const h = colorHex(ci.value); if (h) ch.value = h; });
 }
 function editVariant(vid, mid, presetColor){
   const m = window._model; const v = vid ? m.variants.find(x => x.id === vid) : {status:'in_magazzino', location:'italia', condition:'nuovo_cartellino', low_stock_threshold:0, color: presetColor ?? '', sale_price: m.variants.find(x => (x.color || '').trim() === (presetColor || ''))?.sale_price ?? m.variants[0]?.sale_price};
   const fields = [
-    {name:'size', label:t('size')}, {name:'color', label:t('color')},
+    {name:'size', label:t('size')}, {name:'color', label:t('color'), type:'colorname'},
     {name:'sale_price', label:t('sale_price'), type:'number'},
     {name:'status', label:t('status'), type:'select', options:opts('variant_status'), empty:false},
     {name:'location', label:t('location'), type:'select', options:opts('location'), empty:false},
@@ -1004,7 +1045,7 @@ async function addPurchaseLine(pid){
     {name:'category_id', label:t('category'), type:'select', options:catOptions()},
     {name:'name', label:t('name')},
     {name:'size', label:t('size')},
-    {name:'color', label:t('color')},
+    {name:'color', label:t('color'), type:'colorname'},
     {name:'sale_price', label:t('sale_price'), type:'number'},
     {name:'photos', label:t('photos'), type:'file'},
     {name:'qty', label:t('qty'), type:'number', value:1, required:true},
@@ -1019,7 +1060,7 @@ async function addPurchaseLine(pid){
       await ensureBrand(v);
       const md = check(await sb.from('models').insert({brand_id: v.brand_id, category_id: v.category_id, name: v.name, list_price: v.sale_price}).select().single());
       await uploadPhotos(md.id, v.photos);
-      const nv = check(await sb.from('variants').insert({model_id: md.id, size: v.size, color: v.color, sale_price: v.sale_price, status:'ordinato', sku: skuFor(md, v.size, v.color)}).select().single());
+      const nv = check(await sb.from('variants').insert({model_id: md.id, size: v.size, color: v.color, color_hex: v.color_hex, sale_price: v.sale_price, status:'ordinato', sku: skuFor(md, v.size, v.color)}).select().single());
       vid = nv.id;
     }
     check(await sb.from('purchase_lines').insert({variant_id: vid, qty: v.qty, unit_price: v.unit_price, purchase_id: pid, add_to_stock: toStock}));
