@@ -226,6 +226,8 @@ const T = {
   dc_other_hint:['Il pezzo nuovo entra in catalogo e in magazzino con il costo del pezzo difettoso:','The new item enters the catalogue and stock with the defective item\'s cost:','Copa e re hyn në katalog dhe magazinë me koston e copës me defekt:'],
   coupon_code:['Codice buono','Voucher code','Kodi i kuponit'], coupon_expiry:['Scadenza','Expires','Skadon'], store_credits:['Buoni negozio','Store credits','Kuponët e dyqaneve'],
   use_credit:['Usa buono','Use credit','Përdor kuponin'], amount_used:['Importo usato','Amount used','Shuma e përdorur'], remaining:['Residuo','Remaining','Mbetja'],
+  what_happened:['Cosa ha deciso il negozio?','What did the store decide?','Çfarë vendosi dyqani?'], other_outcome:['Altro esito…','Other outcome…','Rezultat tjetër…'],
+  dcs_refund:['Rimborso ricevuto','Refund received','Rimbursim i marrë'], dcs_coupon:['Buono negozio','Store voucher','Kupon dyqani'], dcs_same:['Sostituito uguale','Same item back','E njëjta copë'], dcs_other:['Cambiato con altro','Exchanged for other','Ndërruar me tjetër'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Dashboard','Dashboard','Dashboard'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -693,7 +695,14 @@ const defectRow = d => `<div class="row" style="flex-wrap:nowrap;align-items:fle
   <div style="flex:1;min-width:0"><b>${esc(d.item_label || '')}</b> ${statusPill('defect_status', d.status)}
   <div class="small">${esc(d.description)}</div>
   <div class="small muted">${fdate(d.found_on)} · ${d.qty} pz${d.suppliers ? ' · ' + t('return_to') + ' ' + esc(d.suppliers.name) : ''}${d.purchase_id ? ` · <a href="#/acquisto/${d.purchase_id}">${t('purchases')} #${d.purchase_id}</a>` : ''}${d.return_tracking ? ' · ' + esc(d.return_tracking) : ''}${d.refund_amount != null ? ' · ' + t('refund') + ' ' + eur(d.refund_amount) : ''}</div>
-  ${['da_restituire','inviato'].includes(d.status) ? `<div>${d.status === 'da_restituire' ? `<button class="link" onclick="defectSent(${d.id})">${t('mark_sent')}</button>` : ''}<button class="link" onclick="closeDefect(${d.id})">${t('close_defect')}</button></div>` : ''}</div>
+  ${d.status === 'da_restituire' ? `<div class="row" style="margin-top:6px"><button class="primary small" onclick="defectSent(${d.id})">${t('mark_sent')}</button><button class="link" onclick="closeDefect(${d.id})">${t('other_outcome')}</button></div>` : ''}
+  ${d.status === 'inviato' ? `<div class="small muted" style="margin-top:8px">${t('what_happened')}</div><div class="chips" style="margin-top:4px">
+    <button class="small" onclick="closeDefect(${d.id},'rimborsato')">💶 ${t('dcs_refund')}</button>
+    <button class="small" onclick="closeDefect(${d.id},'coupon')">🎟 ${t('dcs_coupon')}</button>
+    <button class="small" onclick="closeDefect(${d.id},'sostituito')">↺ ${t('dcs_same')}</button>
+    <button class="small" onclick="replaceWithOther(${d.id})">⇄ ${t('dcs_other')}</button>
+    <button class="small" onclick="closeDefect(${d.id})">${t('other_outcome')}</button></div>` : ''}
+  ${d.replacement_variant_id ? `<div class="small">${t('dc_other')} ✓</div>` : ''}</div>
   <div class="right" style="flex:none">${d.unit_cost != null ? `<div class="small muted">${t('cost')}</div><b>${eur(d.qty * d.unit_cost)}</b>` : ''}</div></div>`;
 function reportDefect(vid){
   const v = window._model.variants.find(x => x.id === vid);
@@ -705,10 +714,10 @@ function reportDefect(vid){
 function defectSent(id){
   form({title:t('mark_sent'), fields:[{name:'return_tracking', label:t('tracking') + ' / ' + t('notes')}], onSubmit: async x => { check(await sb.from('defects').update({status:'inviato', return_tracking: x.return_tracking}).eq('id', id)); route(); }});
 }
-function closeDefect(id){
+function closeDefect(id, preset){
   const d = (window._defects || []).find(x => x.id === id) || {};
-  const m = form({title:t('close_defect'), fields:[
-    {name:'status', label:t('outcome'), type:'select', empty:false, options:[['rimborsato', t('dc_refunded')], ['coupon', t('dc_coupon')], ['sostituito', t('dc_replaced')], ['sostituito_diverso', t('dc_other')], ['tenuto', t('dc_kept')], ['perso', t('dc_lost')]]},
+  const m = form({title: preset ? ev('defect_status', preset) : t('close_defect'), fields:[
+    {name:'status', label:t('outcome'), type:'select', empty:false, value: preset || 'rimborsato', options:[['rimborsato', t('dc_refunded')], ['coupon', t('dc_coupon')], ['sostituito', t('dc_replaced')], ['sostituito_diverso', t('dc_other')], ['tenuto', t('dc_kept')], ['perso', t('dc_lost')]]},
     {name:'amount', label:t('amount') + ' (€)', type:'number', value: d.unit_cost != null ? d.qty * d.unit_cost : ''},
     {name:'code', label:t('coupon_code')},
     {name:'expires', label:t('coupon_expiry'), type:'date'},
@@ -722,6 +731,7 @@ function closeDefect(id){
   const sync = () => { const v = sel.value; const show = {amount: ['rimborsato','coupon'], code: ['coupon'], expires: ['coupon'], notes: ['rimborsato','coupon','sostituito','tenuto','perso']};
     Object.entries(show).forEach(([n, ok]) => m.querySelector(`[name=${n}]`).closest('.field').classList.toggle('hide', !ok.includes(v))); };
   sel.addEventListener('change', sync); sync();
+  if (preset) sel.closest('.field').classList.add('hide');
 }
 async function replaceWithOther(id){
   const d = (window._defects || []).find(x => x.id === id) || {};
