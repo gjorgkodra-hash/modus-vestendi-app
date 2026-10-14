@@ -217,6 +217,9 @@ const T = {
   dc_kept:['Lo teniamo e lo vendiamo come difettato','We keep it and sell it as flawed','E mbajmë dhe e shesim me defekt'], dc_lost:['Nessun rimborso: perdita','No refund: loss','Pa rimbursim: humbje'],
   cancel_defect:['Annulla per difetto','Cancel for defect','Anulo për defekt'], cancel_defect_hint:['L\'ordine viene annullato e il pezzo va in "Difetti", non torna in vendita.','The order is cancelled and the item goes to "Defects", not back on sale.','Porosia anulohet dhe copa shkon te "Defektet", nuk kthehet në shitje.'],
   defect_loss:['Perdite per difetti','Defect losses','Humbje nga defektet'],
+  sale_value:['Valore di vendita','Sale value','Vlera e shitjes'], pieces_no_cost:['pezzi senza costo d\'acquisto','pieces without purchase cost','copë pa kosto blerjeje'],
+  pieces_no_cost_title:['Pezzi senza costo d\'acquisto','Pieces without purchase cost','Copë pa kosto blerjeje'],
+  pieces_no_cost_hint:['Collegali a un acquisto: Acquisti → Aggiungi pezzo → Già nel catalogo, stessa taglia e colore. Finché manca il costo, il valore del magazzino e i margini sono sottostimati.','Link them to a purchase: Purchases → Add item → Already in catalogue, same size and colour. Until then, stock value and margins are understated.','Lidhi me një blerje: Blerjet → Shto copë → Tashmë në katalog, e njëjta masë dhe ngjyrë. Deri atëherë, vlera e magazinës dhe marzhet janë të pasakta.'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Dashboard','Dashboard','Dashboard'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -236,7 +239,7 @@ const T = {
   carrier:['Corriere','Courier','Korrieri'], tracking:['Numero di tracking','Tracking number','Numri i gjurmimit'], track:['Traccia','Track','Gjurmo'],
   total:['Totale','Total','Totali'], paid:['Incassato','Collected','Arkëtuar'], to_collect:['Da incassare','To collect','Për t\'u arkëtuar'], discount:['Sconto','Discount','Zbritje'],
   margin:['Margine','Margin','Marzhi'], date:['Data','Date','Data'], amount:['Importo','Amount','Shuma'], method:['Metodo','Method','Mënyra'], kind:['Tipo','Type','Lloji'],
-  in_stock:['Pezzi in magazzino','Items in stock','Artikuj në magazinë'], stock_value:['Valore magazzino (costo)','Stock value (cost)','Vlera e magazinës (kosto)'],
+  in_stock:['Pezzi in magazzino','Items in stock','Artikuj në magazinë'], stock_value:['Valore magazzino (quanto l\'avete pagato)','Stock value (what you paid)','Vlera e magazinës (sa e paguat)'],
   to_ship:['Ordini da spedire','Orders to ship','Porosi për t\'u dërguar'], low_stock:['Scorta bassa','Low stock','Stok i ulët'], recent_orders:['Ultimi ordini','Latest orders','Porositë e fundit'],
   waiting_role:['Account creato. Un amministratore deve assegnarti un ruolo prima che tu possa usare l\'app.','Account created. An administrator must assign you a role before you can use the app.','Llogaria u krijua. Një administrator duhet t\'ju caktojë një rol përpara se të përdorni aplikacionin.'],
   check_email:['Controlla la tua email per confermare l\'account, poi accedi.','Check your email to confirm the account, then log in.','Kontrolloni email-in për të konfirmuar llogarinë, pastaj hyni.'],
@@ -497,17 +500,23 @@ async function route(){
 
 // ====== Panoramica ======
 async function viewDashboard(main){
-  const variants = check(await sb.from('variants').select('id,sku,size,color,qty,low_stock_threshold,models!inner(id,name,brand_id,archived)').eq('models.archived', false));
+  const variants = check(await sb.from('variants').select('id,sku,size,color,qty,sale_price,low_stock_threshold,models!inner(id,name,brand_id,archived)').eq('models.archived', false));
   const inStock = variants.reduce((a, v) => a + Math.max(0, v.qty), 0);
   const low = variants.filter(v => v.low_stock_threshold > 0 && v.qty <= v.low_stock_threshold);
   const pend = check(await sb.from('order_lines').select('qty,orders!inner(status)').eq('orders.status', 'confermato'));
   const committed = pend.reduce((a, l) => a + l.qty, 0);
   let kpis = `<div class="card kpi"><div class="v">${inStock + committed}</div><div class="l">${t('in_stock')}${committed ? ` · ${committed} ${t('of_which_ordered')}` : ''}</div></div>`;
   if (can.costs()){
-    const vc = check(await sb.from('variant_costs').select('variant_id,landed_cost'));
-    const cost = Object.fromEntries(vc.map(x => [x.variant_id, Number(x.landed_cost)]));
-    const value = variants.reduce((a, v) => a + Math.max(0, v.qty) * (cost[v.id] || 0), 0);
-    kpis += `<div class="card kpi"><div class="v">${eur(value)}</div><div class="l">${t('stock_value')}</div></div>`;
+    const vc = check(await sb.from('variant_costs').select('variant_id,landed_cost,purchase_price'));
+    const cost = Object.fromEntries(vc.filter(x => x.purchase_price != null).map(x => [x.variant_id, Number(x.landed_cost)]));
+    const avail = variants.filter(v => v.qty > 0);
+    const value = avail.reduce((a, v) => a + v.qty * (cost[v.id] || 0), 0);
+    const saleValue = avail.reduce((a, v) => a + v.qty * Number(v.sale_price || 0), 0);
+    window._noCost = avail.filter(v => cost[v.id] == null);
+    const nc = window._noCost.reduce((a, v) => a + v.qty, 0);
+    kpis += `<div class="card kpi"><div class="v">${eur(value)}</div><div class="l">${t('stock_value')}</div>
+      <div class="small" style="margin-top:6px">${t('sale_value')}: <b>${eur(saleValue)}</b></div>
+      ${nc ? `<button class="link small" style="color:var(--warn);padding:4px 0" onclick="showNoCost()">⚠ ${nc} ${t('pieces_no_cost')} ›</button>` : ''}</div>`;
   }
   let recent = '', alerts = '';
   if (can.sales()){
@@ -1563,6 +1572,12 @@ async function viewReports(main){
   ${cur.L.sort((a, b) => b.order_date.localeCompare(a.order_date)).map(l => `<tr class="click" onclick="location.hash='#/ordine/${l.order_id}'"><td>${fdate(l.order_date)}</td><td>${esc(l.item)}</td><td>${esc(l.customer)}</td><td class="right">${eur(Number(l.gross) - Number(l.discount_share))}</td><td class="right">${l.landed_cost == null ? `<span style="color:var(--warn)">${t('cost_missing')}</span>` : eur(l.qty * Number(l.landed_cost) + Number(l.shipping_share))}</td><td class="right"><b>${eur(l.margin)}</b></td></tr>`).join('') || `<tr><td colspan="6" class="empty">${t('no_data')}</td></tr>`}</table></div></div>`;
   const onD = () => { repF = {preset:'custom', from: $('#rf').value, to: $('#rt').value}; route(); };
   $('#rf').onchange = onD; $('#rt').onchange = onD;
+}
+function showNoCost(){
+  modal(`<h2>${t('pieces_no_cost_title')}</h2><p class="small muted">${t('pieces_no_cost_hint')}</p>
+  ${window._noCost.map(v => `<div class="row" style="flex-wrap:nowrap;padding:10px 0;border-top:1px solid var(--line);cursor:pointer" onclick="this.closest('.modal-bg').remove();location.hash='#/articolo/${v.models.id}'">
+    <div style="flex:1;min-width:0"><b>${esc(brandName(v.models.brand_id))} ${esc(v.models.name)}</b><div class="small muted">${esc([v.size, v.color].filter(Boolean).join(' · '))} · ${v.qty} pz</div></div><div class="right">${eur(v.sale_price)}</div></div>`).join('')}
+  <div class="row" style="justify-content:flex-end;margin-top:12px"><button onclick="this.closest('.modal-bg').remove();location.hash='#/acquisti'">${t('purchases')} →</button><button class="primary" onclick="this.closest('.modal-bg').remove()">${t('close')}</button></div>`);
 }
 async function showMarginDetail(){
   const ml = check(await sb.from('v_line_margins').select('*').in('status', ['confermato','spedito']).order('order_id'));
