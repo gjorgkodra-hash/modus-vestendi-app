@@ -207,6 +207,7 @@ const T = {
   stop_now:['Ferma campagna','Stop campaign','Ndalo fushatën'], end_planned:['Fine prevista','Planned end','Mbarimi i planifikuar'], platform:['Piattaforma','Platform','Platforma'],
   campaign_product:['Prodotto promosso','Promoted product','Produkti i promovuar'], new_followers:['Nuovi follower','New followers','Ndjekës të rinj'], followers:['follower','followers','ndjekës'],
   per_follower:['per follower','per follower','për ndjekës'], reach:['Persone raggiunte','Reach','Persona të arritura'], dms_received:['DM ricevuti','DMs received','DM të marra'],
+  add_color:['Aggiungi colore','Add colour','Shto ngjyrë'], no_color:['Senza colore','No colour','Pa ngjyrë'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Dashboard','Dashboard','Dashboard'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -627,12 +628,14 @@ async function viewModel(main, id){
   ${m.description ? `<p>${esc(m.description)}</p>` : ''}
   <div class="card"><h3>${t('photos')}</h3>
   <div class="photos">${w ? `<label class="photo-add"><span class="plus" style="display:flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span>${t('take_photo')}</span><input type="file" accept="image/*" capture="environment" class="hide" id="pfc"></label><label class="photo-add"><span class="plus">+</span><span>${t('from_gallery')}</span><input type="file" accept="image/*" multiple class="hide" id="pf"></label>` : ''}${m.photos.map(p => `<div class="p ${p.is_main ? 'main' : ''}" style="background-image:url('${urlCache[p.path] || ''}')" onclick="window.open('${urlCache[p.path] || ''}','_blank')">${w ? `<button onclick="event.stopPropagation();photoMenu(${p.id},${m.id})">⋯</button>` : ''}</div>`).join('') || (w ? '' : `<span class="muted small">${t('no_data')}</span>`)}</div></div>
-  <div class="card"><div class="row spread"><h3>${t('sizes_stock')}</h3>${w ? `<button onclick="editVariant(null,${m.id})">+ ${t('add_size')}</button>` : ''}</div>
-  ${m.variants.map(v => { const s = ST[v.id] || {available: v.qty, reserved: 0}; return `<div class="row" style="flex-wrap:nowrap;padding:10px 0;border-top:1px solid var(--line)">
-    <div style="flex:1;min-width:0"><b>${esc(vname(v))}</b> <span class="small muted">${esc(v.sku || '')}</span>
+  <div class="card"><div class="row spread"><h3>${t('sizes_stock')}</h3>${w ? `<button class="primary" onclick="addColor()">+ ${t('add_color')}</button>` : ''}</div>
+  ${colorGroups(m.variants).map(([col, vs]) => { const tot = vs.reduce((a, v) => a + Math.max(0, (ST[v.id] || {available: v.qty}).available), 0); return `<div style="border-top:2px solid var(--line);margin-top:8px;padding-top:10px">
+    <div class="row spread"><b style="font-size:16px">${esc(col || t('no_color'))}</b><span class="row"><span class="pill ${tot ? 'good' : 'grey'}">${tot} ${t('available')}</span>${w ? `<button class="link" onclick="editVariant(null,${m.id},${esc(JSON.stringify(col))})">+ ${t('add_size')}</button>` : ''}</span></div>
+    ${vs.map(v => { const s = ST[v.id] || {available: v.qty, reserved: 0}; return `<div class="row" style="flex-wrap:nowrap;padding:9px 0 9px 10px;border-top:1px solid var(--line)">
+    <div style="flex:1;min-width:0"><b>${esc(v.size || t('one_size'))}</b> <span class="small muted">${esc(v.sku || '')}</span>
     <div class="small">${eur(v.sale_price)}${can.costs() && costs[v.id] ? ` · <span class="muted">${t('landed_cost')} ${eur(costs[v.id].landed_cost)}</span>` : ''} · ${esc(ev('location', v.location))}</div></div>
     <div class="right" style="flex:none"><span class="pill ${s.available > 0 ? 'good' : 'grey'}">${Math.max(0, s.available)} ${t('available')}</span>${s.reserved ? `<div class="small" style="color:var(--warn)">${s.reserved} ${t('reserved_short')}</div>` : ''}
-    <div>${can.sales() && s.available > 0 ? `<button class="link" onclick="sellFromModel(${v.id})">${t('sell')}</button>` : ''}${w ? `<button class="link" onclick="editVariant(${v.id},${m.id})">${t('edit')}</button><button class="link" onclick="adjustStock(${v.id},${m.id})">±</button><button class="link" style="color:var(--bad)" onclick="deleteVariant(${v.id})">${t('delete')}</button>` : ''}</div></div></div>`; }).join('') || `<div class="empty">${t('no_data')}</div>`}</div>
+    <div>${can.sales() && s.available > 0 ? `<button class="link" onclick="sellFromModel(${v.id})">${t('sell')}</button>` : ''}${w ? `<button class="link" onclick="editVariant(${v.id},${m.id})">${t('edit')}</button><button class="link" onclick="adjustStock(${v.id},${m.id})">±</button><button class="link" style="color:var(--bad)" onclick="deleteVariant(${v.id})">${t('delete')}</button>` : ''}</div></div></div>`; }).join('')}</div>`; }).join('') || `<div class="empty">${t('no_data')}</div>`}</div>
   ${can.sales() ? `<div class="card"><h3>${t('sales_reservations')}</h3>
   ${sales.sort((a, b) => b.orders.id - a.orders.id).map(s => { const v = m.variants.find(x => x.id === s.variant_id); return `<div class="row" style="flex-wrap:nowrap;padding:9px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='#/ordine/${s.orders.id}'">
     <div style="flex:1;min-width:0"><b>${esc(s.orders.customers?.full_name || '')}</b>${s.orders.customers?.instagram ? ` <span class="small muted">@${esc(s.orders.customers.instagram)}</span>` : ''}
@@ -684,8 +687,33 @@ async function deletePhoto(pid){
   await sb.storage.from('foto').remove([p.path]);
   check(await sb.from('photos').delete().eq('id', pid)); document.querySelector('.modal-bg')?.remove(); route();
 }
-function editVariant(vid, mid){
-  const m = window._model; const v = vid ? m.variants.find(x => x.id === vid) : {status:'in_magazzino', location:'italia', condition:'nuovo_cartellino', low_stock_threshold:0};
+const SIZE_ORDER = ['XXS','XS','S','M','L','XL','XXL','XXXL','TU','U'];
+const sizeRank = z => { const u = String(z || '').toUpperCase(); const i = SIZE_ORDER.indexOf(u); return i >= 0 ? i : (isNaN(Number(u)) ? 100 : 200 + Number(u)); };
+function colorGroups(vs){
+  const g = {};
+  vs.forEach(v => { const k = (v.color || '').trim(); const key = k.toLowerCase(); (g[key] = g[key] || [k, []])[1].push(v); });
+  return Object.values(g).map(([k, list]) => [k, list.sort((a, b) => sizeRank(a.size) - sizeRank(b.size))]);
+}
+function addColor(){
+  const m = window._model;
+  const base = m.variants[0] || {};
+  form({title:t('add_color'), fields:[
+    {name:'color', label:t('color'), required:true},
+    {name:'sale_price', label:t('sale_price') + ' (€)', type:'number', value: base.sale_price ?? m.list_price ?? ''},
+    {name:'sizes', label:t('sizes_stock'), type:'sizes'},
+    {name:'photos', label:t('photos'), type:'file'}
+  ], onSubmit: async v => {
+    const sizes = v.sizes.length ? v.sizes : [{size:'TU', qty:1}];
+    for (const {size, qty} of sizes){
+      const nv = check(await sb.from('variants').insert({model_id: m.id, size: size || 'TU', color: v.color.trim(), sale_price: v.sale_price, status:'in_magazzino', location: base.location || 'italia', sku: skuFor(m, size, v.color)}).select().single());
+      if (qty) check(await sb.from('stock_movements').insert({variant_id: nv.id, kind:'carico', qty, reference:'carico iniziale'}));
+    }
+    await uploadPhotos(m.id, v.photos, m.photos.length);
+    toast(t('saved')); route();
+  }});
+}
+function editVariant(vid, mid, presetColor){
+  const m = window._model; const v = vid ? m.variants.find(x => x.id === vid) : {status:'in_magazzino', location:'italia', condition:'nuovo_cartellino', low_stock_threshold:0, color: presetColor ?? '', sale_price: m.variants.find(x => (x.color || '').trim() === (presetColor || ''))?.sale_price ?? m.variants[0]?.sale_price};
   const fields = [
     {name:'size', label:t('size')}, {name:'color', label:t('color')},
     {name:'sale_price', label:t('sale_price'), type:'number'},
@@ -695,7 +723,7 @@ function editVariant(vid, mid){
     {name:'low_stock_threshold', label:t('low_stock'), type:'number'},
     {name:'sku', label:t('sku')}
   ];
-  if (!vid) fields.splice(2, 0, {name:'initial_qty', label:t('qty'), type:'number', value:0});
+  if (!vid) fields.splice(2, 0, {name:'initial_qty', label:t('qty'), type:'number', value:1});
   form({title: vid ? t('edit') : t('add_variant'), fields, values:v, onSubmit: async x => {
     const q = x.initial_qty; delete x.initial_qty;
     x.low_stock_threshold = x.low_stock_threshold || 0;
@@ -1099,7 +1127,7 @@ async function openOrderSheet({modelId, variantId, customerId, mode} = {}){
   const siblings = v => pool.filter(x => x.model_id === v.model_id);
   const draw = () => {
     const chipModel = modelId && pool.filter(v => v.model_id === modelId).length > 1 ? modelId : null;
-    $m('#os_sizes').innerHTML = chipModel ? `<label>${t('pick_size')}</label><div class="chips" style="margin-bottom:10px">${pool.filter(v => v.model_id === chipModel).map(v => `<button type="button" class="${lines.some(l => l.v.id === v.id) ? 'primary' : ''}" data-addv="${v.id}">${esc(szName(v))} · ${avail[v.id]}</button>`).join('')}</div>` : '';
+    $m('#os_sizes').innerHTML = chipModel ? `<label>${t('pick_size')}</label>${colorGroups(pool.filter(v => v.model_id === chipModel)).map(([col, vs]) => `<div class="small" style="margin:4px 0 2px"><b>${esc(col || t('no_color'))}</b></div><div class="chips" style="margin-bottom:8px">${vs.map(v => `<button type="button" class="${lines.some(l => l.v.id === v.id) ? 'primary' : ''}" data-addv="${v.id}">${esc(v.size || t('one_size'))} · ${avail[v.id]}</button>`).join('')}</div>`).join('')}` : '';
     $m('#os_lines').innerHTML = lines.map((l, i) => `<div class="card" style="padding:10px 12px;margin-bottom:8px;box-shadow:none">
       <div class="row spread"><b style="min-width:0">${esc(brandName(l.v.models?.brand_id))} ${esc(l.v.models?.name)}</b><button type="button" class="link" data-rm="${i}">✕</button></div>
       <div style="margin-top:6px"><label>${t('size')}</label><select data-sz="${i}">${siblings(l.v).concat(siblings(l.v).some(x => x.id === l.v.id) ? [] : [l.v]).map(x => `<option value="${x.id}" ${x.id === l.v.id ? 'selected' : ''}>${esc(szName(x))} · ${avail[x.id] ?? 0} ${t('available')}</option>`).join('')}</select></div>
