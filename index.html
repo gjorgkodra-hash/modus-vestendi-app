@@ -208,6 +208,8 @@ const T = {
   campaign_product:['Prodotto promosso','Promoted product','Produkti i promovuar'], new_followers:['Nuovi follower','New followers','Ndjekës të rinj'], followers:['follower','followers','ndjekës'],
   per_follower:['per follower','per follower','për ndjekës'], reach:['Persone raggiunte','Reach','Persona të arritura'], dms_received:['DM ricevuti','DMs received','DM të marra'],
   add_color:['Aggiungi colore','Add colour','Shto ngjyrë'], no_color:['Senza colore','No colour','Pa ngjyrë'],
+  sold_no_cost:['venduto senza costo','sold without cost','shitur pa kosto'], edit_line:['Correggi pezzo o prezzo','Fix item or price','Korrigjo copën ose çmimin'],
+  order_no_cost:['Manca il costo d\'acquisto: il margine non è reale. Aggiungi il pezzo a un acquisto (con "Già nel catalogo", stessa taglia e colore).','Purchase cost missing: the margin is not real. Add the item to a purchase ("Already in catalogue", same size and colour).','Mungon kostoja e blerjes: marzhi nuk është real. Shtoje copën në një blerje ("Tashmë në katalog", e njëjta masë dhe ngjyrë).'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Dashboard','Dashboard','Dashboard'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -820,7 +822,7 @@ async function viewPurchase(main, id){
   ${p.purchase_lines.map(l => `<div class="row" style="flex-wrap:nowrap;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)">
     <div style="flex:1;min-width:0">${l.variants ? `<a href="#/articolo/${l.variants.model_id}"><b>${esc(brandName(l.variants.models.brand_id))} ${esc(l.variants.models.name)}</b></a>
     <div class="small muted">${esc([l.variants.size, l.variants.color].filter(Boolean).join(' · '))} · ` : `<b>${esc(l.item_label || '—')}</b> <span class="pill grey">${t('removed_from_catalog')}</span><div class="small muted">`}${l.qty} × ${eur(l.unit_price)}${Number(l.allocated_unit_cost) ? ` + ${eur(l.allocated_unit_cost)} ${t('costs').toLowerCase()}` : ''}</div>
-    <button class="link small" onclick="editPurchaseLine(${l.id}, ${l.unit_price})">${t('edit_price')}</button>${p.status !== 'ricevuto' ? `<button class="link small" onclick="delRow('purchase_lines',${l.id})">${t('delete')}</button>` : ''}</div>
+    <button class="link small" onclick="editPurchaseLine(${l.id}, ${l.unit_price})">${t('edit_line')}</button>${p.status !== 'ricevuto' ? `<button class="link small" onclick="delRow('purchase_lines',${l.id})">${t('delete')}</button>` : ''}</div>
     <div class="right" style="flex:none"><div class="small muted">${t('landed_cost')}</div><b>${eur(Number(l.unit_price) + Number(l.allocated_unit_cost))}</b></div></div>`).join('') || `<div class="empty">${t('no_data')}</div>`}
   <div class="row spread" style="padding-top:10px;border-top:1px solid var(--line)"><b>${t('total')}</b><span><b>${eur(tot)}</b>${ctot ? ` <span class="small muted">+ ${eur(ctot)} ${t('costs').toLowerCase()}</span>` : ''}</span></div></div>
   <div class="card"><div class="row spread"><h3>${t('costs')}</h3><button onclick="addCost({purchase_id:${p.id}})">+ ${t('add')}</button></div>
@@ -845,12 +847,18 @@ function editPurchaseStatus(id){
     route(); }});
   if (!received) buyModeToggle(m);
 }
+async function soldWithoutCost(){
+  const [ol, vc] = await Promise.all([sb.from('order_lines').select('variant_id,orders!inner(status)').not('orders.status', 'in', '(annullato,bozza)'), sb.from('variant_costs').select('variant_id,purchase_price')]);
+  const costed = new Set((vc.data || []).filter(x => x.purchase_price != null).map(x => x.variant_id));
+  return new Set((ol.data || []).map(x => x.variant_id).filter(id => !costed.has(id)));
+}
 async function addPurchaseLine(pid){
-  const vs = (await allVariants()).filter(v => !v.models?.archived).sort((a, b) => variantLabel(a).localeCompare(variantLabel(b)));
+  const flag = await soldWithoutCost();
+  const vs = (await allVariants()).filter(v => !v.models?.archived).sort((a, b) => (flag.has(b.id) - flag.has(a.id)) || variantLabel(a).localeCompare(variantLabel(b)));
   const newF = ['brand_id','new_brand','category_id','name','size','color','sale_price','photos'], oldF = ['variant_id','add_stock'];
   const m = form({title:t('add_line'), fields:[
     {name:'line_kind', label:t('line_kind'), type:'select', empty:false, value:'new', options:[['new', t('lk_new')], ['existing', t('lk_existing')]]},
-    {name:'variant_id', label:t('catalog'), type:'select', options:vs.map(v => [v.id, variantLabel(v)])},
+    {name:'variant_id', label:t('catalog'), type:'select', options:vs.map(v => [v.id, (flag.has(v.id) ? '⚠ ' + t('sold_no_cost') + ' · ' : '') + variantLabel(v)])},
     {name:'add_stock', label:t('add_stock_q'), type:'checkbox', value:false},
     {name:'brand_id', label:t('brand'), type:'select', options:S.brands.map(b => [b.id, b.name])},
     {name:'new_brand', label:`${t('brand')}: ${t('or_new')}`},
@@ -904,9 +912,14 @@ async function deleteOrder(id){
   check(await sb.from('orders').delete().eq('id', id));
   toast(t('saved')); location.hash = '#/ordini';
 }
-function editPurchaseLine(id, price){
-  form({title:t('edit_price'), fields:[{name:'unit_price', label:t('purchase_price') + ' (€)', type:'number', value:price, required:true}],
-    onSubmit: async v => { check(await sb.from('purchase_lines').update({unit_price: v.unit_price}).eq('id', id)); route(); }});
+async function editPurchaseLine(id, price){
+  const l = window._purchase.purchase_lines.find(x => x.id === id);
+  const flag = await soldWithoutCost();
+  const vs = (await allVariants()).filter(v => !v.models?.archived || v.id === l.variant_id).sort((a, b) => (flag.has(b.id) - flag.has(a.id)) || variantLabel(a).localeCompare(variantLabel(b)));
+  form({title:t('edit_line'), fields:[
+    {name:'variant_id', label:`${t('items')} · ${t('size')} · ${t('color')}`, type:'select', empty:false, value:l.variant_id, options:vs.map(v => [v.id, (flag.has(v.id) ? '⚠ ' + t('sold_no_cost') + ' · ' : '') + variantLabel(v)])},
+    {name:'unit_price', label:t('purchase_price') + ' (€)', type:'number', value:price, required:true}],
+    onSubmit: async v => { check(await sb.from('purchase_lines').update({unit_price: v.unit_price, variant_id: Number(v.variant_id)}).eq('id', id)); route(); }});
 }
 async function receivePurchase(id){ if (!confirmBox()) return; check(await sb.rpc('ricevi_acquisto', {p_purchase_id: id})); toast(t('saved')); route(); }
 function addCost(target){
@@ -1254,7 +1267,8 @@ async function viewOrder(main, id){
     <div class="right"><b>${eur(l.qty * l.unit_price)}</b></div></div>`; }).join('')}
   ${Number(od.discount) ? `<div class="row spread small" style="padding-top:8px"><span>${t('discount')}</span><span>− ${eur(od.discount)}</span></div>` : ''}
   <div class="row spread" style="padding-top:8px"><b>${t('total')}</b><b style="font-size:20px">${eur(tt.total)}</b></div>
-  ${marg ? `<p class="small muted">${t('goods_cost')} ${eur(marg.goods_cost)} · ${t('shipping_cost')} ${eur(marg.shipping_cost)} · <b>${t('margin')} ${eur(marg.margin)}</b></p>` : ''}</div>
+  ${marg ? `<p class="small muted">${t('goods_cost')} ${eur(marg.goods_cost)} · ${t('shipping_cost')} ${eur(marg.shipping_cost)} · <b>${t('margin')} ${eur(marg.margin)}</b></p>` : ''}
+  ${marg && !['riservato','bozza','annullato'].includes(od.status) && Number(marg.goods_cost) === 0 ? `<p class="small" style="color:var(--warn)">⚠ ${t('order_no_cost')} <a href="#/acquisti">${t('purchases')} →</a></p>` : ''}</div>
   <div class="grid g2">
   <div class="card"><div class="row spread"><h3>${t('payments')}</h3><button onclick="addPayment(${id})">+ ${t('add')}</button></div>
   <p class="small">${t('paid')}: <b>${eur(tt.paid)}</b> · ${t('to_collect')}: <b>${eur(tt.to_collect)}</b></p>
