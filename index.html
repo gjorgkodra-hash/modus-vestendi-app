@@ -220,6 +220,8 @@ const T = {
   sale_value:['Valore di vendita','Sale value','Vlera e shitjes'], pieces_no_cost:['pezzi senza costo d\'acquisto','pieces without purchase cost','copë pa kosto blerjeje'],
   pieces_no_cost_title:['Pezzi senza costo d\'acquisto','Pieces without purchase cost','Copë pa kosto blerjeje'],
   pieces_no_cost_hint:['Collegali a un acquisto: Acquisti → Aggiungi pezzo → Già nel catalogo, stessa taglia e colore. Finché manca il costo, il valore del magazzino e i margini sono sottostimati.','Link them to a purchase: Purchases → Add item → Already in catalogue, same size and colour. Until then, stock value and margins are understated.','Lidhi me një blerje: Blerjet → Shto copë → Tashmë në katalog, e njëjta masë dhe ngjyrë. Deri atëherë, vlera e magazinës dhe marzhet janë të pasakta.'],
+  color_dot:['Colore del pallino','Dot colour','Ngjyra e pikës'], edit_color:['Modifica colore','Edit colour','Ndrysho ngjyrën'], all_sizes:['tutte le taglie','all sizes','të gjitha masat'],
+  max_avail:['Quantità oltre la disponibilità','Quantity above availability','Sasia mbi gjendjen'], max:['max','max','maks'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Dashboard','Dashboard','Dashboard'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -652,13 +654,19 @@ async function viewModel(main, id){
   <div class="card"><h3>${t('photos')}</h3>
   <div class="photos">${w ? `<label class="photo-add"><span class="plus" style="display:flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span>${t('take_photo')}</span><input type="file" accept="image/*" capture="environment" class="hide" id="pfc"></label><label class="photo-add"><span class="plus">+</span><span>${t('from_gallery')}</span><input type="file" accept="image/*" multiple class="hide" id="pf"></label>` : ''}${m.photos.map(p => `<div class="p ${p.is_main ? 'main' : ''}" style="background-image:url('${urlCache[p.path] || ''}')" onclick="window.open('${urlCache[p.path] || ''}','_blank')">${w ? `<button onclick="event.stopPropagation();photoMenu(${p.id},${m.id})">⋯</button>` : ''}</div>`).join('') || (w ? '' : `<span class="muted small">${t('no_data')}</span>`)}</div></div>
   <div class="card"><div class="row spread"><h3>${t('sizes_stock')}</h3>${w ? `<button class="primary" onclick="addColor()">+ ${t('add_color')}</button>` : ''}</div>
-  ${colorGroups(m.variants).map(([col, vs]) => { const tot = vs.reduce((a, v) => a + Math.max(0, (ST[v.id] || {available: v.qty}).available), 0); return `<div style="border-top:2px solid var(--line);margin-top:8px;padding-top:10px">
-    <div class="row spread"><b style="font-size:16px">${esc(col || t('no_color'))}</b><span class="row"><span class="pill ${tot ? 'good' : 'grey'}">${tot} ${t('available')}</span>${w ? `<button class="link" onclick="editVariant(null,${m.id},${esc(JSON.stringify(col))})">+ ${t('add_size')}</button>` : ''}</span></div>
+  ${colorGroups(m.variants).map(([col, vs, hex], gi) => { const tot = vs.reduce((a, v) => a + Math.max(0, (ST[v.id] || {available: v.qty}).available), 0); const firstAv = vs.find(v => (ST[v.id] || {available: v.qty}).available > 0); return `<div style="border-top:2px solid var(--line);margin-top:8px;padding-top:10px">
+    <div class="row" style="flex-wrap:nowrap;cursor:pointer" onclick="const b=this.parentNode.querySelector('.cg-body');b.hidden=!b.hidden;this.querySelector('.chev').textContent=b.hidden?'▸':'▾'">
+      <span class="chev" style="width:14px;flex:none">▸</span>${swatch(col, hex, 18)}<b style="font-size:16px;flex:1;min-width:0">${esc(col || t('no_color'))}</b>
+      <span class="small muted" style="flex:none">${vs.filter(v => (ST[v.id] || {available: v.qty}).available > 0).map(v => esc(v.size || t('one_size'))).join(' · ')}</span>
+      <span class="pill ${tot ? 'good' : 'grey'}" style="flex:none">${tot} ${t('available')}</span>
+      ${can.sales() && firstAv ? `<button class="primary small" style="flex:none;padding:6px 10px" onclick="event.stopPropagation();sellFromModel(null,null,${esc(JSON.stringify(col))})">${t('sell')}</button>` : ''}</div>
+    <div class="cg-body" hidden>
+    ${w ? `<div class="row" style="justify-content:flex-end;gap:0"><button class="link" onclick="editColor(${esc(JSON.stringify(col))})">${t('edit_color')}</button><button class="link" onclick="editVariant(null,${m.id},${esc(JSON.stringify(col))})">+ ${t('add_size')}</button></div>` : ''}
     ${vs.map(v => { const s = ST[v.id] || {available: v.qty, reserved: 0}; return `<div style="padding:9px 0 6px 10px;border-top:1px solid var(--line)"><div class="row" style="flex-wrap:nowrap">
     <div style="flex:1;min-width:0"><b>${esc(v.size || t('one_size'))}</b> <span class="small muted">${esc(v.sku || '')}</span>
     <div class="small">${eur(v.sale_price)}${can.costs() && costs[v.id] ? ` · <span class="muted">${t('landed_cost')} ${eur(costs[v.id].landed_cost)}</span>` : ''} · ${esc(ev('location', v.location))}${v.condition === 'difetto' ? ` · <span style="color:var(--warn)">${t('defect')}</span>` : ''}</div></div>
     <div class="right" style="flex:none"><span class="pill ${s.available > 0 ? 'good' : 'grey'}">${Math.max(0, s.available)} ${t('available')}</span>${s.reserved ? `<div class="small" style="color:var(--warn)">${s.reserved} ${t('reserved_short')}</div>` : ''}</div></div>
-    <div class="row" style="justify-content:flex-end;gap:0">${can.sales() && s.available > 0 ? `<button class="link" onclick="sellFromModel(${v.id})">${t('sell')}</button>` : ''}${w ? `<button class="link" onclick="editVariant(${v.id},${m.id})">${t('edit')}</button><button class="link" onclick="adjustStock(${v.id},${m.id})">±</button>` : ''}${v.qty > 0 ? `<button class="link" style="color:var(--warn)" onclick="reportDefect(${v.id})">${t('defect')}</button>` : ''}${w ? `<button class="link" style="color:var(--bad)" onclick="deleteVariant(${v.id})">${t('delete')}</button>` : ''}</div></div>`; }).join('')}</div>`; }).join('') || `<div class="empty">${t('no_data')}</div>`}</div>
+    <div class="row" style="justify-content:flex-end;gap:0">${can.sales() && s.available > 0 ? `<button class="link" onclick="sellFromModel(${v.id})">${t('sell')}</button>` : ''}${w ? `<button class="link" onclick="editVariant(${v.id},${m.id})">${t('edit')}</button><button class="link" onclick="adjustStock(${v.id},${m.id})">±</button>` : ''}${v.qty > 0 ? `<button class="link" style="color:var(--warn)" onclick="reportDefect(${v.id})">${t('defect')}</button>` : ''}${w ? `<button class="link" style="color:var(--bad)" onclick="deleteVariant(${v.id})">${t('delete')}</button>` : ''}</div></div>`; }).join('')}</div></div>`; }).join('') || `<div class="empty">${t('no_data')}</div>`}</div>
   ${defects.length ? `<div class="card"><h3>${t('defects')}</h3>${defects.map(defectRow).join('')}</div>` : ''}
   ${can.sales() ? `<div class="card"><h3>${t('sales_reservations')}</h3>
   ${sales.sort((a, b) => b.orders.id - a.orders.id).map(s => { const v = m.variants.find(x => x.id === s.variant_id); return `<div class="row" style="flex-wrap:nowrap;padding:9px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='#/ordine/${s.orders.id}'">
@@ -743,30 +751,50 @@ async function deletePhoto(pid){
   await sb.storage.from('foto').remove([p.path]);
   check(await sb.from('photos').delete().eq('id', pid)); document.querySelector('.modal-bg')?.remove(); route();
 }
+const COLOR_MAP = {nero:'#1f1b1b',zeze:'#1f1b1b',black:'#1f1b1b',bianco:'#f7f5f0',bardhe:'#f7f5f0',white:'#f7f5f0',panna:'#efe6d2',crema:'#efe6d2',krem:'#efe6d2',cream:'#efe6d2',ivory:'#efe6d2',avorio:'#efe6d2',
+  bordo:'#6d1a2a',bordeaux:'#6d1a2a',burgundy:'#6d1a2a',vinaccia:'#6d1a2a',rosso:'#c0272d',kuq:'#c0272d',kuqe:'#c0272d',red:'#c0272d',rosa:'#e8a3b5',roze:'#e8a3b5',pink:'#e8a3b5',fucsia:'#c2185b',
+  blu:'#1f3c88',blue:'#1f3c88',navy:'#1b2a4a',azzurro:'#7fb3e0',celeste:'#a7cdea',verde:'#2e6b3f',jeshil:'#2e6b3f',jeshile:'#2e6b3f',green:'#2e6b3f',kaki:'#8a8455',khaki:'#8a8455',militare:'#56583c',
+  beige:'#d9c3a5',bezhe:'#d9c3a5',cammello:'#b8875a',camel:'#b8875a',marrone:'#6b4430',kafe:'#6b4430',brown:'#6b4430',cioccolato:'#4a2c20',tortora:'#a89a8a',taupe:'#a89a8a',
+  grigio:'#8c8c8c',gri:'#8c8c8c',grey:'#8c8c8c',gray:'#8c8c8c',antracite:'#3d3d40',giallo:'#e8c33d',verdhe:'#e8c33d',yellow:'#e8c33d',senape:'#c9a227',arancione:'#e07b2a',portokalli:'#e07b2a',orange:'#e07b2a',
+  viola:'#6a3d8f',vjollce:'#6a3d8f',purple:'#6a3d8f',lilla:'#b79fd1',oro:'#c9a54b',gold:'#c9a54b',argento:'#c0c0c0',silver:'#c0c0c0'};
+const normCol = c => String(c || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z ]/g, '').trim();
+const colorHex = (name, hex) => hex || COLOR_MAP[normCol(name)] || COLOR_MAP[normCol(name).split(' ')[0]] || COLOR_MAP[normCol(name).split(' ').pop()] || null;
+const swatch = (name, hex, size = 16) => { const h = colorHex(name, hex); return `<span style="display:inline-block;flex:none;width:${size}px;height:${size}px;border-radius:50%;vertical-align:-3px;border:1px solid var(--line);background:${h || 'conic-gradient(#e8a3b5,#e8c33d,#7fb3e0,#2e6b3f,#e8a3b5)'}"></span>`; };
 const SIZE_ORDER = ['XXS','XS','S','M','L','XL','XXL','XXXL','TU','U'];
 const sizeRank = z => { const u = String(z || '').toUpperCase(); const i = SIZE_ORDER.indexOf(u); return i >= 0 ? i : (isNaN(Number(u)) ? 100 : 200 + Number(u)); };
 function colorGroups(vs){
   const g = {};
   vs.forEach(v => { const k = (v.color || '').trim(); const key = k.toLowerCase(); (g[key] = g[key] || [k, []])[1].push(v); });
-  return Object.values(g).map(([k, list]) => [k, list.sort((a, b) => sizeRank(a.size) - sizeRank(b.size))]);
+  return Object.values(g).map(([k, list]) => [k, list.sort((a, b) => sizeRank(a.size) - sizeRank(b.size)), list.find(v => v.color_hex)?.color_hex]);
+}
+function editColor(col){
+  const m = window._model; const vs = m.variants.filter(v => (v.color || '').trim().toLowerCase() === (col || '').toLowerCase());
+  form({title:`${t('edit_color')}: ${col || t('no_color')}`, fields:[
+    {name:'color', label:t('color'), value: col},
+    {name:'color_hex', label:t('color_dot'), type:'color', value: colorHex(col, vs.find(v => v.color_hex)?.color_hex) || '#d9c3a5'},
+    {name:'sale_price', label:t('sale_price') + ' (€) · ' + t('all_sizes'), type:'number', value: vs[0]?.sale_price ?? ''}
+  ], onSubmit: async x => { check(await sb.from('variants').update({color: x.color ? x.color.trim() : null, color_hex: x.color_hex, sale_price: x.sale_price}).in('id', vs.map(v => v.id))); toast(t('saved')); route(); }});
 }
 function addColor(){
   const m = window._model;
   const base = m.variants[0] || {};
   form({title:t('add_color'), fields:[
     {name:'color', label:t('color'), required:true},
+    {name:'color_hex', label:t('color_dot'), type:'color', value:'#d9c3a5'},
     {name:'sale_price', label:t('sale_price') + ' (€)', type:'number', value: base.sale_price ?? m.list_price ?? ''},
     {name:'sizes', label:t('sizes_stock'), type:'sizes'},
     {name:'photos', label:t('photos'), type:'file'}
   ], onSubmit: async v => {
     const sizes = v.sizes.length ? v.sizes : [{size:'TU', qty:1}];
     for (const {size, qty} of sizes){
-      const nv = check(await sb.from('variants').insert({model_id: m.id, size: size || 'TU', color: v.color.trim(), sale_price: v.sale_price, status:'in_magazzino', location: base.location || 'italia', sku: skuFor(m, size, v.color)}).select().single());
+      const nv = check(await sb.from('variants').insert({model_id: m.id, size: size || 'TU', color: v.color.trim(), color_hex: v.color_hex, sale_price: v.sale_price, status:'in_magazzino', location: base.location || 'italia', sku: skuFor(m, size, v.color)}).select().single());
       if (qty) check(await sb.from('stock_movements').insert({variant_id: nv.id, kind:'carico', qty, reference:'carico iniziale'}));
     }
     await uploadPhotos(m.id, v.photos, m.photos.length);
     toast(t('saved')); route();
   }});
+  const fm = document.querySelector('.modal-bg:last-child'); const ci = fm.querySelector('[name=color]'), ch = fm.querySelector('[name=color_hex]');
+  ci.addEventListener('input', () => { const h = colorHex(ci.value); if (h) ch.value = h; });
 }
 function editVariant(vid, mid, presetColor){
   const m = window._model; const v = vid ? m.variants.find(x => x.id === vid) : {status:'in_magazzino', location:'italia', condition:'nuovo_cartellino', low_stock_threshold:0, color: presetColor ?? '', sale_price: m.variants.find(x => (x.color || '').trim() === (presetColor || ''))?.sale_price ?? m.variants[0]?.sale_price};
@@ -1144,15 +1172,15 @@ async function viewOrders(main){
 const custLabel = c => c.full_name + (c.instagram ? ' @' + c.instagram : '') + (c.phone ? ' · ' + c.phone : '');
 async function loadCustomersLite(){ return check(await sb.from('customers').select('id,full_name,instagram,phone,currency,country').order('full_name')); }
 function newOrder(cid){ return openOrderSheet({customerId: cid}); }
-async function sellFromModel(vid, mode){ const m = window._model; return openOrderSheet({modelId: m.id, variantId: vid, mode}); }
+async function sellFromModel(vid, mode, color){ const m = window._model; return openOrderSheet({modelId: m.id, variantId: vid, mode, color}); }
 const plus48h = () => { const d = new Date(Date.now() + 48 * 3600e3); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
 const vLabel = v => `${brandName(v.models?.brand_id)} ${v.models?.name} · ${[v.size, v.color].filter(Boolean).join(' ') || '—'}`;
 
 // ---- scheda ordine unica: da prodotto, da cliente o da Ordini ----
-async function openOrderSheet({modelId, variantId, customerId, mode} = {}){
+async function openOrderSheet({modelId, variantId, customerId, mode, color} = {}){
   const [cs, vs, st] = await Promise.all([
     loadCustomersLite(),
-    sb.from('variants').select('id,sku,size,color,sale_price,model_id,models(name,brand_id,archived,list_price)').then(check),
+    sb.from('variants').select('id,sku,size,color,color_hex,sale_price,model_id,models(name,brand_id,archived,list_price)').then(check),
     sb.from('v_variant_stock').select('*').then(check)
   ]);
   const avail = Object.fromEntries(st.map(x => [x.variant_id, x.available]));
@@ -1161,7 +1189,7 @@ async function openOrderSheet({modelId, variantId, customerId, mode} = {}){
   const lines = [];
   const addLine = v => { if (!v || lines.some(l => l.v.id === v.id)) return; lines.push({v, qty: 1, price: v.sale_price ?? v.models?.list_price ?? ''}); };
   if (variantId) addLine(pool.find(v => v.id === variantId));
-  else if (modelId){ const first = pool.filter(v => v.model_id === modelId); if (first.length === 1) addLine(first[0]); }
+  else if (modelId){ const first = pool.filter(v => v.model_id === modelId && (color == null || (v.color || '').trim().toLowerCase() === color.toLowerCase())); if (first.length === 1) addLine(first[0]); }
   if ((variantId || modelId) && !lines.length && !pool.some(v => v.model_id === modelId)) return toast(t('no_stock'), true);
   const cur = customerId ? cs.find(c => c.id === customerId) : null;
 
@@ -1193,13 +1221,14 @@ async function openOrderSheet({modelId, variantId, customerId, mode} = {}){
   const szName = v => [v.size, v.color].filter(Boolean).join(' · ') || t('one_size');
   const siblings = v => pool.filter(x => x.model_id === v.model_id);
   const draw = () => {
-    const chipModel = modelId && pool.filter(v => v.model_id === modelId).length > 1 ? modelId : null;
-    $m('#os_sizes').innerHTML = chipModel ? `<label>${t('pick_size')}</label>${colorGroups(pool.filter(v => v.model_id === chipModel)).map(([col, vs]) => `<div class="small" style="margin:4px 0 2px"><b>${esc(col || t('no_color'))}</b></div><div class="chips" style="margin-bottom:8px">${vs.map(v => `<button type="button" class="${lines.some(l => l.v.id === v.id) ? 'primary' : ''}" data-addv="${v.id}">${esc(v.size || t('one_size'))} · ${avail[v.id]}</button>`).join('')}</div>`).join('')}` : '';
+    const inColor = v => color == null || (v.color || '').trim().toLowerCase() === color.toLowerCase();
+    const chipModel = modelId && pool.filter(v => v.model_id === modelId && inColor(v)).length > 1 ? modelId : null;
+    $m('#os_sizes').innerHTML = chipModel ? `<label>${t('pick_size')}</label>${colorGroups(pool.filter(v => v.model_id === chipModel && inColor(v))).map(([col, vs, hex]) => `<div class="small row" style="margin:4px 0 2px;gap:6px">${swatch(col, hex, 14)}<b>${esc(col || t('no_color'))}</b></div><div class="chips" style="margin-bottom:8px">${vs.map(v => `<button type="button" class="${lines.some(l => l.v.id === v.id) ? 'primary' : ''}" data-addv="${v.id}">${esc(v.size || t('one_size'))} · ${avail[v.id]}</button>`).join('')}</div>`).join('')}` : '';
     $m('#os_lines').innerHTML = lines.map((l, i) => `<div class="card" style="padding:10px 12px;margin-bottom:8px;box-shadow:none">
       <div class="row spread"><b style="min-width:0">${esc(brandName(l.v.models?.brand_id))} ${esc(l.v.models?.name)}</b><button type="button" class="link" data-rm="${i}">✕</button></div>
       <div style="margin-top:6px"><label>${t('size')}</label><select data-sz="${i}">${siblings(l.v).concat(siblings(l.v).some(x => x.id === l.v.id) ? [] : [l.v]).map(x => `<option value="${x.id}" ${x.id === l.v.id ? 'selected' : ''}>${esc(szName(x))} · ${avail[x.id] ?? 0} ${t('available')}</option>`).join('')}</select></div>
       <div class="row" style="flex-wrap:nowrap;margin-top:6px"><div style="flex:1"><label>${t('sold_price')}</label><input type="number" step="any" data-pr="${i}" value="${esc(l.price)}"></div>
-      <div style="width:90px"><label>${t('qty')}</label><input type="number" min="1" max="${avail[l.v.id]}" data-q="${i}" value="${l.qty}"></div></div></div>`).join('') || `<p class="small muted">${t('no_items_yet')}</p>`;
+      <div style="width:90px"><label>${t('qty')}</label><input type="number" min="1" max="${avail[l.v.id]}" data-q="${i}" value="${l.qty}"><div class="small muted">${t('max')} ${avail[l.v.id]}</div></div></div></div>`).join('') || `<p class="small muted">${t('no_items_yet')}</p>`;
     showTot();
   };
   const subtotal = () => lines.reduce((a, l) => a + (Number(l.price) || 0) * (Number(l.qty) || 0), 0);
@@ -1242,6 +1271,8 @@ async function openOrderSheet({modelId, variantId, customerId, mode} = {}){
     if (!typed) return toast(t('customer') + '?', true);
     if (!lines.length) return toast(t('no_items_yet'), true);
     if (lines.some(l => l.price === '' || l.price == null)) return toast(t('sold_price') + '?', true);
+    const over = lines.find(l => (Number(l.qty) || 1) > (avail[l.v.id] || 0));
+    if (over) return toast(`${t('max_avail')}: ${vLabel(over.v)} · ${avail[over.v.id] || 0}`, true);
     m.querySelectorAll('button').forEach(x => x.disabled = true);
     try {
       let c = chosen || cs.find(x => x.full_name.toLowerCase() === typed.toLowerCase());
