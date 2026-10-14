@@ -536,7 +536,7 @@ async function viewDashboard(main){
       else if (o.status === 'confermato') items.push(['warn', o, `${o.delivery_mode === 'modus_vestendi' ? t('to_deliver_own') : t('to_ship_choose')}: ${nm}`]);
       else if (o.status === 'spedito' && o.delivery_mode === 'modus_vestendi' && hoursSince(o.shipped_at) >= 24) items.push(['bad', o, `${t('confirm_delivery_ask')}: ${nm}`]);
     });
-    const defs = check(await sb.from('defects').select('id,item_label,status,variant_id,variants(model_id)').in('status', ['da_restituire','inviato']));
+    const defs = check(await sb.from('defects').select('id,item_label,status,variant_id,variants!defects_variant_id_fkey(model_id)').in('status', ['da_restituire','inviato']));
     defs.forEach(d => items.push([d.status === 'inviato' ? 'warn' : 'bad', {order_no: t('defect'), id: null, _model: d.variants?.model_id}, `${esc(ev('defect_status', d.status))}: ${esc(d.item_label || '')}`]));
     if (items.length) alerts = `<div class="card"><h3>${t('to_do')}</h3>${items.map(([c, o, txt]) => `<div class="row" style="flex-wrap:nowrap;padding:9px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='${o.id ? '#/ordine/' + o.id : '#/articolo/' + o._model}'"><span class="pill ${c}" style="flex:none">${esc(o.order_no)}</span><span style="min-width:0">${txt}</span></div>`).join('')}</div>`;
     const toShip = check(await sb.from('orders').select('id', {count:'exact', head:false}).eq('status', 'confermato'));
