@@ -213,7 +213,7 @@ const T = {
   defect:['Difetto','Defect','Defekt'], defects:['Difetti e resi al fornitore','Defects and returns to supplier','Defektet dhe kthimet te furnitori'], defect_save:['Togli dalla vendita','Take off sale','Hiqe nga shitja'],
   defect_desc:['Che difetto ha?','What is the defect?','Çfarë defekti ka?'], defect_hint:['Il pezzo esce dal magazzino vendibile e resta in "Difetti" finché non lo restituisci al negozio o decidi cosa farne.','The item leaves sellable stock and stays in "Defects" until you return it to the store or decide what to do.','Copa del nga magazina e shitshme dhe mbetet te "Defektet" derisa ta kthesh në dyqan ose të vendosësh çfarë të bësh.'],
   return_to:['da restituire a','return to','për t\'u kthyer te'], refund:['Rimborso','Refund','Rimbursim'], mark_sent:['Segna inviato al fornitore','Mark sent to supplier','Shëno si dërguar te furnitori'], close_defect:['Chiudi','Close','Mbyll'], outcome:['Esito','Outcome','Rezultati'],
-  dc_refunded:['Rimborsato dal negozio','Refunded by the store','Rimbursuar nga dyqani'], dc_replaced:['Sostituito con un pezzo nuovo (torna in magazzino)','Replaced with a new piece (back in stock)','Zëvendësuar me copë të re (kthehet në magazinë)'],
+  dc_refunded:['Rimborsato dal negozio','Refunded by the store','Rimbursuar nga dyqani'], dc_replaced:['Sostituito con un pezzo uguale (torna in magazzino)','Replaced with the same item (back in stock)','Zëvendësuar me copë të njëjtë (kthehet në magazinë)'],
   dc_kept:['Lo teniamo e lo vendiamo come difettato','We keep it and sell it as flawed','E mbajmë dhe e shesim me defekt'], dc_lost:['Nessun rimborso: perdita','No refund: loss','Pa rimbursim: humbje'],
   cancel_defect:['Annulla per difetto','Cancel for defect','Anulo për defekt'], cancel_defect_hint:['L\'ordine viene annullato e il pezzo va in "Difetti", non torna in vendita.','The order is cancelled and the item goes to "Defects", not back on sale.','Porosia anulohet dhe copa shkon te "Defektet", nuk kthehet në shitje.'],
   defect_loss:['Perdite per difetti','Defect losses','Humbje nga defektet'],
@@ -222,6 +222,10 @@ const T = {
   pieces_no_cost_hint:['Collegali a un acquisto: Acquisti → Aggiungi pezzo → Già nel catalogo, stessa taglia e colore. Finché manca il costo, il valore del magazzino e i margini sono sottostimati.','Link them to a purchase: Purchases → Add item → Already in catalogue, same size and colour. Until then, stock value and margins are understated.','Lidhi me një blerje: Blerjet → Shto copë → Tashmë në katalog, e njëjta masë dhe ngjyrë. Deri atëherë, vlera e magazinës dhe marzhet janë të pasakta.'],
   color_dot:['Colore del pallino','Dot colour','Ngjyra e pikës'], edit_color:['Modifica colore','Edit colour','Ndrysho ngjyrën'], all_sizes:['tutte le taglie','all sizes','të gjitha masat'],
   max_avail:['Quantità oltre la disponibilità','Quantity above availability','Sasia mbi gjendjen'], max:['max','max','maks'],
+  dc_coupon:['Buono spesa del negozio','Store credit voucher','Kupon blerjeje nga dyqani'], dc_other:['Cambiato con un altro pezzo','Exchanged for a different item','Ndërruar me një copë tjetër'],
+  dc_other_hint:['Il pezzo nuovo entra in catalogo e in magazzino con il costo del pezzo difettoso:','The new item enters the catalogue and stock with the defective item\'s cost:','Copa e re hyn në katalog dhe magazinë me koston e copës me defekt:'],
+  coupon_code:['Codice buono','Voucher code','Kodi i kuponit'], coupon_expiry:['Scadenza','Expires','Skadon'], store_credits:['Buoni negozio','Store credits','Kuponët e dyqaneve'],
+  use_credit:['Usa buono','Use credit','Përdor kuponin'], amount_used:['Importo usato','Amount used','Shuma e përdorur'], remaining:['Residuo','Remaining','Mbetja'],
   dashboard:['Panoramica','Overview','Përmbledhje'], home:['Home','Home','Kreu'], menu:['Menu','Menu','Menu'], catalog:['Catalogo','Catalogue','Katalogu'], purchases:['Acquisti','Purchases','Blerjet'],
   customers:['Clienti','Customers','Klientët'], orders:['Ordini','Orders','Porositë'], expenses:['Spese','Expenses','Shpenzimet'],
   reports:['Dashboard','Dashboard','Dashboard'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
@@ -293,7 +297,7 @@ const E = {
   return_outcome:{rimborso:['Rimborso','Refund','Rimbursim'],cambio:['Cambio','Exchange','Ndërrim'],credito:['Credito','Store credit','Kredi']},
   expense_cat:{tasse:['Tasse','Taxes','Taksat'],gestione:['Gestione','Operations','Menaxhimi'],marketing:['Marketing','Marketing','Marketing'],packaging:['Packaging','Packaging','Paketimi'],abbonamenti:['Abbonamenti','Subscriptions','Abonimet'],altro:['Altro','Other','Tjetër']},
   role:{admin:['Amministratore','Administrator','Administrator'],vendite:['Vendite','Sales','Shitje'],magazzino:['Magazzino / acquisti','Warehouse / buying','Magazina / blerje']},
-  defect_status:{da_restituire:['Da restituire','To return','Për t\'u kthyer'],inviato:['Inviato al fornitore','Sent to supplier','Dërguar te furnitori'],rimborsato:['Rimborsato','Refunded','Rimbursuar'],sostituito:['Sostituito','Replaced','Zëvendësuar'],tenuto:['Tenuto (in vendita)','Kept (on sale)','Mbajtur (në shitje)'],perso:['Perso','Written off','Humbur']},
+  defect_status:{da_restituire:['Da restituire','To return','Për t\'u kthyer'],inviato:['Inviato al fornitore','Sent to supplier','Dërguar te furnitori'],rimborsato:['Rimborsato','Refunded','Rimbursuar'],coupon:['Buono negozio','Store credit','Kupon dyqani'],sostituito:['Sostituito (uguale)','Replaced (same)','Zëvendësuar (e njëjtë)'],sostituito_diverso:['Cambiato con altro pezzo','Exchanged for another item','Ndërruar me copë tjetër'],tenuto:['Tenuto (in vendita)','Kept (on sale)','Mbajtur (në shitje)'],perso:['Perso','Written off','Humbur']},
   camp_status:{attiva:['Attiva','Active','Aktive'],fermata:['Fermata','Stopped','E ndalur'],conclusa:['Conclusa','Finished','E përfunduar']},
   req_status:{aperta:['Aperta','Open','E hapur'],trovata:['Trovata','Found','U gjet'],chiusa:['Chiusa','Closed','E mbyllur']}
 };
@@ -703,11 +707,52 @@ function defectSent(id){
 }
 function closeDefect(id){
   const d = (window._defects || []).find(x => x.id === id) || {};
-  form({title:t('close_defect'), fields:[
-    {name:'status', label:t('outcome'), type:'select', empty:false, options:[['rimborsato', t('dc_refunded')], ['sostituito', t('dc_replaced')], ['tenuto', t('dc_kept')], ['perso', t('dc_lost')]]},
-    {name:'refund', label:t('refund') + ' (€)', type:'number', value: d.unit_cost != null ? d.qty * d.unit_cost : ''},
+  const m = form({title:t('close_defect'), fields:[
+    {name:'status', label:t('outcome'), type:'select', empty:false, options:[['rimborsato', t('dc_refunded')], ['coupon', t('dc_coupon')], ['sostituito', t('dc_replaced')], ['sostituito_diverso', t('dc_other')], ['tenuto', t('dc_kept')], ['perso', t('dc_lost')]]},
+    {name:'amount', label:t('amount') + ' (€)', type:'number', value: d.unit_cost != null ? d.qty * d.unit_cost : ''},
+    {name:'code', label:t('coupon_code')},
+    {name:'expires', label:t('coupon_expiry'), type:'date'},
     {name:'notes', label:t('notes')}
-  ], onSubmit: async x => { check(await sb.rpc('risolvi_difetto', {p_id: id, p_status: x.status, p_refund: x.status === 'rimborsato' ? x.refund : null, p_notes: x.notes})); toast(t('saved')); route(); }});
+  ], onSubmit: async x => {
+    if (x.status === 'coupon') check(await sb.rpc('difetto_coupon', {p_id: id, p_amount: x.amount || 0, p_code: x.code, p_expires: x.expires}));
+    else if (x.status === 'sostituito_diverso'){ setTimeout(() => replaceWithOther(id), 50); return; }
+    else check(await sb.rpc('risolvi_difetto', {p_id: id, p_status: x.status, p_refund: x.status === 'rimborsato' ? x.amount : null, p_notes: x.notes}));
+    toast(t('saved')); route(); }});
+  const sel = m.querySelector('[name=status]');
+  const sync = () => { const v = sel.value; const show = {amount: ['rimborsato','coupon'], code: ['coupon'], expires: ['coupon'], notes: ['rimborsato','coupon','sostituito','tenuto','perso']};
+    Object.entries(show).forEach(([n, ok]) => m.querySelector(`[name=${n}]`).closest('.field').classList.toggle('hide', !ok.includes(v))); };
+  sel.addEventListener('change', sync); sync();
+}
+async function replaceWithOther(id){
+  const d = (window._defects || []).find(x => x.id === id) || {};
+  const vs = (await allVariants()).filter(v => !v.models?.archived).sort((a, b) => variantLabel(a).localeCompare(variantLabel(b)));
+  const newF = ['brand_id','new_brand','category_id','name','size','color','sale_price','photos'];
+  const m = form({title:t('dc_other'), submitLabel:t('save'), extra:`<p class="small muted">${t('dc_other_hint')} ${d.unit_cost != null ? eur(d.qty * d.unit_cost) : ''}</p>`, fields:[
+    {name:'kind', label:t('line_kind'), type:'select', empty:false, value:'new', options:[['new', t('lk_new')], ['existing', t('lk_existing')]]},
+    {name:'variant_id', label:t('catalog'), type:'select', options:vs.map(v => [v.id, variantLabel(v)])},
+    {name:'brand_id', label:t('brand'), type:'select', options:S.brands.map(b => [b.id, b.name])},
+    {name:'new_brand', label:`${t('brand')}: ${t('or_new')}`},
+    {name:'category_id', label:t('category'), type:'select', options:catOptions()},
+    {name:'name', label:t('name')}, {name:'size', label:t('size')}, {name:'color', label:t('color')},
+    {name:'sale_price', label:t('sale_price') + ' (€)', type:'number'},
+    {name:'photos', label:t('photos'), type:'file'}
+  ], onSubmit: async x => {
+    let vid = x.variant_id ? Number(x.variant_id) : null, modelId = null;
+    if (x.kind === 'new'){
+      if (!x.name){ toast(t('pick_or_new'), true); throw new Error('item'); }
+      await ensureBrand(x);
+      const md = check(await sb.from('models').insert({brand_id: x.brand_id, category_id: x.category_id, name: x.name, list_price: x.sale_price}).select().single());
+      await uploadPhotos(md.id, x.photos);
+      const nv = check(await sb.from('variants').insert({model_id: md.id, size: x.size || 'TU', color: x.color, sale_price: x.sale_price, status:'in_magazzino', sku: skuFor(md, x.size, x.color)}).select().single());
+      vid = nv.id; modelId = md.id;
+    } else if (!vid){ toast(t('pick_or_new'), true); throw new Error('item'); }
+    else modelId = vs.find(v => v.id === vid)?.model_id;
+    check(await sb.rpc('difetto_cambio_diverso', {p_id: id, p_variant_id: vid}));
+    toast(t('saved')); location.hash = '#/articolo/' + modelId; route();
+  }});
+  const sel = m.querySelector('[name=kind]');
+  const sync = () => [...newF, 'variant_id'].forEach(n => { const el = m.querySelector(`[name=${n}]`); if (el) el.closest('.field').classList.toggle('hide', (sel.value === 'new') !== newF.includes(n)); });
+  sel.addEventListener('change', sync); sync();
 }
 function cancelForDefect(id){
   const od = window._order;
@@ -833,8 +878,10 @@ function reserveVariant(vid){ return sellFromModel(vid, 'riservato'); }
 async function viewPurchases(main){
   const ps = check(await sb.from('purchases').select('*,suppliers(name),trips(title),purchase_lines(id,qty,unit_price,allocated_unit_cost,item_label,variant_id,variants(qty,model_id))').order('purchase_date', {ascending:false}));
   const hist = ps.flatMap(p => p.purchase_lines.map(l => ({...l, p})));
+  const credits = check(await sb.from('store_credits').select('*,suppliers(name)').order('id', {ascending:false}));
   main.innerHTML = `<div class="row spread"><h1>${t('purchases')}</h1><button class="primary" onclick="newPurchase()">+ ${t('new_purchase')}</button></div>
   <div class="help">${t('purch_help')}</div>
+  ${credits.length ? `<div class="card"><h3>${t('store_credits')}</h3>${credits.map(c => `<div class="row" style="flex-wrap:nowrap;padding:9px 0;border-top:1px solid var(--line)"><div style="flex:1;min-width:0"><b>${esc(c.suppliers?.name || '')}</b><div class="small muted">${c.code ? esc(c.code) + ' · ' : ''}${c.expires_on ? t('coupon_expiry') + ' ' + fdate(c.expires_on) + ' · ' : ''}${t('amount')} ${eur(c.amount)}</div>${Number(c.remaining) > 0 ? `<button class="link small" onclick="useCredit(${c.id}, ${c.remaining})">${t('use_credit')}</button>` : ''}</div><div class="right" style="flex:none"><div class="small muted">${t('remaining')}</div><b style="color:${Number(c.remaining) > 0 ? 'var(--good)' : 'var(--muted)'}">${eur(c.remaining)}</b></div></div>`).join('')}</div>` : ''}
   <div class="card"><h3>${t('purchase_history')}</h3>
   ${hist.map(l => `<div class="row" style="flex-wrap:nowrap;padding:9px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='${l.variants ? '#/articolo/' + l.variants.model_id : '#/acquisto/' + l.p.id}'">
     <div style="flex:1;min-width:0"><b>${esc(l.item_label || '—')}</b><div class="small muted">${fdate(l.p.purchase_date)} · ${esc(l.p.suppliers?.name || '')}${l.p.trips ? ' · ' + esc(l.p.trips.title) : ''} · ${l.qty} × ${eur(l.unit_price)}</div></div>
@@ -1002,6 +1049,10 @@ async function editPurchaseLine(id, price){
     {name:'variant_id', label:`${t('items')} · ${t('size')} · ${t('color')}`, type:'select', empty:false, value:l.variant_id, options:vs.map(v => [v.id, (flag.has(v.id) ? '⚠ ' + t('sold_no_cost') + ' · ' : '') + variantLabel(v)])},
     {name:'unit_price', label:t('purchase_price') + ' (€)', type:'number', value:price, required:true}],
     onSubmit: async v => { check(await sb.from('purchase_lines').update({unit_price: v.unit_price, variant_id: Number(v.variant_id)}).eq('id', id)); route(); }});
+}
+function useCredit(id, remaining){
+  form({title:t('use_credit'), fields:[{name:'used', label:t('amount_used') + ' (€)', type:'number', value: remaining, required:true}],
+    onSubmit: async x => { check(await sb.from('store_credits').update({remaining: Math.max(0, Number(remaining) - (x.used || 0))}).eq('id', id)); route(); }});
 }
 async function receivePurchase(id){ if (!confirmBox()) return; check(await sb.rpc('ricevi_acquisto', {p_purchase_id: id})); toast(t('saved')); route(); }
 function addCost(target){
@@ -1539,7 +1590,7 @@ async function viewReports(main){
     sb.from('expenses').select('*').gte('expense_date', pf).lte('expense_date', to).then(check),
     sb.from('campaigns').select('*').then(check),
     sb.from('purchase_lines').select('qty,unit_price,allocated_unit_cost,purchases!inner(purchase_date)').gte('purchases.purchase_date', pf).lte('purchases.purchase_date', to).then(check),
-    sb.from('defects').select('*').in('status', ['rimborsato','perso']).gte('resolved_on', pf).lte('resolved_on', to).then(check)
+    sb.from('defects').select('*').in('status', ['rimborsato','perso','coupon']).gte('resolved_on', pf).lte('resolved_on', to).then(check)
   ]);
   const inR = (d, a, b) => d && d >= a && d <= b;
   const calc = (a, b) => {
