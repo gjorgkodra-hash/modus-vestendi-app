@@ -220,7 +220,7 @@ const T = {
   sale_value:['Valore di vendita','Sale value','Vlera e shitjes'], pieces_no_cost:['pezzi senza costo d\'acquisto','pieces without purchase cost','copë pa kosto blerjeje'],
   pieces_no_cost_title:['Pezzi senza costo d\'acquisto','Pieces without purchase cost','Copë pa kosto blerjeje'],
   pieces_no_cost_hint:['Collegali a un acquisto: Acquisti → Aggiungi pezzo → Già nel catalogo, stessa taglia e colore. Finché manca il costo, il valore del magazzino e i margini sono sottostimati.','Link them to a purchase: Purchases → Add item → Already in catalogue, same size and colour. Until then, stock value and margins are understated.','Lidhi me një blerje: Blerjet → Shto copë → Tashmë në katalog, e njëjta masë dhe ngjyrë. Deri atëherë, vlera e magazinës dhe marzhet janë të pasakta.'],
-  color_dot:['Colore del pallino','Dot colour','Ngjyra e pikës'], color_dot_hint:['Scrivi il colore: il pallino si accende da solo. Oppure tocca il pallino e scegli la tinta: il nome si compila da solo.','Type the colour and the dot lights up. Or tap the dot to pick a shade and the name fills in.','Shkruaj ngjyrën dhe pika ndizet vetë. Ose prek pikën dhe zgjidh ngjyrën: emri plotësohet vetë.'], edit_color:['Modifica colore','Edit colour','Ndrysho ngjyrën'], all_sizes:['tutte le taglie','all sizes','të gjitha masat'],
+  color_dot:['Colore del pallino','Dot colour','Ngjyra e pikës'], sizes_exist:['taglie già presenti, non toccate (usa ± per i pezzi)','sizes already there, left as they were (use ± for pieces)','masat ekzistojnë, nuk u prekën (përdor ± për copët)'], color_dot_hint:['Scrivi il colore: il pallino si accende da solo. Oppure tocca il pallino e scegli la tinta: il nome si compila da solo.','Type the colour and the dot lights up. Or tap the dot to pick a shade and the name fills in.','Shkruaj ngjyrën dhe pika ndizet vetë. Ose prek pikën dhe zgjidh ngjyrën: emri plotësohet vetë.'], edit_color:['Modifica colore','Edit colour','Ndrysho ngjyrën'], all_sizes:['tutte le taglie','all sizes','të gjitha masat'],
   max_avail:['Quantità oltre la disponibilità','Quantity above availability','Sasia mbi gjendjen'], max:['max','max','maks'],
   dc_coupon:['Buono spesa del negozio','Store credit voucher','Kupon blerjeje nga dyqani'], dc_other:['Cambiato con un altro pezzo','Exchanged for a different item','Ndërruar me një copë tjetër'],
   dc_other_hint:['Il pezzo nuovo entra in catalogo e in magazzino con il costo del pezzo difettoso:','The new item enters the catalogue and stock with the defective item\'s cost:','Copa e re hyn në katalog dhe magazinë me koston e copës me defekt:'],
@@ -625,12 +625,19 @@ function newModel(){
     const m = check(await sb.from('models').insert(v).select().single());
     for (const {size: sz0, qty} of sizes){
       const sz = sz0 || 'TU';
-      const nv = check(await sb.from('variants').insert({model_id: m.id, size: sz, color: color || null, color_hex: colorHx, sale_price: price, status:'in_magazzino', sku: skuFor(m, sz, color)}).select().single());
+      const nv = (await insertVariant({model_id: m.id, size: sz, color: color || null, color_hex: colorHx, sale_price: price, status:'in_magazzino', sku: skuFor(m, sz, color)}));
       if (qty) check(await sb.from('stock_movements').insert({variant_id: nv.id, kind:'carico', qty, reference:'carico iniziale'}));
     }
     await uploadPhotos(m.id, files);
     location.hash = '#/articolo/' + m.id;
   }});
+}
+async function insertVariant(row){
+  for (let i = 0; i < 30; i++){
+    const r = await sb.from('variants').insert({...row, sku: i ? `${row.sku || 'MV'}-${i + 1}` : row.sku}).select().single();
+    if (!r.error) return r.data;
+    if (r.error.code !== '23505' || !/sku/.test(r.error.message)) return check(r);
+  }
 }
 const skuFor = (m, size, color) => [brandName(m.brand_id).replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'MV', m.id, (size || 'U').toUpperCase().replace(/\s+/g, ''), (color || '').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase()].filter(Boolean).join('-');
 async function viewModel(main, id){
@@ -756,7 +763,7 @@ async function replaceWithOther(id){
       await ensureBrand(x);
       const md = check(await sb.from('models').insert({brand_id: x.brand_id, category_id: x.category_id, name: x.name, list_price: x.sale_price}).select().single());
       await uploadPhotos(md.id, x.photos);
-      const nv = check(await sb.from('variants').insert({model_id: md.id, size: x.size || 'TU', color: x.color, color_hex: x.color_hex, sale_price: x.sale_price, status:'in_magazzino', sku: skuFor(md, x.size, x.color)}).select().single());
+      const nv = (await insertVariant({model_id: md.id, size: x.size || 'TU', color: x.color, color_hex: x.color_hex, sale_price: x.sale_price, status:'in_magazzino', sku: skuFor(md, x.size, x.color)}));
       vid = nv.id; modelId = md.id;
     } else if (!vid){ toast(t('pick_or_new'), true); throw new Error('item'); }
     else modelId = vs.find(v => v.id === vid)?.model_id;
@@ -884,12 +891,15 @@ function addColor(){
     {name:'photos', label:t('photos'), type:'file'}
   ], onSubmit: async v => {
     const sizes = v.sizes.length ? v.sizes : [{size:'TU', qty:1}];
+    const col = v.color.trim(), same = m.variants.filter(x => (x.color || '').trim().toLowerCase() === col.toLowerCase());
+    const skipped = [];
     for (const {size, qty} of sizes){
-      const nv = check(await sb.from('variants').insert({model_id: m.id, size: size || 'TU', color: v.color.trim(), color_hex: v.color_hex, sale_price: v.sale_price, status:'in_magazzino', location: base.location || 'italia', sku: skuFor(m, size, v.color)}).select().single());
+      if (same.some(x => String(x.size || 'TU').toUpperCase() === String(size || 'TU').toUpperCase())){ skipped.push(size || 'TU'); continue; }
+      const nv = (await insertVariant({model_id: m.id, size: size || 'TU', color: v.color.trim(), color_hex: v.color_hex, sale_price: v.sale_price, status:'in_magazzino', location: base.location || 'italia', sku: skuFor(m, size, v.color)}));
       if (qty) check(await sb.from('stock_movements').insert({variant_id: nv.id, kind:'carico', qty, reference:'carico iniziale'}));
     }
     await uploadPhotos(m.id, v.photos, m.photos.length);
-    toast(t('saved')); route();
+    toast(skipped.length ? `${t('saved')} · ${t('sizes_exist')}: ${skipped.join(', ')}` : t('saved')); route();
   }});
 }
 function editVariant(vid, mid, presetColor){
@@ -910,7 +920,7 @@ function editVariant(vid, mid, presetColor){
     if (!x.sku) x.sku = skuFor(m, x.size, x.color);
     if (vid) check(await sb.from('variants').update(x).eq('id', vid));
     else {
-      const nv = check(await sb.from('variants').insert({...x, model_id: mid}).select().single());
+      const nv = (await insertVariant({...x, model_id: mid}));
       if (q) check(await sb.from('stock_movements').insert({variant_id: nv.id, kind:'carico', qty:q, reference:'carico iniziale'}));
     }
     route();
@@ -1060,7 +1070,7 @@ async function addPurchaseLine(pid){
       await ensureBrand(v);
       const md = check(await sb.from('models').insert({brand_id: v.brand_id, category_id: v.category_id, name: v.name, list_price: v.sale_price}).select().single());
       await uploadPhotos(md.id, v.photos);
-      const nv = check(await sb.from('variants').insert({model_id: md.id, size: v.size, color: v.color, color_hex: v.color_hex, sale_price: v.sale_price, status:'ordinato', sku: skuFor(md, v.size, v.color)}).select().single());
+      const nv = (await insertVariant({model_id: md.id, size: v.size, color: v.color, color_hex: v.color_hex, sale_price: v.sale_price, status:'ordinato', sku: skuFor(md, v.size, v.color)}));
       vid = nv.id;
     }
     check(await sb.from('purchase_lines').insert({variant_id: vid, qty: v.qty, unit_price: v.unit_price, purchase_id: pid, add_to_stock: toStock}));
