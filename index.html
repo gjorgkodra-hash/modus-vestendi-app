@@ -208,7 +208,7 @@ const T = {
   campaign_product:['Prodotto promosso','Promoted product','Produkti i promovuar'], new_followers:['Nuovi follower','New followers','Ndjekës të rinj'], followers:['follower','followers','ndjekës'],
   per_follower:['per follower','per follower','për ndjekës'], reach:['Persone raggiunte','Reach','Persona të arritura'], dms_received:['DM ricevuti','DMs received','DM të marra'],
   add_color:['Aggiungi colore','Add colour','Shto ngjyrë'], no_color:['Senza colore','No colour','Pa ngjyrë'],
-  sold_no_cost:['venduto senza costo','sold without cost','shitur pa kosto'], edit_line:['Correggi pezzo o prezzo','Fix item or price','Korrigjo copën ose çmimin'],
+  lk_sold:['Pezzo già venduto senza costo','Item already sold without cost','Artikull i shitur pa kosto'], sold_no_cost:['venduto senza costo','sold without cost','shitur pa kosto'], edit_line:['Correggi pezzo o prezzo','Fix item or price','Korrigjo copën ose çmimin'],
   order_no_cost:['Manca il costo d\'acquisto: il margine non è reale. Aggiungi il pezzo a un acquisto (con "Già nel catalogo", stessa taglia e colore).','Purchase cost missing: the margin is not real. Add the item to a purchase ("Already in catalogue", same size and colour).','Mungon kostoja e blerjes: marzhi nuk është real. Shtoje copën në një blerje ("Tashmë në katalog", e njëjta masë dhe ngjyrë).'],
   defect:['Difetto','Defect','Defekt'], defects:['Difetti e resi al fornitore','Defects and returns to supplier','Defektet dhe kthimet te furnitori'], defect_save:['Togli dalla vendita','Take off sale','Hiqe nga shitja'],
   defect_desc:['Che difetto ha?','What is the defect?','Çfarë defekti ka?'], defect_hint:['Il pezzo esce dal magazzino vendibile e resta in "Difetti" finché non lo restituisci al negozio o decidi cosa farne.','The item leaves sellable stock and stays in "Defects" until you return it to the store or decide what to do.','Copa del nga magazina e shitshme dhe mbetet te "Defektet" derisa ta kthesh në dyqan ose të vendosësh çfarë të bësh.'],
@@ -1047,7 +1047,8 @@ async function addPurchaseLine(pid){
   const vs = (await allVariants()).filter(v => !v.models?.archived).sort((a, b) => (flag.has(b.id) - flag.has(a.id)) || variantLabel(a).localeCompare(variantLabel(b)));
   const newF = ['brand_id','new_brand','category_id','name','size','color','sale_price','photos'], oldF = ['variant_id','add_stock'];
   const m = form({title:t('add_line'), fields:[
-    {name:'line_kind', label:t('line_kind'), type:'select', empty:false, value:'new', options:[['new', t('lk_new')], ['existing', t('lk_existing')]]},
+    {name:'line_kind', label:t('line_kind'), type:'select', empty:false, value: flag.size ? 'sold' : 'new', options:[...(flag.size ? [['sold', `⚠ ${t('lk_sold')} (${flag.size})`]] : []), ['new', t('lk_new')], ['existing', t('lk_existing')]]},
+    {name:'sold_variant_id', label:t('lk_sold'), type:'select', empty:false, options:vs.filter(v => flag.has(v.id)).map(v => [v.id, variantLabel(v)])},
     {name:'variant_id', label:t('catalog'), type:'select', options:vs.map(v => [v.id, (flag.has(v.id) ? '⚠ ' + t('sold_no_cost') + ' · ' : '') + variantLabel(v)])},
     {name:'add_stock', label:t('add_stock_q'), type:'checkbox', value:false},
     {name:'brand_id', label:t('brand'), type:'select', options:S.brands.map(b => [b.id, b.name])},
@@ -1062,7 +1063,10 @@ async function addPurchaseLine(pid){
     {name:'unit_price', label:t('purchase_price'), type:'number', required:true}
   ], onSubmit: async v => {
     let vid = null, toStock = true;
-    if (v.line_kind === 'existing'){
+    if (v.line_kind === 'sold'){
+      vid = v.sold_variant_id; toStock = false;
+      if (!vid){ toast(t('pick_or_new'), true); throw new Error('item'); }
+    } else if (v.line_kind === 'existing'){
       vid = v.variant_id; toStock = !!v.add_stock;
       if (!vid){ toast(t('pick_or_new'), true); throw new Error('item'); }
     } else {
@@ -1080,7 +1084,7 @@ async function addPurchaseLine(pid){
     }
     route(); }});
   const sel = m.querySelector('[name=line_kind]');
-  const sync = () => { [...newF, ...oldF].forEach(n => { const el = m.querySelector(`[name=${n}]`); if (el) el.closest('.field').classList.toggle('hide', (sel.value === 'new') !== newF.includes(n)); }); };
+  const sync = () => { const show = {new: newF, existing: oldF, sold: ['sold_variant_id']}[sel.value]; [...newF, ...oldF, 'sold_variant_id'].forEach(n => { const el = m.querySelector(`[name=${n}]`); if (el) el.closest('.field').classList.toggle('hide', !show.includes(n)); }); };
   sel.addEventListener('change', sync); sync();
   const hint = document.createElement('p'); hint.className = 'small muted'; hint.style.margin = '-6px 0 12px'; hint.textContent = t('add_stock_hint');
   m.querySelector('[name=add_stock]').closest('.field').appendChild(hint);
