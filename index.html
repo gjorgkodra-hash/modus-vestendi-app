@@ -677,7 +677,7 @@ async function viewModel(main, id){
       <span class="pill ${tot ? 'good' : 'grey'}" style="flex:none">${tot} ${t('available')}</span>
       ${can.sales() && firstAv ? `<button class="primary small" style="flex:none;padding:6px 10px" onclick="event.stopPropagation();sellFromModel(null,null,${esc(JSON.stringify(col))})">${t('sell')}</button>` : ''}</div>
     <div class="cg-body" hidden>
-    ${w ? `<div class="row" style="justify-content:flex-end;gap:0"><button class="link" onclick="editColor(${esc(JSON.stringify(col))})">${t('edit_color')}</button><button class="link" onclick="editVariant(null,${m.id},${esc(JSON.stringify(col))})">+ ${t('add_size')}</button></div>` : ''}
+    ${w ? `<div class="row" style="justify-content:flex-end;gap:8px;margin-top:6px"><button class="small" onclick="editColor(${esc(JSON.stringify(col))})">${t('edit_color')}</button><button class="small primary" onclick="editVariant(null,${m.id},${esc(JSON.stringify(col))})">+ ${t('add_size')}</button></div>` : ''}
     ${vs.map(v => { const s = ST[v.id] || {available: v.qty, reserved: 0}; return `<div style="padding:9px 0 6px 10px;border-top:1px solid var(--line)"><div class="row" style="flex-wrap:nowrap">
     <div style="flex:1;min-width:0"><b>${esc(v.size || t('one_size'))}</b> <span class="small muted">${esc(v.sku || '')}</span>
     <div class="small">${eur(v.sale_price)}${can.costs() && costs[v.id] ? ` · <span class="muted">${t('landed_cost')} ${eur(costs[v.id].landed_cost)}</span>` : ''} · ${esc(ev('location', v.location))}${v.condition === 'difetto' ? ` · <span style="color:var(--warn)">${t('defect')}</span>` : ''}</div></div>
