@@ -208,7 +208,7 @@ const T = {
   campaign_product:['Prodotto promosso','Promoted product','Produkti i promovuar'], new_followers:['Nuovi follower','New followers','Ndjekës të rinj'], followers:['follower','followers','ndjekës'],
   per_follower:['per follower','per follower','për ndjekës'], reach:['Persone raggiunte','Reach','Persona të arritura'], dms_received:['DM ricevuti','DMs received','DM të marra'],
   add_color:['Aggiungi colore','Add colour','Shto ngjyrë'], no_color:['Senza colore','No colour','Pa ngjyrë'],
-  lk_sold:['Pezzo già venduto senza costo','Item already sold without cost','Artikull i shitur pa kosto'], sold_no_cost:['venduto senza costo','sold without cost','shitur pa kosto'], edit_line:['Correggi pezzo o prezzo','Fix item or price','Korrigjo copën ose çmimin'],
+  lk_sold:['Pezzo già venduto senza costo','Item already sold without cost','Artikull i shitur pa kosto'], web_order:['🛍 Nuovo ordine dal sito','🛍 New website order','🛍 Porosi e re nga faqja'], show_on_site:['Mostra nel negozio online','Show in the online shop','Shfaq në dyqanin online'], share_link:['Condividi link','Share link','Ndaj linkun'], online_shop:['Negozio online','Online shop','Dyqani online'], link_copied:['Link copiato','Link copied','Linku u kopjua'], site_hint:['Visibili sul sito solo le taglie disponibili. Gli ordini arrivano come prenotazioni di 48 ore.','Only available sizes are shown. Orders arrive as 48-hour reservations.','Shfaqen vetëm masat në dispozicion. Porositë vijnë si rezervime 48 orë.'], sold_no_cost:['venduto senza costo','sold without cost','shitur pa kosto'], edit_line:['Correggi pezzo o prezzo','Fix item or price','Korrigjo copën ose çmimin'],
   order_no_cost:['Manca il costo d\'acquisto: il margine non è reale. Aggiungi il pezzo a un acquisto (con "Già nel catalogo", stessa taglia e colore).','Purchase cost missing: the margin is not real. Add the item to a purchase ("Already in catalogue", same size and colour).','Mungon kostoja e blerjes: marzhi nuk është real. Shtoje copën në një blerje ("Tashmë në katalog", e njëjta masë dhe ngjyrë).'],
   defect:['Difetto','Defect','Defekt'], defects:['Difetti e resi al fornitore','Defects and returns to supplier','Defektet dhe kthimet te furnitori'], defect_save:['Togli dalla vendita','Take off sale','Hiqe nga shitja'],
   defect_desc:['Che difetto ha?','What is the defect?','Çfarë defekti ka?'], defect_hint:['Il pezzo esce dal magazzino vendibile e resta in "Difetti" finché non lo restituisci al negozio o decidi cosa farne.','The item leaves sellable stock and stays in "Defects" until you return it to the store or decide what to do.','Copa del nga magazina e shitshme dhe mbetet te "Defektet" derisa ta kthesh në dyqan ose të vendosësh çfarë të bësh.'],
@@ -288,9 +288,9 @@ const E = {
   supplier_kind:{boutique:['Boutique','Boutique','Butik'],outlet:['Outlet','Outlet','Outlet'],online:['Online','Online','Online'],grossista:['Grossista','Wholesaler','Shumicë'],altro:['Altro','Other','Tjetër']},
   country:{AL:['Albania','Albania','Shqipëri'],XK:['Kosovo','Kosovo','Kosovë'],MK:['Macedonia del Nord','North Macedonia','Maqedoni e Veriut'],UK:['Regno Unito','UK','Mbretëri e Bashkuar'],IT:['Italia','Italy','Itali'],ES:['Spagna','Spain','Spanjë'],altro:['Altro','Other','Tjetër']},
   currency:{EUR:['EUR','EUR','EUR'],ALL:['Lek (ALL)','Lek (ALL)','Lek (ALL)'],MKD:['Denar (MKD)','Denar (MKD)','Denar (MKD)'],GBP:['Sterlina (GBP)','Pound (GBP)','Paund (GBP)']},
-  source:{instagram_organico:['Instagram organico','Instagram organic','Instagram organik'],instagram_ads:['Instagram ads','Instagram ads','Reklama në Instagram'],passaparola:['Passaparola','Word of mouth','Nga goja në gojë'],facebook:['Facebook','Facebook','Facebook'],altro:['Altro','Other','Tjetër']},
+  source:{sito:['Sito web','Website','Faqja web'],instagram_organico:['Instagram organico','Instagram organic','Instagram organik'],instagram_ads:['Instagram ads','Instagram ads','Reklama në Instagram'],passaparola:['Passaparola','Word of mouth','Nga goja në gojë'],facebook:['Facebook','Facebook','Facebook'],altro:['Altro','Other','Tjetër']},
   order_status:{bozza:['Bozza','Draft','Draft'],riservato:['Riservato','Reserved','Rezervuar'],confermato:['Ordinato','Ordered','Porositur'],spedito:['Spedito','Shipped','Dërguar'],consegnato:['Consegnato','Delivered','Dorëzuar'],reso:['Reso','Returned','Kthyer'],annullato:['Annullato','Cancelled','Anuluar']},
-  channel:{instagram:['Instagram','Instagram','Instagram'],facebook:['Facebook','Facebook','Facebook'],whatsapp:['WhatsApp','WhatsApp','WhatsApp'],di_persona:['Di persona','In person','Personalisht'],altro:['Altro','Other','Tjetër']},
+  channel:{sito:['Sito web','Website','Faqja web'],instagram:['Instagram','Instagram','Instagram'],facebook:['Facebook','Facebook','Facebook'],whatsapp:['WhatsApp','WhatsApp','WhatsApp'],di_persona:['Di persona','In person','Personalisht'],altro:['Altro','Other','Tjetër']},
   pay_method:{contanti:['Contanti','Cash','Para në dorë'],contanti_alla_consegna:['Contanti alla consegna (corriere)','Cash on delivery (courier)','Para në dorëzim (korrieri)'],bonifico:['Bonifico','Bank transfer','Transfertë bankare'],carta:['Carta','Card','Kartë'],altro:['Altro','Other','Tjetër']},
   pay_kind:{acconto:['Acconto','Deposit','Kapar'],saldo:['Saldo','Balance','Saldo'],rimborso:['Rimborso','Refund','Rimbursim']},
   pay_status:{da_incassare:['Da incassare','To collect','Për t\'u arkëtuar'],incassato:['Incassato','Collected','Arkëtuar'],consegnato_dal_corriere:['Versato dal corriere','Remitted by courier','Derdhur nga korrieri']},
@@ -468,6 +468,13 @@ async function logout(){ await sb.auth.signOut(); location.hash = ''; boot(); }
 
 // ====== Struttura e navigazione ======
 const MAIN_TABS = {admin:['dashboard','catalog','orders','customers'], vendite:['dashboard','catalog','orders','customers'], magazzino:['dashboard','catalog','purchases']};
+const SHOP_URL = location.origin + location.pathname.replace(/[^/]*$/, '') + 'shop/';
+async function togglePublished(id, on){ check(await sb.from('models').update({published: on}).eq('id', id)); toast(t('saved')); route(); }
+async function shareShop(id){
+  const url = SHOP_URL + (id ? '#p/' + id : '');
+  try { if (navigator.share) return await navigator.share({title:'Modus Vestendi', url}); } catch (e) { if (e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(url); toast(t('link_copied')); } catch (e) { prompt(t('share_link'), url); }
+}
 function navItems(){
   const r = S.profile.role;
   const all = [['dashboard','#/'],['catalog','#/catalogo'],['purchases','#/acquisti'],['customers','#/clienti'],['orders','#/ordini'],['expenses','#/spese'],['reports','#/report'],['settings','#/impostazioni']];
@@ -484,6 +491,7 @@ function renderShell(){
   <div class="drop" id="drop" hidden>
     <div class="who">${esc(S.profile.full_name || S.profile.email || '')} · ${esc(ev('role', S.profile.role))}</div>
     ${more.map(([k, h]) => `<a href="${h}" data-k="${k}" onclick="toggleMenu(false)">${t(k)}</a>`).join('')}
+    <a href="${SHOP_URL}" target="_blank" rel="noopener">🛍 ${t('online_shop')} ↗</a><button class="link" style="text-align:left" onclick="toggleMenu(false);shareShop()">${t('share_link')}: ${t('online_shop')}</button>
     <div class="drop-row"><span>${t('language')}</span>${langSelect()}</div>
     <button class="link" onclick="logout()">${t('logout')}</button>
   </div></header><div class="menu-veil" id="veil" hidden onclick="toggleMenu(false)"></div><main id="main"></main>`;
@@ -531,12 +539,13 @@ async function viewDashboard(main){
   }
   let recent = '', alerts = '';
   if (can.sales()){
-    const act = check(await sb.from('orders').select('id,order_no,status,reserved_until,delivery_mode,shipped_at,customers(full_name)').in('status', ['riservato','confermato','spedito']).order('created_at'));
+    const act = check(await sb.from('orders').select('id,order_no,status,channel,reserved_until,delivery_mode,shipped_at,customers(full_name)').in('status', ['riservato','confermato','spedito']).order('created_at'));
     const now = Date.now();
     const items = [];
     act.forEach(o => {
       const nm = esc(o.customers?.full_name || '');
       if (o.status === 'riservato' && o.reserved_until && new Date(o.reserved_until) < now) items.push(['bad', o, `${t('reservation_expired')}: ${nm}`]);
+      else if (o.status === 'riservato' && o.channel === 'sito') items.push(['bad', o, `${t('web_order')}: ${nm} · ${t('reserved_until_lbl')} ${fdt(o.reserved_until)}`]);
       else if (o.status === 'riservato') items.push(['warn', o, `${t('reserved_until_lbl')} ${fdt(o.reserved_until)}: ${nm}`]);
       else if (o.status === 'confermato') items.push(['warn', o, `${o.delivery_mode === 'modus_vestendi' ? t('to_deliver_own') : t('to_ship_choose')}: ${nm}`]);
       else if (o.status === 'spedito' && o.delivery_mode === 'modus_vestendi' && hoursSince(o.shipped_at) >= 24) items.push(['bad', o, `${t('confirm_delivery_ask')}: ${nm}`]);
@@ -667,6 +676,7 @@ async function viewModel(main, id){
   <div class="row" style="margin-bottom:10px"><span class="pill ${totAvail ? 'good' : 'grey'}">${totAvail} ${t('available')}</span>${totRes ? `<span class="pill warn">${totRes} ${t('reserved_short')}</span>` : ''}${sold ? `<span class="pill">${sold} ${t('sold_short')}</span>` : ''}${statusPill('instagram_status', m.instagram_status)}${m.instagram_url ? `<a class="small" href="${esc(m.instagram_url)}" target="_blank" rel="noopener">Instagram ↗</a>` : ''}</div>
   ${can.sales() ? `<div class="grid g2" style="margin-bottom:14px"><button class="primary" style="justify-content:center;padding:12px" onclick="sellFromModel()" ${totAvail ? '' : 'disabled'}>${t('sell')}</button><button class="accent" style="justify-content:center;padding:12px" onclick="sellFromModel(null,'riservato')" ${totAvail ? '' : 'disabled'}>${t('reserve')}</button></div>` : ''}
   ${m.description ? `<p>${esc(m.description)}</p>` : ''}
+  ${w ? `<div class="card" style="padding:12px 14px"><div class="row spread" style="flex-wrap:nowrap;gap:10px"><label class="row" style="flex-wrap:nowrap;gap:10px;cursor:pointer;margin:0;font-weight:600"><input type="checkbox" style="width:22px;height:22px;flex:none" ${m.published ? 'checked' : ''} onchange="togglePublished(${m.id}, this.checked)"> 🛍 ${t('show_on_site')}</label>${m.published ? `<button class="small" onclick="shareShop(${m.id})">${t('share_link')}</button>` : ''}</div><p class="small muted" style="margin:6px 0 0">${t('site_hint')}${m.published && !m.photos.length ? ' ⚠ ' + t('photos') + ': 0' : ''}</p></div>` : ''}
   <div class="card"><h3>${t('photos')}</h3>
   <div class="photos">${w ? `<label class="photo-add"><span class="plus" style="display:flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span>${t('take_photo')}</span><input type="file" accept="image/*" capture="environment" class="hide" id="pfc"></label><label class="photo-add"><span class="plus">+</span><span>${t('from_gallery')}</span><input type="file" accept="image/*" multiple class="hide" id="pf"></label>` : ''}${m.photos.map(p => `<div class="p ${p.is_main ? 'main' : ''}" style="background-image:url('${urlCache[p.path] || ''}')" onclick="window.open('${urlCache[p.path] || ''}','_blank')">${w ? `<button onclick="event.stopPropagation();photoMenu(${p.id},${m.id})">⋯</button>` : ''}</div>`).join('') || (w ? '' : `<span class="muted small">${t('no_data')}</span>`)}</div></div>
   <div class="card"><div class="row spread"><h3>${t('sizes_stock')}</h3>${w ? `<button class="primary" onclick="addColor()">+ ${t('add_color')}</button>` : ''}</div>

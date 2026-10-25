@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="sq">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e6dfd5">
+<title>Modus Vestendi · Shop</title>
+<meta name="description" content="Modus Vestendi — veshje italiane dhe spanjolle të përzgjedhura. Porosit online, paguaj në dorëzim.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Modus Vestendi · Shop">
+<meta property="og:description" content="Veshje italiane dhe spanjolle të përzgjedhura · Capi italiani e spagnoli selezionati · Curated Italian & Spanish fashion">
+<meta property="og:image" content="https://gjorgkodra-hash.github.io/modus-vestendi-app/icons/icon-512.png">
+<meta property="og:url" content="https://gjorgkodra-hash.github.io/modus-vestendi-app/shop/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/png" href="../icons/favicon.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --bg:#efe9e1; --surface:#faf7f2; --ink:#2c2527; --muted:#6e605a; --line:#ddd1c4;
+  --accent:#4c2f2a; --tan:#deb598; --soft:#f1e1d2; --good:#3f7350; --bad:#a63d3d;
+  --r:14px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Nunito,"Segoe UI",system-ui,sans-serif}
+a{color:var(--accent)}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:9px 16px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button:disabled{opacity:.45;cursor:not-allowed}
+input,select,textarea{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+textarea{min-height:70px;resize:vertical}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header{position:sticky;top:0;z-index:30;background:color-mix(in srgb, var(--bg) 92%, transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font-family:Jost,sans-serif;letter-spacing:.16em;font-size:16px;text-transform:lowercase;white-space:nowrap}
+.brand img{height:30px}
+.tools{display:flex;align-items:center;gap:8px}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.lang button{border:0;border-radius:0;padding:6px 10px;background:transparent;font-size:13px;color:var(--muted)}
+.lang button.on{background:var(--ink);color:#fff}
+.cart-btn{position:relative;padding:8px 12px;display:flex;align-items:center;gap:6px}
+@media(max-width:480px){#cartlbl{display:none}.brand span{font-size:14px;letter-spacing:.12em}.lang button{padding:6px 8px}}
+.badge{position:absolute;top:-6px;right:-6px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 5px}
+.hero{padding:34px 0 18px;text-align:center}
+.hero h1{font-family:Jost,sans-serif;font-weight:300;letter-spacing:.2em;text-transform:lowercase;font-size:clamp(26px,5vw,40px);margin:0}
+.hero p{color:var(--muted);margin:8px auto 0;max-width:560px}
+.perks{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 18px;margin-top:14px;font-size:13px;color:var(--muted)}
+.filters{display:flex;gap:8px;overflow-x:auto;padding:6px 0 16px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;padding:7px 14px;font-size:14px}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px;padding-bottom:60px}
+@media(min-width:720px){.grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:22px 18px}}
+@media(min-width:1040px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.card{cursor:pointer;text-decoration:none;color:inherit;display:block}
+.ph{aspect-ratio:4/5;border-radius:var(--r);overflow:hidden;background:var(--soft);position:relative}
+.ph img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s}
+.card:hover .ph img{transform:scale(1.03)}
+.ph .noimg{position:absolute;inset:0;display:grid;place-items:center;font-family:Jost,sans-serif;letter-spacing:.2em;color:var(--tan);font-size:28px}
+.ph .tag{position:absolute;left:8px;top:8px;background:rgba(250,247,242,.92);font-size:11px;padding:3px 8px;border-radius:999px;color:var(--accent);font-weight:700}
+.meta{padding:9px 2px 0}
+.b{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.n{font-weight:600;line-height:1.3;margin:2px 0}
+.p{font-weight:700}
+.dots{display:flex;gap:5px;margin-top:5px}
+.dot{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex:none}
+.empty{text-align:center;color:var(--muted);padding:60px 0}
+.sheet-bg{position:fixed;inset:0;background:rgba(44,37,39,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:720px){.sheet-bg{align-items:center}}
+.sheet{background:var(--surface);width:100%;max-width:880px;max-height:94vh;overflow:auto;border-radius:20px 20px 0 0;position:relative}
+@media(min-width:720px){.sheet{border-radius:20px}}
+.sheet .x{position:absolute;right:12px;top:12px;z-index:3;width:38px;height:38px;padding:0;display:grid;place-items:center;font-size:20px;background:rgba(250,247,242,.95)}
+.pd{display:grid;grid-template-columns:1fr}
+@media(min-width:720px){.pd{grid-template-columns:1.05fr 1fr}}
+.gal{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;background:var(--soft);aspect-ratio:4/5;scrollbar-width:none}
+.gal::-webkit-scrollbar{display:none}
+@media(max-width:719px){.gal{aspect-ratio:auto;height:min(56vh,480px)}}
+.gal img{flex:0 0 100%;width:100%;height:100%;object-fit:cover;scroll-snap-align:start}
+.gdots{display:flex;justify-content:center;gap:6px;padding:8px 0 0}
+.gdots span{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.gdots span.on{background:var(--accent)}
+.info{padding:20px 20px 24px}
+.info h2{margin:4px 0 6px;font-size:22px}
+.price{font-size:20px;font-weight:700;margin-bottom:10px}
+.opt{display:flex;flex-wrap:wrap;gap:8px}
+.cdot{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px}
+.cdot .dot{width:22px;height:22px}
+.cdot.on,.sz.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.sz{min-width:52px;padding:9px 12px;border-radius:10px}
+.qty{display:flex;align-items:center;gap:10px}
+.qty button{width:38px;height:38px;padding:0}
+.desc{color:var(--muted);white-space:pre-line;margin-top:14px;font-size:14px}
+.note{font-size:13px;color:var(--muted);margin-top:10px}
+.line{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line);align-items:center}
+.line img,.line .ni{width:64px;height:80px;object-fit:cover;border-radius:10px;background:var(--soft);flex:none}
+.pad{padding:22px 20px}
+.tot{display:flex;justify-content:space-between;font-weight:700;font-size:17px;padding:12px 0;border-top:1px solid var(--line)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.err{color:var(--bad);font-size:14px;margin-top:8px}
+.ok{text-align:center;padding:36px 22px}
+.ok .big{font-size:44px}
+footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);font-size:13px;text-align:center}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:999px;z-index:80;font-size:14px}
+</style>
+</head>
+<body>
+<header><div class="wrap top">
+  <a class="brand" href="#" onclick="closeSheet();return false"><img src="../icons/mv-mark.png" alt="MV"><span>modus vestendi</span></a>
+  <div class="tools">
+    <div class="lang" id="lang"></div>
+    <button class="cart-btn" onclick="openCart()" aria-label="cart"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14l-1 13H6z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/></svg><span id="cartlbl"></span><span class="badge" id="badge" hidden></span></button>
+  </div>
+</div></header>
+<main class="wrap">
+  <section class="hero"><h1>modus vestendi</h1><p id="sub"></p><div class="perks" id="perks"></div></section>
+  <div class="filters" id="filters"></div>
+  <div class="grid" id="grid"><div class="empty" style="grid-column:1/-1" id="loading">…</div></div>
+</main>
+<footer><div class="wrap"><span id="foot"></span> · <a href="https://www.instagram.com/modus.vestendi/" target="_blank" rel="noopener">@modus.vestendi</a></div></footer>
+<script>
+const SB_URL = 'https://xmdbknlmdzodilvcbpwj.supabase.co', SB_KEY = 'sb_publishable_nJQfqCvShsVCkDknNhfb6w_O5aJLvAL';
+const sb = window.supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:false}});
+const LANGS = ['sq','it','en'];
+let L = (() => { try { const q = new URLSearchParams(location.search).get('lang') || localStorage.getItem('mvshop_lang'); return LANGS.includes(q) ? q : 'sq'; } catch (e) { return 'sq'; } })();
+const TX = {
+  sub:['Veshje italiane dhe spanjolle të përzgjedhura me kujdes.','Capi italiani e spagnoli selezionati con cura.','Carefully selected Italian and Spanish fashion.'],
+  perks:[['Pagesë në dorëzim','Dërgesë në Shqipëri, Kosovë, Maqedoni','Pyetje? Na shkruani në Instagram'],['Pagamento alla consegna','Spedizione in Albania, Kosovo, Macedonia','Domande? Scrivici su Instagram'],['Pay on delivery','Shipping to Albania, Kosovo, North Macedonia','Questions? Message us on Instagram']],
+  all:['Të gjitha','Tutti','All'], cart:['Shporta','Carrello','Cart'], add:['Shto në shportë','Aggiungi al carrello','Add to cart'],
+  color:['Ngjyra','Colore','Colour'], size:['Masa','Taglia','Size'], qty:['Sasia','Quantità','Quantity'], left:['copë në dispozicion','pezzi disponibili','pieces available'],
+  last:['E fundit!','Ultimo pezzo!','Last one!'], pick_size:['Zgjidh masën','Scegli la taglia','Choose a size'], added:['U shtua në shportë','Aggiunto al carrello','Added to cart'],
+  empty_cart:['Shporta është bosh.','Il carrello è vuoto.','Your cart is empty.'], total:['Totali','Totale','Total'], checkout:['Vazhdo me porosinë','Procedi all\'ordine','Continue to order'],
+  name:['Emri dhe mbiemri','Nome e cognome','Full name'], phone:['Telefoni (WhatsApp)','Telefono (WhatsApp)','Phone (WhatsApp)'], ig:['Instagram (opsional)','Instagram (facoltativo)','Instagram (optional)'],
+  country:['Shteti','Paese','Country'], city:['Qyteti','Città','City'], address:['Adresa','Indirizzo','Address'], notes:['Shënime (opsionale)','Note (facoltative)','Notes (optional)'],
+  pay:['Pagesa bëhet në dorëzim. Do t\'ju kontaktojmë për të konfirmuar porosinë dhe kostot e dërgesës.','Si paga alla consegna. Ti contatteremo per confermare l\'ordine e il costo di spedizione.','You pay on delivery. We will contact you to confirm the order and the shipping cost.'],
+  send:['Dërgo porosinë','Invia ordine','Send order'], back:['← Shporta','← Carrello','← Cart'],
+  ok_t:['Faleminderit! Porosia u mor.','Grazie! Ordine ricevuto.','Thank you! Order received.'],
+  ok_p:['Numri i porosisë: ','Numero ordine: ','Order number: '], ok_n:['Artikujt janë rezervuar për ju për 48 orë. Do t\'ju kontaktojmë së shpejti.','I capi sono riservati per te per 48 ore. Ti contatteremo a breve.','The items are reserved for you for 48 hours. We will contact you soon.'],
+  continue:['Vazhdo blerjet','Continua lo shopping','Continue shopping'], remove:['Hiq','Rimuovi','Remove'], none:['Së shpejti produkte të reja.','Presto nuovi prodotti.','New items coming soon.'],
+  e_missing_contact:['Shkruani emrin dhe një numër telefoni të saktë.','Inserisci nome e un numero di telefono valido.','Please enter your name and a valid phone number.'],
+  e_missing_address:['Shkruani qytetin dhe adresën.','Inserisci città e indirizzo.','Please enter city and address.'],
+  e_not_available:['Një artikull nuk është më në dispozicion. Shporta u përditësua.','Un capo non è più disponibile. Il carrello è stato aggiornato.','An item is no longer available. Your cart was updated.'],
+  e_too_many:['Shumë porosi në pak kohë. Na shkruani në Instagram.','Troppi ordini in poco tempo. Scrivici su Instagram.','Too many orders in a short time. Please message us on Instagram.'],
+  e_generic:['Diçka shkoi keq. Provoni përsëri.','Qualcosa è andato storto. Riprova.','Something went wrong. Please try again.'],
+  foot:['Pagesë në dorëzim','Pagamento alla consegna','Pay on delivery'], one:['Masë e vetme','Taglia unica','One size']
+};
+const COUNTRIES = [['AL',['Shqipëri','Albania','Albania']],['XK',['Kosovë','Kosovo','Kosovo']],['MK',['Maqedoni e Veriut','Macedonia del Nord','North Macedonia']],['IT',['Itali','Italia','Italy']],['UK',['Mbretëri e Bashkuar','Regno Unito','United Kingdom']],['altro',['Tjetër','Altro','Other']]];
+const t = k => TX[k][LANGS.indexOf(L)];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur = n => new Intl.NumberFormat(L === 'en' ? 'en-GB' : L === 'it' ? 'it-IT' : 'sq-AL', {style:'currency', currency:'EUR', maximumFractionDigits:0}).format(Number(n) || 0);
+const RAINBOW = 'conic-gradient(#e8a3b5,#e8c33d,#7fb3e0,#2e6b3f,#e8a3b5)';
+const CMAP = {nero:'#1f1b1b',zeze:'#1f1b1b',black:'#1f1b1b',bianco:'#f7f5f0',bardhe:'#f7f5f0',white:'#f7f5f0',panna:'#efe6d2',crema:'#efe6d2',cream:'#efe6d2',bordo:'#6d1a2a',bordeaux:'#6d1a2a',burgundy:'#6d1a2a',rosso:'#c0272d',red:'#c0272d',kuqe:'#c0272d',rosa:'#e8a3b5',pink:'#e8a3b5',roze:'#e8a3b5',blu:'#1f3c88',blue:'#1f3c88',navy:'#1b2a4a',azzurro:'#7fb3e0',celeste:'#a7cdea',verde:'#2e6b3f',green:'#2e6b3f',beige:'#d9c3a5',bezhe:'#d9c3a5',cammello:'#b8875a',camel:'#b8875a',marrone:'#6b4430',brown:'#6b4430',kafe:'#6b4430',grigio:'#8c8c8c',grey:'#8c8c8c',gray:'#8c8c8c',gri:'#8c8c8c',giallo:'#e8c33d',yellow:'#e8c33d',viola:'#6a3d8f',purple:'#6a3d8f',oro:'#c9a54b',gold:'#c9a54b',argento:'#c0c0c0',silver:'#c0c0c0',kaki:'#8a8455',khaki:'#8a8455'};
+const norm = c => String(c || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z ]/g, '').trim();
+const hexOf = (c, h) => h || CMAP[norm(c)] || CMAP[norm(c).split(' ')[0]] || CMAP[norm(c).split(' ').pop()] || null;
+const SIZE_ORDER = ['XXS','XS','S','M','L','XL','XXL','XXXL','TU','U'];
+const sRank = z => { const u = String(z || '').toUpperCase(); const i = SIZE_ORDER.indexOf(u); return i >= 0 ? i : (isNaN(Number(u)) ? 100 : 200 + Number(u)); };
+const sizeLbl = z => ['TU','U'].includes(String(z).toUpperCase()) ? t('one') : z;
+
+let P = [], URLS = {}, CAT = '', CART = [];
+try { CART = JSON.parse(localStorage.getItem('mvshop_cart') || '[]'); } catch (e) {}
+const saveCart = () => { try { localStorage.setItem('mvshop_cart', JSON.stringify(CART)); } catch (e) {} renderBadge(); };
+function toast(m){ const d = document.createElement('div'); d.className = 'toast'; d.textContent = m; document.body.appendChild(d); setTimeout(() => d.remove(), 2200); }
+
+async function load(){
+  const {data, error} = await sb.rpc('shop_catalog');
+  if (error){ $('#grid').innerHTML = `<div class="empty" style="grid-column:1/-1">${t('e_generic')}</div>`; return; }
+  P = data || [];
+  const paths = P.flatMap(p => p.photos);
+  if (paths.length){
+    const r = await sb.storage.from('foto').createSignedUrls(paths, 60 * 60 * 6);
+    (r.data || []).forEach(x => { if (x.signedUrl) URLS[x.path] = x.signedUrl; });
+  }
+  // drop cart lines that are no longer available
+  const avail = {}; P.forEach(p => p.variants.forEach(v => avail[v.id] = v.available));
+  CART = CART.filter(c => avail[c.v] > 0).map(c => ({...c, q: Math.min(c.q, avail[c.v])}));
+  saveCart(); render(); route();
+}
+function render(){
+  document.documentElement.lang = L;
+  $('#lang').innerHTML = LANGS.map(l => `<button class="${l === L ? 'on' : ''}" onclick="setLang('${l}')">${l.toUpperCase()}</button>`).join('');
+  $('#sub').textContent = t('sub');
+  $('#perks').innerHTML = t('perks').map(x => `<span>· ${esc(x)}</span>`).join('');
+  $('#foot').textContent = t('foot');
+  $('#cartlbl').textContent = t('cart');
+  const cats = [...new Map(P.map(p => [p.category?.it || '', p.category])).entries()].filter(([k]) => k);
+  $('#filters').innerHTML = cats.length > 1 ? `<button class="chip ${CAT ? '' : 'on'}" onclick="CAT='';render()">${t('all')}</button>` + cats.map(([k, c]) => `<button class="chip ${CAT === k ? 'on' : ''}" onclick="CAT=${esc(JSON.stringify(k))};render()">${esc(c[L] || k)}</button>`).join('') : '';
+  const list = P.filter(p => !CAT || p.category?.it === CAT);
+  $('#grid').innerHTML = list.length ? list.map(card).join('') : `<div class="empty" style="grid-column:1/-1">${t('none')}</div>`;
+  renderBadge();
+}
+function card(p){
+  const prices = p.variants.map(v => Number(v.price)); const min = Math.min(...prices), max = Math.max(...prices);
+  const cols = [...new Map(p.variants.map(v => [norm(v.color), v])).values()];
+  const pieces = p.variants.reduce((a, v) => a + v.available, 0);
+  const img = URLS[p.photos[0]];
+  return `<a class="card" href="#p/${p.id}"><div class="ph">${img ? `<img src="${esc(img)}" alt="${esc(p.name)}" loading="lazy">` : '<div class="noimg">MV</div>'}${pieces === 1 ? `<span class="tag">${t('last')}</span>` : ''}</div>
+  <div class="meta"><div class="b">${esc(p.brand)}</div><div class="n">${esc(p.name)}</div><div class="p">${min === max ? eur(min) : eur(min) + ' – ' + eur(max)}</div>
+  ${cols.some(v => v.color) ? `<div class="dots">${cols.map(v => `<span class="dot" title="${esc(v.color)}" style="background:${hexOf(v.color, v.color_hex) || RAINBOW}"></span>`).join('')}</div>` : ''}</div></a>`;
+}
+function setLang(l){ L = l; try { localStorage.setItem('mvshop_lang', l); } catch (e) {} render(); route(); }
+function renderBadge(){ const n = CART.reduce((a, c) => a + c.q, 0); const b = $('#badge'); b.hidden = !n; b.textContent = n; }
+
+// ---- sheets ----
+function sheet(html){ closeSheet(true); const bg = document.createElement('div'); bg.className = 'sheet-bg'; bg.innerHTML = `<div class="sheet"><button class="x" onclick="closeSheet()" aria-label="close">×</button>${html}</div>`; bg.onclick = e => { if (e.target === bg) closeSheet(); }; document.body.appendChild(bg); document.body.style.overflow = 'hidden'; return bg; }
+function closeSheet(silent){ document.querySelectorAll('.sheet-bg').forEach(x => x.remove()); document.body.style.overflow = ''; if (!silent && location.hash) history.replaceState(null, '', location.pathname + location.search); }
+window.addEventListener('hashchange', route);
+function route(){
+  const m = location.hash.match(/^#p\/(\d+)/);
+  if (m){ const p = P.find(x => x.id === Number(m[1])); if (p) openProduct(p); else if (P.length) closeSheet(); }
+  else if (location.hash === '#cart') openCart();
+}
+let SEL = {};
+function openProduct(p){
+  const groups = {}; p.variants.forEach(v => { const k = norm(v.color); (groups[k] = groups[k] || {name: v.color, hex: hexOf(v.color, v.color_hex), list: []}).list.push(v); });
+  Object.values(groups).forEach(g => g.list.sort((a, b) => sRank(a.size) - sRank(b.size)));
+  const keys = Object.keys(groups);
+  SEL = {p, groups, col: SEL.p?.id === p.id && groups[SEL.col] ? SEL.col : keys[0], v: null, q: 1};
+  const g = groups[SEL.col]; if (g.list.length === 1) SEL.v = g.list[0];
+  const photos = p.photos.map(x => URLS[x]).filter(Boolean);
+  const desc = (L === 'en' && p.description_en) || (L === 'sq' && p.description_sq) || p.description || '';
+  sheet(`<div class="pd"><div><div class="gal" id="gal" onscroll="galDots()">${photos.length ? photos.map(u => `<img src="${esc(u)}" alt="${esc(p.name)}">`).join('') : '<div class="ph" style="flex:0 0 100%;border-radius:0"><div class="noimg">MV</div></div>'}</div>${photos.length > 1 ? `<div class="gdots" id="gdots">${photos.map((_, i) => `<span class="${i ? '' : 'on'}"></span>`).join('')}</div>` : ''}</div>
+  <div class="info"><div class="b">${esc(p.brand)} · ${esc(p.category?.[L] || '')}</div><h2>${esc(p.name)}</h2><div class="price" id="price"></div>
+  <div id="opts"></div>
+  <div class="row" style="display:flex;gap:10px;align-items:center;margin-top:16px"><div class="qty"><button onclick="chq(-1)">−</button><b id="q">1</b><button onclick="chq(1)">+</button></div><button class="primary" id="addb" style="flex:1;padding:13px" onclick="addToCart()">${t('add')}</button></div>
+  <div class="note" id="left"></div>
+  ${desc ? `<div class="desc">${esc(desc)}</div>` : ''}
+  <div class="note">${esc(t('pay'))}</div></div></div>`);
+  if (location.hash !== '#p/' + p.id) history.replaceState(null, '', '#p/' + p.id);
+  drawOpts();
+}
+function galDots(){ const g = $('#gal'), d = $('#gdots'); if (!g || !d) return; const i = Math.round(g.scrollLeft / g.clientWidth); [...d.children].forEach((s, j) => s.classList.toggle('on', i === j)); }
+function drawOpts(){
+  const {groups, col, v} = SEL; const keys = Object.keys(groups); const g = groups[col];
+  $('#opts').innerHTML = `${keys.length > 1 || g.name ? `<label>${t('color')}${g.name ? ': <b style="color:var(--ink)">' + esc(g.name) + '</b>' : ''}</label><div class="opt">${keys.map(k => `<button class="cdot ${k === col ? 'on' : ''}" onclick="pickCol('${esc(k)}')"><span class="dot" style="background:${groups[k].hex || RAINBOW}"></span>${esc(groups[k].name || '—')}</button>`).join('')}</div>` : ''}
+  <label>${t('size')}</label><div class="opt">${g.list.map(x => `<button class="sz ${v?.id === x.id ? 'on' : ''}" onclick="pickV(${x.id})">${esc(sizeLbl(x.size))}</button>`).join('')}</div>`;
+  const prices = g.list.map(x => Number(x.price));
+  $('#price').textContent = v ? eur(v.price) : (Math.min(...prices) === Math.max(...prices) ? eur(prices[0]) : eur(Math.min(...prices)) + ' – ' + eur(Math.max(...prices)));
+  $('#q').textContent = SEL.q;
+  $('#left').textContent = v ? (v.available === 1 ? t('last') : `${v.available} ${t('left')}`) : '';
+  $('#addb').textContent = v ? t('add') : t('pick_size');
+}
+function pickCol(k){ SEL.col = k; const g = SEL.groups[k]; SEL.v = g.list.length === 1 ? g.list[0] : null; SEL.q = 1; drawOpts(); }
+function pickV(id){ SEL.v = SEL.groups[SEL.col].list.find(x => x.id === id); SEL.q = Math.min(SEL.q, SEL.v.available); drawOpts(); }
+function chq(d){ const max = SEL.v ? SEL.v.available : 5; SEL.q = Math.max(1, Math.min(max, 5, SEL.q + d)); drawOpts(); }
+function addToCart(){
+  if (!SEL.v) { toast(t('pick_size')); return; }
+  const ex = CART.find(c => c.v === SEL.v.id);
+  if (ex) ex.q = Math.min(SEL.v.available, ex.q + SEL.q); else CART.push({v: SEL.v.id, q: SEL.q});
+  saveCart(); toast(t('added')); closeSheet();
+}
+const findV = id => { for (const p of P){ const v = p.variants.find(x => x.id === id); if (v) return [p, v]; } return []; };
+function openCart(){
+  const lines = CART.map(c => { const [p, v] = findV(c.v); return p ? {c, p, v} : null; }).filter(Boolean);
+  const tot = lines.reduce((a, l) => a + l.c.q * Number(l.v.price), 0);
+  sheet(`<div class="pad"><h2>${t('cart')}</h2>${lines.length ? lines.map(l => `<div class="line">${URLS[l.p.photos[0]] ? `<img src="${esc(URLS[l.p.photos[0]])}" alt="">` : '<div class="ni"></div>'}
+    <div style="flex:1;min-width:0"><div class="b">${esc(l.p.brand)}</div><div class="n">${esc(l.p.name)}</div><div class="note" style="margin:0">${esc([l.v.color, sizeLbl(l.v.size)].filter(Boolean).join(' · '))} · ${l.c.q} × ${eur(l.v.price)}</div></div>
+    <button onclick="rmCart(${l.v.id})" style="padding:6px 12px;font-size:13px">${t('remove')}</button></div>`).join('') + `<div class="tot"><span>${t('total')}</span><span>${eur(tot)}</span></div>
+    <p class="note">${esc(t('pay'))}</p><button class="primary" style="width:100%;padding:14px" onclick="openCheckout()">${t('checkout')}</button>` : `<p class="empty" style="padding:30px 0">${t('empty_cart')}</p><button style="width:100%" onclick="closeSheet()">${t('continue')}</button>`}</div>`);
+}
+function rmCart(id){ CART = CART.filter(c => c.v !== id); saveCart(); openCart(); }
+function openCheckout(){
+  let saved = {}; try { saved = JSON.parse(localStorage.getItem('mvshop_me') || '{}'); } catch (e) {}
+  const f = (n, lbl, type = 'text', extra = '') => `<label for="f_${n}">${t(lbl)}</label><input id="f_${n}" name="${n}" type="${type}" value="${esc(saved[n] || '')}" ${extra}>`;
+  sheet(`<div class="pad"><button onclick="openCart()" style="border:0;padding:0;background:none;color:var(--accent)">${t('back')}</button><h2 style="margin-top:10px">${t('checkout')}</h2>
+  <form id="co" onsubmit="sendOrder(event)">${f('name', 'name', 'text', 'required autocomplete="name"')}${f('phone', 'phone', 'tel', 'required autocomplete="tel" inputmode="tel"')}${f('instagram', 'ig', 'text', 'autocomplete="off" placeholder="@"')}
+  <div class="two"><div><label for="f_country">${t('country')}</label><select id="f_country" name="country">${COUNTRIES.map(([k, n]) => `<option value="${k}" ${(saved.country || 'AL') === k ? 'selected' : ''}>${esc(n[LANGS.indexOf(L)])}</option>`).join('')}</select></div><div>${f('city', 'city', 'text', 'required autocomplete="address-level2"')}</div></div>
+  ${f('address', 'address', 'text', 'required autocomplete="street-address"')}
+  <label for="f_notes">${t('notes')}</label><textarea id="f_notes" name="notes"></textarea>
+  <p class="note">${esc(t('pay'))}</p><div class="err" id="err"></div>
+  <button class="primary" id="sendb" style="width:100%;padding:14px;margin-top:8px">${t('send')}</button></form></div>`);
+}
+async function sendOrder(e){
+  e.preventDefault();
+  const fd = Object.fromEntries(new FormData(e.target).entries());
+  try { localStorage.setItem('mvshop_me', JSON.stringify({name: fd.name, phone: fd.phone, instagram: fd.instagram, country: fd.country, city: fd.city, address: fd.address})); } catch (x) {}
+  const b = $('#sendb'); b.disabled = true; $('#err').textContent = '';
+  const {data, error} = await sb.rpc('shop_order', {p_name: fd.name, p_phone: fd.phone, p_instagram: fd.instagram, p_country: fd.country, p_city: fd.city, p_address: fd.address, p_lines: CART.map(c => ({variant_id: c.v, qty: c.q})), p_notes: fd.notes, p_lang: L});
+  if (error){
+    const m = String(error.message || ''); const k = ['missing_contact','missing_address','not_available','too_many'].find(x => m.includes(x));
+    $('#err').textContent = t('e_' + (k || 'generic')); b.disabled = false;
+    if (k === 'not_available'){ const id = Number(m.split(':').pop()); CART = CART.filter(c => c.v !== id); saveCart(); load(); }
+    return;
+  }
+  CART = []; saveCart();
+  sheet(`<div class="ok"><div class="big">✓</div><h2>${t('ok_t')}</h2><p>${t('ok_p')}<b>${esc(data)}</b></p><p class="note">${t('ok_n')}</p><button class="primary" onclick="closeSheet();load()">${t('continue')}</button></div>`);
+}
+render(); load();
+</script>
+</body>
+</html>
