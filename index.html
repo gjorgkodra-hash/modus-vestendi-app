@@ -142,6 +142,7 @@ const T = {
   shipped_on:['Data spedizione','Ship date','Data e dërgimit'], delivered_on:['Data consegna','Delivery date','Data e dorëzimit'],
   addr_label:['Etichetta (casa, ufficio)','Label (home, work)','Etiketa (shtëpi, punë)'], default:['Predefinito','Default','Kryesore'], size_guide:['Guida taglie','Size guide','Udhëzues masash'],
   ig_no_at:['Instagram (senza @)','Instagram (without @)','Instagram (pa @)'], ig_link:['Link post Instagram','Instagram post link','Lidhja e postimit në Instagram'], max_price:['Prezzo max (€)','Max price (€)','Çmimi maksimal (€)'],
+  adj_now:['Pezzi registrati adesso','Pieces recorded now','Copë të regjistruara tani'], adj_hint:['Scrivi quanti pezzi hai davvero: la differenza la calcola l\'app.','Type how many pieces you really have: the app works out the difference.','Shkruaj sa copë ke realisht: diferencën e llogarit aplikacioni.'], adj_target:['Quanti pezzi hai davvero?','How many pieces do you really have?','Sa copë ke realisht?'], adj_reason:['Motivo','Reason','Arsyeja'], adj_count:['Correzione conteggio','Count correction','Korrigjim numërimi'], adj_arrival:['Nuovi pezzi arrivati','New pieces arrived','Copë të reja'], adj_sold_out:['Venduto fuori dall\'app','Sold outside the app','Shitur jashtë aplikacionit'], adj_lost:['Perso o rovinato','Lost or damaged','Humbur ose dëmtuar'], adj_nochange:['Nessuna modifica: il numero è uguale','No change: same number','Asnjë ndryshim'],
   mv_in:['carico','stock in','hyrje'], mv_fix:['rettifica','adjustment','korrigjim'], mv_move:['trasferimento','transfer','transferim'],
   trip_alloc_hint:['Questi costi si dividono su tutti gli acquisti del viaggio.','These costs are split across every purchase of the trip.','Këto kosto ndahen mbi të gjitha blerjet e udhëtimit.'],
   report_hint:['Margine per marca = prezzo di vendita − costo reale; spedizioni e dazi sono nel margine per mese e per paese.','Brand margin = sale price − landed cost; shipping and duties are in the monthly and country margins.','Marzhi sipas markës = çmimi i shitjes − kosto reale; dërgesat dhe doganat janë te marzhi mujor dhe sipas shtetit.'],
@@ -937,11 +938,21 @@ function editVariant(vid, mid, presetColor){
   }});
 }
 function adjustStock(vid){
-  form({title:t('movements'), fields:[
-    {name:'kind', label:t('kind'), type:'select', options:[['carico','+ ' + t('mv_in')],['rettifica','± ' + t('mv_fix')],['trasferimento',t('mv_move')]], empty:false},
-    {name:'qty', label:`${t('qty')} (+/−)`, type:'number', required:true},
+  const v = window._model?.variants.find(x => x.id === vid) || {qty: 0};
+  const cur = Number(v.qty) || 0;
+  form({title:`${t('movements')}: ${[v.size, v.color].filter(Boolean).join(' · ')}`, extra:'', fields:[
+    {name:'heading', type:'heading', label:`${t('adj_now')}: ${cur}`, hint:t('adj_hint')},
+    {name:'target', label:t('adj_target'), type:'number', value:cur, required:true},
+    {name:'reason', label:t('adj_reason'), type:'select', empty:false, options:[['conteggio', t('adj_count')], ['arrivo', t('adj_arrival')], ['fuori_app', t('adj_sold_out')], ['perso', t('adj_lost')]]},
     {name:'reference', label:t('notes')}
-  ], onSubmit: async x => { check(await sb.from('stock_movements').insert({...x, variant_id: vid})); route(); }});
+  ], onSubmit: async x => {
+    const target = Math.max(0, Math.round(Number(x.target)));
+    const diff = target - cur;
+    if (!diff){ toast(t('adj_nochange')); return; }
+    const reason = {conteggio:t('adj_count'), arrivo:t('adj_arrival'), fuori_app:t('adj_sold_out'), perso:t('adj_lost')}[x.reason];
+    check(await sb.from('stock_movements').insert({variant_id: vid, kind: x.reason === 'arrivo' && diff > 0 ? 'carico' : 'rettifica', qty: diff, reference: [reason, x.reference].filter(Boolean).join(' · ')}));
+    toast(`${t('saved')}: ${cur} → ${target}`); route();
+  }});
 }
 function reserveVariant(vid){ return sellFromModel(vid, 'riservato'); }
 
