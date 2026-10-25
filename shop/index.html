@@ -122,6 +122,7 @@ footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);f
 </main>
 <footer><div class="wrap"><span id="foot"></span> · <a href="https://www.instagram.com/modus.vestendi/" target="_blank" rel="noopener">@modus.vestendi</a></div></footer>
 <script>
+const IG_USER = 'modus.vestendi', WA_NUMBER = ''; // WA_NUMBER: solo cifre con prefisso, es. 355691234567
 const SB_URL = 'https://xmdbknlmdzodilvcbpwj.supabase.co', SB_KEY = 'sb_publishable_nJQfqCvShsVCkDknNhfb6w_O5aJLvAL';
 const sb = window.supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:false}});
 const LANGS = ['sq','it','en'];
@@ -145,6 +146,9 @@ const TX = {
   e_not_available:['Një artikull nuk është më në dispozicion. Shporta u përditësua.','Un capo non è più disponibile. Il carrello è stato aggiornato.','An item is no longer available. Your cart was updated.'],
   e_too_many:['Shumë porosi në pak kohë. Na shkruani në Instagram.','Troppi ordini in poco tempo. Scrivici su Instagram.','Too many orders in a short time. Please message us on Instagram.'],
   e_generic:['Diçka shkoi keq. Provoni përsëri.','Qualcosa è andato storto. Riprova.','Something went wrong. Please try again.'],
+  ask:['Ke pyetje për këtë produkt?','Hai domande su questo capo?','Questions about this item?'], ask_ig:['Shkruaj në Instagram','Scrivi su Instagram','Message on Instagram'], ask_wa:['Shkruaj në WhatsApp','Scrivi su WhatsApp','Message on WhatsApp'],
+  ask_msg:['Përshëndetje! Kam një pyetje për këtë produkt:','Ciao! Ho una domanda su questo capo:','Hi! I have a question about this item:'],
+  ask_copied:['Mesazhi me linkun u kopjua: ngjite në chat-in e Instagram.','Messaggio con il link copiato: incollalo nella chat di Instagram.','Message with the link copied: paste it in the Instagram chat.'],
   foot:['Pagesë në dorëzim','Pagamento alla consegna','Pay on delivery'], one:['Masë e vetme','Taglia unica','One size']
 };
 const COUNTRIES = [['AL',['Shqipëri','Albania','Albania']],['XK',['Kosovë','Kosovo','Kosovo']],['MK',['Maqedoni e Veriut','Macedonia del Nord','North Macedonia']],['IT',['Itali','Italia','Italy']],['UK',['Mbretëri e Bashkuar','Regno Unito','United Kingdom']],['altro',['Tjetër','Altro','Other']]];
@@ -227,11 +231,26 @@ function openProduct(p){
   <div id="opts"></div>
   <div class="row" style="display:flex;gap:10px;align-items:center;margin-top:16px"><div class="qty"><button onclick="chq(-1)">−</button><b id="q">1</b><button onclick="chq(1)">+</button></div><button class="primary" id="addb" style="flex:1;padding:13px" onclick="addToCart()">${t('add')}</button></div>
   <div class="note" id="left"></div>
+  <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)"><div class="note" style="margin:0 0 8px">${t('ask')}</div><div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button onclick="askIG(${p.id})" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>${t('ask_ig')}</button>
+    ${WA_NUMBER ? `<button onclick="askWA(${p.id})" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 12a8 8 0 1 1-3.6-6.7A8 8 0 0 1 20 12z"/><path d="M4.5 19.5 6 15.6"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .8a4 4 0 0 1-1.8-1.8l.8-1-1-2z"/></svg>${t('ask_wa')}</button>` : ''}
+  </div></div>
   ${desc ? `<div class="desc">${esc(desc)}</div>` : ''}
   <div class="note">${esc(t('pay'))}</div></div></div>`);
   if (location.hash !== '#p/' + p.id) history.replaceState(null, '', '#p/' + p.id);
   drawOpts();
 }
+function askText(id){
+  const p = P.find(x => x.id === id); const v = SEL.p?.id === id ? SEL.v : null;
+  const url = location.origin + location.pathname + '#p/' + id;
+  return `${url}\n${t('ask_msg')} ${p ? p.brand + ' · ' + p.name : ''}${v ? ' (' + [v.color, sizeLbl(v.size)].filter(Boolean).join(' · ') + ')' : ''}\n`;
+}
+async function askIG(id){
+  const txt = askText(id);
+  try { await navigator.clipboard.writeText(txt); toast(t('ask_copied')); } catch (e) {}
+  setTimeout(() => window.open('https://ig.me/m/' + IG_USER, '_blank', 'noopener'), 900);
+}
+function askWA(id){ window.open('https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(askText(id)), '_blank', 'noopener'); }
 function galDots(){ const g = $('#gal'), d = $('#gdots'); if (!g || !d) return; const i = Math.round(g.scrollLeft / g.clientWidth); [...d.children].forEach((s, j) => s.classList.toggle('on', i === j)); }
 function drawOpts(){
   const {groups, col, v} = SEL; const keys = Object.keys(groups); const g = groups[col];
