@@ -491,7 +491,7 @@ const MAIN_TABS = {admin:['dashboard','catalog','orders','customers'], vendite:[
 const SHOP_URL = 'https://shop.modusvestendi.com/';
 async function togglePublished(id, on){ check(await sb.from('models').update({published: on}).eq('id', id)); toast(t('saved')); route(); }
 async function shareShop(id){
-  const url = SHOP_URL + (id ? '#p/' + id : '');
+  const url = SHOP_URL + (id ? '#/p/' + id : '');
   try { if (navigator.share) return await navigator.share({title:'Modus Vestendi', url}); } catch (e) { if (e.name === 'AbortError') return; }
   try { await navigator.clipboard.writeText(url); toast(t('link_copied')); } catch (e) { prompt(t('share_link'), url); }
 }
