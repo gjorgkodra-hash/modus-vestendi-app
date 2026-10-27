@@ -488,7 +488,7 @@ async function logout(){ await sb.auth.signOut(); location.hash = ''; boot(); }
 
 // ====== Struttura e navigazione ======
 const MAIN_TABS = {admin:['dashboard','catalog','orders','customers'], vendite:['dashboard','catalog','orders','customers'], magazzino:['dashboard','catalog','purchases']};
-const SHOP_URL = location.origin + location.pathname.replace(/[^/]*$/, '') + 'shop/';
+const SHOP_URL = 'https://shop.modusvestendi.com/';
 async function togglePublished(id, on){ check(await sb.from('models').update({published: on}).eq('id', id)); toast(t('saved')); route(); }
 async function shareShop(id){
   const url = SHOP_URL + (id ? '#p/' + id : '');
