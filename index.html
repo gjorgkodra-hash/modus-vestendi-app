@@ -209,12 +209,21 @@ const T = {
   campaign_product:['Prodotto promosso','Promoted product','Produkti i promovuar'], new_followers:['Nuovi follower','New followers','Ndjekës të rinj'], followers:['follower','followers','ndjekës'],
   per_follower:['per follower','per follower','për ndjekës'], reach:['Persone raggiunte','Reach','Persona të arritura'], dms_received:['DM ricevuti','DMs received','DM të marra'],
   add_color:['Aggiungi colore','Add colour','Shto ngjyrë'], no_color:['Senza colore','No colour','Pa ngjyrë'],
-  lk_sold:['Pezzo già venduto senza costo','Item already sold without cost','Artikull i shitur pa kosto'], fb_title:['Esito della consegna','Delivery outcome','Rezultati i dorëzimit'], fb_ask:['Com\'è andata la consegna?','How did the delivery go?','Si shkoi dorëzimi?'], fb_btn:['Registra esito','Record outcome','Regjistro rezultatin'],
+  lk_sold:['Pezzo già venduto senza costo','Item already sold without cost','Artikull i shitur pa kosto'], xrequests:['Richieste cambi','Exchange requests','Kërkesat për ndërrim'], rq_hint:['Taglie o capi chiesti dai clienti dopo la consegna e non presenti in magazzino: chiedi al fornitore, avvisa il cliente, poi fai il cambio o il rimborso.','Sizes or items customers asked for after delivery that are not in stock: ask the supplier, tell the customer, then exchange or refund.','Masa që klientët kërkuan pas dorëzimit dhe nuk janë në magazinë: pyet furnitorin, njofto klientin, pastaj ndërro ose rimburso.'],
+  rq_ask:['Da chiedere al fornitore','Ask the supplier','Pyet furnitorin'], rq_waiting:['In attesa del fornitore','Waiting for the supplier','Në pritje të furnitorit'], rq_tell:['Disponibile: avvisa il cliente','Available: tell the customer','Në dispozicion: njofto klientin'], rq_coming:['In arrivo','On the way','Në ardhje'], rq_refund:['Non disponibile: da rimborsare','Not available: refund','Nuk ka: për t\'u rimbursuar'], rq_wish:['Solo avviso (nessun cambio)','Notify only (no exchange)','Vetëm njoftim'], rq_closed:['Chiuse','Closed','Të mbyllura'],
+  rq_asked_btn:['Chiesto al fornitore','Asked the supplier','I kërkuam furnitorit'], rq_yes:['✓ Il fornitore ce l\'ha','✓ Supplier has it','✓ Furnitori e ka'], rq_no:['✗ Non disponibile','✗ Not available','✗ Nuk ka'], rq_expected:['Arrivo previsto del nuovo pezzo','Expected arrival of the new piece','Mbërritja e pritur'],
+  rq_contacted:['Cliente avvisato','Customer told','Klienti u njoftua'], rq_do_swap:['Pezzo arrivato: fai il cambio','Piece arrived: do the exchange','Copa erdhi: bëj ndërrimin'], rq_do_refund:['Rimborsa il cliente','Refund the customer','Rimburso klientin'],
+  rq_keep:['Tengo il capo reso in magazzino','Keep the returned item in stock','E mbaj në magazinë'], rq_back_sup:['Riporto il capo al fornitore per scambiarlo','Take it back to the supplier to swap it','E kthej te furnitori për ndërrim'], rq_item_back:['Il capo che il cliente restituisce','The item the customer returns','Artikulli që kthen klienti'],
+  rq_swap_pick:['Taglia nuova (dal magazzino)','New size (from stock)','Masa e re (nga magazina)'], rq_swap_hint:['Se la taglia non è nel catalogo o ha 0 pezzi, prima caricala dall\'acquisto (Acquisti → aggiungi pezzo).','If the size is not in the catalogue or has 0 pieces, first add it through the purchase (Purchases → add item).','Nëse masa nuk ka copë, shtoje fillimisht nga blerja.'],
+  rq_msg_yes:['Ciao! La taglia che hai chiesto ({x}) arriverà intorno al {d}. Ti scriviamo appena arriva per fare il cambio.','Hi! The size you asked for ({x}) should arrive around {d}. We will message you as soon as it arrives for the exchange.','Përshëndetje! Masa që kërkuat ({x}) do të vijë rreth {d}. Ju shkruajmë sapo të mbërrijë për ndërrimin.'],
+  rq_msg_no:['Ciao! Purtroppo la taglia {x} non è più disponibile. Procediamo con il rimborso.','Hi! Unfortunately size {x} is no longer available. We will refund you.','Përshëndetje! Na vjen keq, masa {x} nuk është më e disponueshme. Do t\'ju rimbursojmë.'],
+  rq_arrived_q:['Pezzo previsto in arrivo: è arrivato?','Piece due: has it arrived?','Copa duhej të vinte: ka ardhur?'], rq_from_order:['dall\'ordine','from order','nga porosia'], rq_customer_has:['Il cliente ha','Customer has','Klienti ka'], rq_wants:['vuole','wants','do'],
+  fb_title:['Esito della consegna','Delivery outcome','Rezultati i dorëzimit'], fb_ask:['Com\'è andata la consegna?','How did the delivery go?','Si shkoi dorëzimi?'], fb_btn:['Registra esito','Record outcome','Regjistro rezultatin'],
   fb_ok:['Tutto ok','All good','Gjithçka në rregull'], fb_return:['Reso','Return','Kthim'], fb_exchange:['Cambio taglia','Size exchange','Ndërrim mase'], fb_refused:['Rifiutato alla consegna','Refused at delivery','Refuzuar në dorëzim'], fb_mixed:['Misto','Mixed','Përzier'],
   fb_deliv_rating:['Voto consegna','Delivery rating','Vlerësimi i dorëzimit'], fb_prod_rating:['Voto prodotto','Product rating','Vlerësimi i produktit'], fb_comments:['Commenti del cliente','Customer comments','Komentet e klientit'],
   fb_lines:['Cosa succede a ogni capo','What happens to each item','Çfarë ndodh me çdo artikull'], fb_keep:['Tiene il capo','Keeps the item','E mban artikullin'], fb_ret_refund:['Reso con rimborso','Return with refund','Kthim me rimbursim'], fb_ret_credit:['Reso con credito','Return for store credit','Kthim me kredi'], fb_swap:['Cambio con altra taglia/colore','Exchange for another size/colour','Ndërrim me masë/ngjyrë tjetër'],
   fb_new_size:['Nuova taglia','New size','Masa e re'], fb_other_size:['Altra taglia non in catalogo…','Another size not in the catalogue…','Masë tjetër jo në katalog…'], fb_wish_size:['Taglia desiderata','Wanted size','Masa e dëshiruar'],
-  fb_unavail:['Non disponibile: il cliente va in lista d\'attesa e lo avvisi quando arriva.','Not available: the customer goes on the waiting list so you can tell them when it arrives.','Nuk ka: klienti shkon në listën e pritjes.'], fb_meanwhile:['Intanto il cliente','Meanwhile the customer','Ndërkohë klienti'],
+  fb_unavail:['Non in magazzino: si apre una richiesta in "Richieste cambi" per chiederla al fornitore. Se il cliente intanto tiene il capo, il cambio o il rimborso si fanno da lì.','Not in stock: a request opens in "Exchange requests" to ask the supplier. If the customer keeps the item meanwhile, the exchange or refund is done from there.','Nuk ka në magazinë: hapet një kërkesë te "Kërkesat për ndërrim" për ta pyetur furnitorin.'], fb_meanwhile:['Intanto il cliente','Meanwhile the customer','Ndërkohë klienti'],
   fb_avail:['disp.','avail.','disp.'], fb_none:['non disp.','not avail.','s\'ka'], fb_already:['reso già registrato','return already recorded','kthimi i regjistruar'], fb_exchange_note:['Il nuovo capo va consegnato: l\'ordine torna tra quelli da spedire.','The new item must be delivered: the order goes back to "to ship".','Artikulli i ri duhet dorëzuar: porosia kthehet te "për t\'u dërguar".'],
   fb_saved:['Esito registrato','Outcome recorded','Rezultati u regjistrua'], fb_todo:['Esito consegna da registrare','Delivery outcome to record','Rezultati i dorëzimit për t\'u regjistruar'], fb_later:['Più tardi','Later','Më vonë'],
   waitlist:['Clienti in attesa','Waiting list','Lista e pritjes'], wl_notified:['Avvisata','Notified','Njoftuar'], wl_close:['Chiudi','Close','Mbyll'], wl_hint:['Clienti che vogliono una taglia/colore non disponibile: scrivi loro quando arriva.','Customers waiting for a size/colour: message them when it arrives.','Klientë që presin një masë: shkruajuni kur të vijë.'],
@@ -488,8 +497,8 @@ async function shareShop(id){
 }
 function navItems(){
   const r = S.profile.role;
-  const all = [['dashboard','#/'],['catalog','#/catalogo'],['purchases','#/acquisti'],['customers','#/clienti'],['orders','#/ordini'],['expenses','#/spese'],['reports','#/report'],['settings','#/impostazioni']];
-  const allowed = {admin: all.map(a => a[0]), vendite:['dashboard','catalog','customers','orders','settings'], magazzino:['dashboard','catalog','purchases','settings']}[r];
+  const all = [['dashboard','#/'],['catalog','#/catalogo'],['purchases','#/acquisti'],['customers','#/clienti'],['orders','#/ordini'],['xrequests','#/richieste'],['expenses','#/spese'],['reports','#/report'],['settings','#/impostazioni']];
+  const allowed = {admin: all.map(a => a[0]), vendite:['dashboard','catalog','customers','orders','xrequests','settings'], magazzino:['dashboard','catalog','purchases','settings']}[r];
   return all.filter(a => allowed.includes(a[0]));
 }
 function renderShell(){
@@ -517,7 +526,7 @@ async function route(){
   const h = location.hash.replace(/^#\/?/, '');
   const [p, id] = h.split('/');
   const map = {'':['dashboard', viewDashboard], catalogo:['catalog', viewCatalog], articolo:['catalog', viewModel], acquisti:['purchases', viewPurchases], acquisto:['purchases', viewPurchase],
-    clienti:['customers', viewCustomers], cliente:['customers', viewCustomer], ordini:['orders', viewOrders], ordine:['orders', viewOrder], spese:['expenses', viewExpenses], report:['reports', viewReports], impostazioni:['settings', viewSettings]};
+    clienti:['customers', viewCustomers], cliente:['customers', viewCustomer], ordini:['orders', viewOrders], ordine:['orders', viewOrder], richieste:['xrequests', viewRequests], spese:['expenses', viewExpenses], report:['reports', viewReports], impostazioni:['settings', viewSettings]};
   const [k, fn] = map[p] || map[''];
   document.querySelectorAll('nav.tabs a, .drop a').forEach(a => a.classList.toggle('on', a.dataset.k === k));
   $('#mb')?.classList.toggle('on', !MAIN_TABS[S.profile.role].includes(k));
@@ -563,9 +572,13 @@ async function viewDashboard(main){
     });
     const recentDel = check(await sb.from('orders').select('id,order_no,delivered_at,customers(full_name),order_feedback(order_id)').eq('status', 'consegnato').gte('delivered_at', new Date(Date.now() - 14 * 864e5).toISOString()));
     recentDel.filter(o => !o.order_feedback).forEach(o => items.push(['warn', o, `📝 ${t('fb_todo')}: ${esc(o.customers?.full_name || '')}`]));
+    const reqs = check(await sb.from('wishlist').select('status,expected_on').in('status', ['attesa','chiesto','confermato','contattato','non_disponibile']).not('order_line_id', 'is', null));
+    [['attesa','bad','rq_ask'], ['chiesto','warn','rq_waiting'], ['non_disponibile','bad','rq_refund'], ['confermato','warn','rq_tell']].forEach(([k, c, lbl]) => { const n = reqs.filter(r => r.status === k).length; if (n) items.push([c, {order_no: t('xrequests'), _href: '#/richieste'}, `${t(lbl)}: ${n}`]); });
+    const late = reqs.filter(r => ['confermato','contattato'].includes(r.status) && r.expected_on && r.expected_on <= today()).length;
+    if (late) items.push(['warn', {order_no: t('xrequests'), _href: '#/richieste'}, `${t('rq_arrived_q')}: ${late}`]);
     const defs = check(await sb.from('defects').select('id,item_label,status,variant_id,variants!defects_variant_id_fkey(model_id)').in('status', ['da_restituire','inviato']));
     defs.forEach(d => items.push([d.status === 'inviato' ? 'warn' : 'bad', {order_no: t('defect'), id: null, _model: d.variants?.model_id}, `${esc(ev('defect_status', d.status))}: ${esc(d.item_label || '')}`]));
-    if (items.length) alerts = `<div class="card"><h3>${t('to_do')}</h3>${items.map(([c, o, txt]) => `<div class="row" style="flex-wrap:nowrap;padding:9px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='${o.id ? '#/ordine/' + o.id : '#/articolo/' + o._model}'"><span class="pill ${c}" style="flex:none">${esc(o.order_no)}</span><span style="min-width:0">${txt}</span></div>`).join('')}</div>`;
+    if (items.length) alerts = `<div class="card"><h3>${t('to_do')}</h3>${items.map(([c, o, txt]) => `<div class="row" style="flex-wrap:nowrap;padding:9px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='${o._href || (o.id ? '#/ordine/' + o.id : '#/articolo/' + o._model)}'"><span class="pill ${c}" style="flex:none">${esc(o.order_no)}</span><span style="min-width:0">${txt}</span></div>`).join('')}</div>`;
     const toShip = check(await sb.from('orders').select('id', {count:'exact', head:false}).eq('status', 'confermato'));
     const pays = check(await sb.from('payments').select('amount,kind').eq('status', 'da_incassare'));
     const due = pays.filter(p => p.kind !== 'rimborso').reduce((a, p) => a + Number(p.amount), 0);
@@ -1611,6 +1624,54 @@ async function deliveryFeedback(id){
     toast(t('fb_saved')); m.remove(); route();
   };
 }
+async function viewRequests(main){
+  const ws = check(await sb.from('wishlist').select('*,customers(id,full_name,phone,instagram,preferred_lang),models(id,name,brand_id),suppliers(name),orders(id,order_no),order_lines(id,qty,unit_price,variants(size,color))').order('id', {ascending:false}).limit(200));
+  window._reqs = ws;
+  const card = w => { const c = w.customers || {}, m = w.models || {}, has = w.order_lines?.variants;
+    const want = [w.size, w.color].filter(Boolean).join(' · ');
+    const acts = {
+      attesa: w.order_line_id ? `<button class="primary small" onclick="reqAsked(${w.id})">${t('rq_asked_btn')}</button>` : `<button class="small" onclick="setWish(${w.id},'avvisata')">✓ ${t('wl_notified')}</button><button class="small" onclick="setWish(${w.id},'chiusa')">${t('wl_close')}</button>`,
+      chiesto: `<button class="primary small" onclick="reqYes(${w.id})">${t('rq_yes')}</button><button class="small" style="color:var(--bad)" onclick="reqNo(${w.id})">${t('rq_no')}</button>`,
+      confermato: `${reqMsgBtns(w, 'yes')}<button class="small" onclick="reqContacted(${w.id})">✓ ${t('rq_contacted')}</button><button class="primary small" onclick="reqSwap(${w.id})">${t('rq_do_swap')}</button>`,
+      contattato: `<button class="primary small" onclick="reqSwap(${w.id})">${t('rq_do_swap')}</button><button class="small" style="color:var(--bad)" onclick="reqNo(${w.id})">${t('rq_no')}</button>`,
+      non_disponibile: `${reqMsgBtns(w, 'no')}<button class="primary small" onclick="reqRefund(${w.id})">${t('rq_do_refund')}</button>`
+    }[w.status] || '';
+    return `<div style="padding:10px 0;border-top:1px solid var(--line)"><div class="row spread" style="flex-wrap:nowrap;align-items:flex-start;gap:8px"><div style="min-width:0">
+      <a href="#/cliente/${c.id}"><b>${esc(c.full_name || '')}</b></a> · <a href="#/articolo/${m.id}">${esc(brandName(m.brand_id))} ${esc(m.name || '')}</a>
+      <div class="small">${has ? `${t('rq_customer_has')} <b>${esc([has.size, has.color].filter(Boolean).join(' · '))}</b> → ${t('rq_wants')} ` : '⏳ '}<b>${esc(want)}</b></div>
+      <div class="small muted">${w.orders ? `${t('rq_from_order')} <a href="#/ordine/${w.orders.id}">${esc(w.orders.order_no)}</a> · ` : ''}${fdate(w.created_at)}${w.suppliers ? ' · ' + esc(w.suppliers.name) : ''}${w.asked_on ? ' · ' + t('rq_asked_btn').toLowerCase() + ' ' + fdate(w.asked_on) : ''}${w.expected_on ? ` · <b>${t('rq_expected')}: ${fdate(w.expected_on)}</b>` : ''}${w.contacted_at ? ' · ✓ ' + t('rq_contacted').toLowerCase() : ''}${w.resolution ? ' · ' + esc(w.resolution) : ''}</div></div></div>
+      ${acts ? `<div class="chips" style="margin-top:8px">${acts}</div>` : ''}</div>`; };
+  const groups = [['attesa', 'rq_ask', w => w.status === 'attesa' && w.order_line_id], ['chiesto', 'rq_waiting', w => w.status === 'chiesto'], ['confermato', 'rq_tell', w => w.status === 'confermato'], ['contattato', 'rq_coming', w => w.status === 'contattato'], ['non_disponibile', 'rq_refund', w => w.status === 'non_disponibile'], ['wish', 'rq_wish', w => w.status === 'attesa' && !w.order_line_id]];
+  const open = groups.map(([k, lbl, f]) => { const list = ws.filter(f); return list.length ? `<div class="card"><h3>${t(lbl)} (${list.length})</h3>${list.map(card).join('')}</div>` : ''; }).join('');
+  const closed = ws.filter(w => ['completato','chiusa','avvisata'].includes(w.status)).slice(0, 30);
+  main.innerHTML = `<h1>${t('xrequests')}</h1><p class="small muted">${t('rq_hint')}</p>${open || `<div class="card empty">${t('no_data')}</div>`}
+    ${closed.length ? `<details class="card"><summary><b>${t('rq_closed')} (${closed.length})</b></summary>${closed.map(card).join('')}</details>` : ''}`;
+}
+const reqW = id => window._reqs.find(w => w.id === id);
+function reqMsgBtns(w, kind){
+  const c = w.customers || {}; const x = [w.size, w.color].filter(Boolean).join(' ');
+  const msg = (kind === 'yes' ? T.rq_msg_yes : T.rq_msg_no)[LANGS[c.preferred_lang] ?? 2].replace('{x}', x).replace('{d}', w.expected_on ? fdate(w.expected_on) : '…');
+  const ph = String(c.phone || '').replace(/[^0-9]/g, '').replace(/^0/, '355');
+  return `${ph ? `<a class="btn small" href="https://wa.me/${ph}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}${c.instagram ? `<button class="small" onclick="navigator.clipboard.writeText(${esc(JSON.stringify(msg))}).then(()=>{toast(t('link_copied'));window.open('https://ig.me/m/${esc(c.instagram)}','_blank')})">Instagram</button>` : ''}`;
+}
+function reqAsked(id){ const w = reqW(id);
+  form({title:t('rq_asked_btn'), fields:[{name:'supplier_id', label:t('supplier'), type:'select', options:S.suppliers.map(s => [s.id, s.name]), value:w.supplier_id}, {name:'notes', label:t('notes'), value:w.notes}],
+    onSubmit: async v => { check(await sb.from('wishlist').update({status:'chiesto', asked_on: today(), supplier_id: v.supplier_id || null, notes: v.notes}).eq('id', id)); route(); }}); }
+function reqYes(id){
+  form({title:t('rq_yes'), fields:[{name:'expected_on', label:t('rq_expected'), type:'date', required:true}, {name:'notes', label:t('notes'), value:reqW(id).notes}],
+    onSubmit: async v => { check(await sb.from('wishlist').update({status:'confermato', expected_on: v.expected_on, notes: v.notes}).eq('id', id)); route(); }}); }
+async function reqNo(id){ check(await sb.from('wishlist').update({status:'non_disponibile'}).eq('id', id)); route(); }
+async function reqContacted(id){ check(await sb.from('wishlist').update({status:'contattato', contacted_at: new Date().toISOString()}).eq('id', id)); route(); }
+async function reqSwap(id){ const w = reqW(id);
+  const vs = check(await sb.from('variants').select('id,size,color').eq('model_id', w.model_id));
+  const st = Object.fromEntries(check(await sb.from('v_variant_stock').select('variant_id,available').in('variant_id', vs.map(v => v.id).concat([0]))).map(x => [x.variant_id, x.available]));
+  const av = vs.filter(v => (st[v.id] || 0) > 0).sort((a, b) => sizeRank(a.size) - sizeRank(b.size));
+  const pre = av.find(v => String(v.size || '').toUpperCase() === String(w.size || '').toUpperCase() && (!w.color || (v.color || '').trim().toLowerCase() === w.color.trim().toLowerCase()));
+  form({title:t('rq_do_swap'), extra:`<p class="small muted">${t('rq_swap_hint')}</p>`, fields:[{name:'variant', label:t('rq_swap_pick'), type:'select', empty:false, required:true, value: pre?.id, options: av.map(v => [v.id, `${[v.size, v.color].filter(Boolean).join(' · ')} — ${st[v.id]} ${t('fb_avail')}`])}],
+    onSubmit: async v => { if (!v.variant){ toast(t('rq_swap_hint'), true); throw new Error('x'); } check(await sb.rpc('richiesta_chiudi', {p_id: id, p_mode: 'cambio', p_new_variant_id: Number(v.variant)})); toast(t('saved')); route(); }}); }
+function reqRefund(id){
+  form({title:t('rq_do_refund'), fields:[{name:'keep', label:t('rq_item_back'), type:'select', empty:false, value:'1', options:[['1', t('rq_keep')], ['0', t('rq_back_sup')]]}, {name:'notes', label:t('notes')}],
+    onSubmit: async v => { check(await sb.rpc('richiesta_chiudi', {p_id: id, p_mode: 'rimborso', p_keep_in_stock: v.keep === '1', p_notes: v.notes})); toast(t('saved')); route(); }}); }
 async function setWish(id, status){ check(await sb.from('wishlist').update({status}).eq('id', id)); route(); }
 function shipWithCarrier(id){
   const c = S.carriers.find(x => x.name === 'Postman') || S.carriers[0];
