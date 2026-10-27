@@ -218,7 +218,7 @@ const T = {
   rq_msg_yes:['Ciao! La taglia che hai chiesto ({x}) arriverà intorno al {d}. Ti scriviamo appena arriva per fare il cambio.','Hi! The size you asked for ({x}) should arrive around {d}. We will message you as soon as it arrives for the exchange.','Përshëndetje! Masa që kërkuat ({x}) do të vijë rreth {d}. Ju shkruajmë sapo të mbërrijë për ndërrimin.'],
   rq_msg_no:['Ciao! Purtroppo la taglia {x} non è più disponibile. Procediamo con il rimborso.','Hi! Unfortunately size {x} is no longer available. We will refund you.','Përshëndetje! Na vjen keq, masa {x} nuk është më e disponueshme. Do t\'ju rimbursojmë.'],
   rq_arrived_q:['Pezzo previsto in arrivo: è arrivato?','Piece due: has it arrived?','Copa duhej të vinte: ka ardhur?'], rq_from_order:['dall\'ordine','from order','nga porosia'], rq_customer_has:['Il cliente ha','Customer has','Klienti ka'], rq_wants:['vuole','wants','do'],
-  fb_title:['Esito della consegna','Delivery outcome','Rezultati i dorëzimit'], fb_ask:['Com\'è andata la consegna?','How did the delivery go?','Si shkoi dorëzimi?'], fb_btn:['Registra esito','Record outcome','Regjistro rezultatin'],
+  nl_title:['Iscritti newsletter','Newsletter sign-ups','Të regjistruarit në newsletter'], nl_sub:['dal negozio online · codice 10% su 1 capo per nuovi clienti','from the online shop · 10% code on 1 item for new customers','nga dyqani online · kod 10% për 1 artikull'], nl_subs:['iscritti','sign-ups','të regjistruar'], nl_used_n:['hanno usato il codice','used the code','e përdorën kodin'], nl_code:['Codice','Code','Kodi'], nl_unused:['non usato','not used','i papërdorur'], fb_title:['Esito della consegna','Delivery outcome','Rezultati i dorëzimit'], fb_ask:['Com\'è andata la consegna?','How did the delivery go?','Si shkoi dorëzimi?'], fb_btn:['Registra esito','Record outcome','Regjistro rezultatin'],
   fb_ok:['Tutto ok','All good','Gjithçka në rregull'], fb_return:['Reso','Return','Kthim'], fb_exchange:['Cambio taglia','Size exchange','Ndërrim mase'], fb_refused:['Rifiutato alla consegna','Refused at delivery','Refuzuar në dorëzim'], fb_mixed:['Misto','Mixed','Përzier'],
   fb_deliv_rating:['Voto consegna','Delivery rating','Vlerësimi i dorëzimit'], fb_prod_rating:['Voto prodotto','Product rating','Vlerësimi i produktit'], fb_comments:['Commenti del cliente','Customer comments','Komentet e klientit'],
   fb_lines:['Cosa succede a ogni capo','What happens to each item','Çfarë ndodh me çdo artikull'], fb_keep:['Tiene il capo','Keeps the item','E mban artikullin'], fb_ret_refund:['Reso con rimborso','Return with refund','Kthim me rimbursim'], fb_ret_credit:['Reso con credito','Return for store credit','Kthim me kredi'], fb_swap:['Cambio con altra taglia/colore','Exchange for another size/colour','Ndërrim me masë/ngjyrë tjetër'],
@@ -1191,10 +1191,25 @@ async function delRow(table, id){ if (!confirmBox()) return; check(await sb.from
 
 // ====== Clienti ======
 let custQ = '';
+async function loadNewsletter(){
+  const ns = check(await sb.from('newsletter').select('*,orders(id,order_no)').order('id', {ascending:false}));
+  window._nl = ns;
+  const used = ns.filter(n => n.used_at).length;
+  $('#nlbody').innerHTML = `<p>${ns.length} ${t('nl_subs')} · ${used} ${t('nl_used_n')} <button class="small" onclick="exportNewsletter()">⬇ CSV</button></p>
+    <div class="table-wrap"><table><tr><th>${t('date')}</th><th>${t('name')}</th><th>${t('phone')}</th><th>Email</th><th>Instagram</th><th>${t('nl_code')}</th><th>${t('order')}</th></tr>
+    ${ns.map(n => `<tr><td>${fdate(n.created_at)}</td><td>${esc(n.name || '')}</td><td>${esc(n.phone || '')}</td><td>${esc(n.email || '')}</td><td>${n.instagram ? '@' + esc(n.instagram) : ''}</td><td><b>${esc(n.code)}</b></td><td>${n.orders ? `<a href="#/ordine/${n.orders.id}">${esc(n.orders.order_no)}</a>` : `<span class="muted">${t('nl_unused')}</span>`}</td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>`;
+}
+function exportNewsletter(){
+  const rows = [['data','nome','telefono','email','instagram','lingua','codice','usato','ordine']].concat((window._nl || []).map(n => [n.created_at.slice(0, 10), n.name, n.phone, n.email, n.instagram, n.lang, n.code, n.used_at ? 'si' : 'no', n.orders?.order_no || '']));
+  const csv = rows.map(r => r.map(x => `"${String(x ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], {type:'text/csv'})); a.download = 'newsletter-modus-vestendi.csv'; a.click();
+}
 async function viewCustomers(main){
   const cs = check(await sb.from('customers').select('id,full_name,instagram,phone,country,orders(id,status)').order('full_name'));
   main.innerHTML = `<div class="row spread"><h1>${t('customers')}</h1><button class="primary" onclick="editCustomer()">+ ${t('new_customer')}</button></div>
-  <input class="search" id="cuq" placeholder="${t('search')}" value="${esc(custQ)}" style="margin-bottom:12px"><div class="card"><div class="table-wrap"><table id="ct"></table></div></div>`;
+  <input class="search" id="cuq" placeholder="${t('search')}" value="${esc(custQ)}" style="margin-bottom:12px"><div class="card"><div class="table-wrap"><table id="ct"></table></div></div>
+  <details class="card" id="nlcard"><summary><b>🎁 ${t('nl_title')}</b> <span class="small muted">${t('nl_sub')}</span></summary><div id="nlbody" class="small muted">…</div></details>`;
+  $('#nlcard').addEventListener('toggle', e => { if (e.target.open) loadNewsletter(); }, {once:true});
   const draw = () => {
     const q = custQ.toLowerCase();
     const list = cs.filter(c => !q || [c.full_name, c.instagram, c.phone].join(' ').toLowerCase().includes(q));
