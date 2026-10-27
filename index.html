@@ -210,7 +210,7 @@ const T = {
   per_follower:['per follower','per follower','për ndjekës'], reach:['Persone raggiunte','Reach','Persona të arritura'], dms_received:['DM ricevuti','DMs received','DM të marra'],
   add_color:['Aggiungi colore','Add colour','Shto ngjyrë'], no_color:['Senza colore','No colour','Pa ngjyrë'],
   lk_sold:['Pezzo già venduto senza costo','Item already sold without cost','Artikull i shitur pa kosto'], xrequests:['Richieste cambi','Exchange requests','Kërkesat për ndërrim'], rq_hint:['Taglie o capi chiesti dai clienti dopo la consegna e non presenti in magazzino: chiedi al fornitore, avvisa il cliente, poi fai il cambio o il rimborso.','Sizes or items customers asked for after delivery that are not in stock: ask the supplier, tell the customer, then exchange or refund.','Masa që klientët kërkuan pas dorëzimit dhe nuk janë në magazinë: pyet furnitorin, njofto klientin, pastaj ndërro ose rimburso.'],
-  rq_ask:['Da chiedere al fornitore','Ask the supplier','Pyet furnitorin'], rq_waiting:['In attesa del fornitore','Waiting for the supplier','Në pritje të furnitorit'], rq_tell:['Disponibile: avvisa il cliente','Available: tell the customer','Në dispozicion: njofto klientin'], rq_coming:['In arrivo','On the way','Në ardhje'], rq_refund:['Non disponibile: da rimborsare','Not available: refund','Nuk ka: për t\'u rimbursuar'], rq_wish:['Solo avviso (nessun cambio)','Notify only (no exchange)','Vetëm njoftim'], rq_closed:['Chiuse','Closed','Të mbyllura'],
+  rq_cancel:['Annulla richiesta','Cancel request','Anulo kërkesën'], rq_cancelled:['annullata','cancelled','anuluar'], rq_ask:['Da chiedere al fornitore','Ask the supplier','Pyet furnitorin'], rq_waiting:['In attesa del fornitore','Waiting for the supplier','Në pritje të furnitorit'], rq_tell:['Disponibile: avvisa il cliente','Available: tell the customer','Në dispozicion: njofto klientin'], rq_coming:['In arrivo','On the way','Në ardhje'], rq_refund:['Non disponibile: da rimborsare','Not available: refund','Nuk ka: për t\'u rimbursuar'], rq_wish:['Solo avviso (nessun cambio)','Notify only (no exchange)','Vetëm njoftim'], rq_closed:['Chiuse','Closed','Të mbyllura'],
   rq_asked_btn:['Chiesto al fornitore','Asked the supplier','I kërkuam furnitorit'], rq_yes:['✓ Il fornitore ce l\'ha','✓ Supplier has it','✓ Furnitori e ka'], rq_no:['✗ Non disponibile','✗ Not available','✗ Nuk ka'], rq_expected:['Arrivo previsto del nuovo pezzo','Expected arrival of the new piece','Mbërritja e pritur'],
   rq_contacted:['Cliente avvisato','Customer told','Klienti u njoftua'], rq_do_swap:['Pezzo arrivato: fai il cambio','Piece arrived: do the exchange','Copa erdhi: bëj ndërrimin'], rq_do_refund:['Rimborsa il cliente','Refund the customer','Rimburso klientin'],
   rq_keep:['Tengo il capo reso in magazzino','Keep the returned item in stock','E mbaj në magazinë'], rq_back_sup:['Riporto il capo al fornitore per scambiarlo','Take it back to the supplier to swap it','E kthej te furnitori për ndërrim'], rq_item_back:['Il capo che il cliente restituisce','The item the customer returns','Artikulli që kthen klienti'],
@@ -1636,11 +1636,12 @@ async function viewRequests(main){
       contattato: `<button class="primary small" onclick="reqSwap(${w.id})">${t('rq_do_swap')}</button><button class="small" style="color:var(--bad)" onclick="reqNo(${w.id})">${t('rq_no')}</button>`,
       non_disponibile: `${reqMsgBtns(w, 'no')}<button class="primary small" onclick="reqRefund(${w.id})">${t('rq_do_refund')}</button>`
     }[w.status] || '';
+    const editBtn = ['completato','chiusa','avvisata'].includes(w.status) ? '' : `<button class="small" onclick="reqEdit(${w.id})">✎ ${t('edit')}</button>`;
     return `<div style="padding:10px 0;border-top:1px solid var(--line)"><div class="row spread" style="flex-wrap:nowrap;align-items:flex-start;gap:8px"><div style="min-width:0">
       <a href="#/cliente/${c.id}"><b>${esc(c.full_name || '')}</b></a> · <a href="#/articolo/${m.id}">${esc(brandName(m.brand_id))} ${esc(m.name || '')}</a>
       <div class="small">${has ? `${t('rq_customer_has')} <b>${esc([has.size, has.color].filter(Boolean).join(' · '))}</b> → ${t('rq_wants')} ` : '⏳ '}<b>${esc(want)}</b></div>
       <div class="small muted">${w.orders ? `${t('rq_from_order')} <a href="#/ordine/${w.orders.id}">${esc(w.orders.order_no)}</a> · ` : ''}${fdate(w.created_at)}${w.suppliers ? ' · ' + esc(w.suppliers.name) : ''}${w.asked_on ? ' · ' + t('rq_asked_btn').toLowerCase() + ' ' + fdate(w.asked_on) : ''}${w.expected_on ? ` · <b>${t('rq_expected')}: ${fdate(w.expected_on)}</b>` : ''}${w.contacted_at ? ' · ✓ ' + t('rq_contacted').toLowerCase() : ''}${w.resolution ? ' · ' + esc(w.resolution) : ''}</div></div></div>
-      ${acts ? `<div class="chips" style="margin-top:8px">${acts}</div>` : ''}</div>`; };
+      ${acts || editBtn ? `<div class="chips" style="margin-top:8px">${acts}${editBtn}</div>` : ''}</div>`; };
   const groups = [['attesa', 'rq_ask', w => w.status === 'attesa' && w.order_line_id], ['chiesto', 'rq_waiting', w => w.status === 'chiesto'], ['confermato', 'rq_tell', w => w.status === 'confermato'], ['contattato', 'rq_coming', w => w.status === 'contattato'], ['non_disponibile', 'rq_refund', w => w.status === 'non_disponibile'], ['wish', 'rq_wish', w => w.status === 'attesa' && !w.order_line_id]];
   const open = groups.map(([k, lbl, f]) => { const list = ws.filter(f); return list.length ? `<div class="card"><h3>${t(lbl)} (${list.length})</h3>${list.map(card).join('')}</div>` : ''; }).join('');
   const closed = ws.filter(w => ['completato','chiusa','avvisata'].includes(w.status)).slice(0, 30);
@@ -1660,6 +1661,22 @@ function reqAsked(id){ const w = reqW(id);
 function reqYes(id){
   form({title:t('rq_yes'), fields:[{name:'expected_on', label:t('rq_expected'), type:'date', required:true}, {name:'notes', label:t('notes'), value:reqW(id).notes}],
     onSubmit: async v => { check(await sb.from('wishlist').update({status:'confermato', expected_on: v.expected_on, notes: v.notes}).eq('id', id)); route(); }}); }
+async function reqEdit(id){ const w = reqW(id);
+  const vs = check(await sb.from('variants').select('size,color').eq('model_id', w.model_id));
+  const sizes = [...new Set(vs.map(v => v.size).filter(Boolean))].sort((a, b) => sizeRank(a) - sizeRank(b));
+  const colors = [...new Set(vs.map(v => (v.color || '').trim()).filter(Boolean))];
+  const stOpts = ['attesa','chiesto','confermato','contattato','non_disponibile'].map(k => [k, t({attesa:'rq_ask', chiesto:'rq_waiting', confermato:'rq_tell', contattato:'rq_coming', non_disponibile:'rq_refund'}[k])]);
+  const m = form({title:`${t('edit')} · ${t('xrequests')}`, values:w, fields:[
+    {name:'size', label:t('fb_wish_size'), type:'datalist', options:sizes, required:true},
+    {name:'color', label:t('color'), type:'datalist', options:colors},
+    {name:'status', label:t('status'), type:'select', empty:false, options:stOpts},
+    {name:'supplier_id', label:t('supplier'), type:'select', options:S.suppliers.map(x => [x.id, x.name])},
+    {name:'asked_on', label:t('rq_asked_btn'), type:'date'},
+    {name:'expected_on', label:t('rq_expected'), type:'date'},
+    {name:'notes', label:t('notes'), type:'textarea'}
+  ], extra:`<p><button type="button" class="link" style="color:var(--bad)" onclick="reqCancel(${id})">${t('rq_cancel')}</button></p>`,
+    onSubmit: async v => { check(await sb.from('wishlist').update({size: v.size, color: v.color, status: v.status, supplier_id: v.supplier_id || null, asked_on: v.asked_on, expected_on: v.expected_on, notes: v.notes}).eq('id', id)); toast(t('saved')); route(); }}); }
+async function reqCancel(id){ if (!confirm(t('rq_cancel') + '?')) return; check(await sb.rpc('richiesta_chiudi', {p_id: id, p_mode: 'annulla', p_notes: t('rq_cancelled')})); document.querySelectorAll('.modal-bg').forEach(x => x.remove()); toast(t('saved')); route(); }
 async function reqNo(id){ check(await sb.from('wishlist').update({status:'non_disponibile'}).eq('id', id)); route(); }
 async function reqContacted(id){ check(await sb.from('wishlist').update({status:'contattato', contacted_at: new Date().toISOString()}).eq('id', id)); route(); }
 async function reqSwap(id){ const w = reqW(id);
