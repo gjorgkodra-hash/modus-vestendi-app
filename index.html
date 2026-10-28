@@ -218,7 +218,7 @@ const T = {
   rq_msg_yes:['Ciao! La taglia che hai chiesto ({x}) arriverà intorno al {d}. Ti scriviamo appena arriva per fare il cambio.','Hi! The size you asked for ({x}) should arrive around {d}. We will message you as soon as it arrives for the exchange.','Përshëndetje! Masa që kërkuat ({x}) do të vijë rreth {d}. Ju shkruajmë sapo të mbërrijë për ndërrimin.'],
   rq_msg_no:['Ciao! Purtroppo la taglia {x} non è più disponibile. Procediamo con il rimborso.','Hi! Unfortunately size {x} is no longer available. We will refund you.','Përshëndetje! Na vjen keq, masa {x} nuk është më e disponueshme. Do t\'ju rimbursojmë.'],
   rq_arrived_q:['Pezzo previsto in arrivo: è arrivato?','Piece due: has it arrived?','Copa duhej të vinte: ka ardhur?'], rq_from_order:['dall\'ordine','from order','nga porosia'], rq_customer_has:['Il cliente ha','Customer has','Klienti ka'], rq_wants:['vuole','wants','do'],
-  sa_title:['Account del negozio online','Online shop accounts','Llogaritë e dyqanit online'], sa_sub:['clienti registrati con telefono e password','customers registered with phone and password','klientë të regjistruar'], sa_n:['account','accounts','llogari'], sa_last:['Ultimo accesso','Last login','Hyrja e fundit'], sa_reset:['Invia email di recupero','Send recovery email','Dërgo email rikuperimi'], sa_reset_hint:['Il cliente riceve sulla sua email un codice di 6 cifre per creare lui stesso una nuova password. Nessuno vede la password.','The customer receives a 6-digit code by email to set a new password themselves. Nobody sees the password.','Klienti merr në email një kod për të krijuar vetë fjalëkalimin e ri.'], sa_sent:['Email con il codice inviata al cliente','Email with the code sent to the customer','Email-i u dërgua'], sa_no_email:['Questo account non ha un\'email: il cliente deve aggiungerla dal suo profilo','This account has no email','Kjo llogari nuk ka email'], sa_no_email_srv:['Invio email non ancora attivo: manca la chiave Resend','Email sending not active yet: Resend key missing','Dërgimi i email-it nuk është aktiv'], nl_title:['Iscritti newsletter','Newsletter sign-ups','Të regjistruarit në newsletter'], nl_sub:['dal negozio online · codice 10% su 1 capo per nuovi clienti','from the online shop · 10% code on 1 item for new customers','nga dyqani online · kod 10% për 1 artikull'], nl_subs:['iscritti','sign-ups','të regjistruar'], nl_used_n:['hanno usato il codice','used the code','e përdorën kodin'], nl_code:['Codice','Code','Kodi'], nl_unused:['non usato','not used','i papërdorur'], fb_title:['Esito della consegna','Delivery outcome','Rezultati i dorëzimit'], fb_ask:['Com\'è andata la consegna?','How did the delivery go?','Si shkoi dorëzimi?'], fb_btn:['Registra esito','Record outcome','Regjistro rezultatin'],
+  sa_title:['Account del negozio online','Online shop accounts','Llogaritë e dyqanit online'], sa_sub:['clienti registrati con telefono e password','customers registered with phone and password','klientë të regjistruar'], sa_n:['account','accounts','llogari'], sa_last:['Ultimo accesso','Last login','Hyrja e fundit'], sa_reset:['Invia email di recupero','Send recovery email','Dërgo email rikuperimi'], sa_reset_hint:['Il cliente riceve sulla sua email un codice di 6 cifre per creare lui stesso una nuova password. Nessuno vede la password.','The customer receives a 6-digit code by email to set a new password themselves. Nobody sees the password.','Klienti merr në email një kod për të krijuar vetë fjalëkalimin e ri.'], sa_sent:['Email con il codice inviata al cliente','Email with the code sent to the customer','Email-i u dërgua'], sa_no_email:['Questo account non ha un\'email: il cliente deve aggiungerla dal suo profilo','This account has no email','Kjo llogari nuk ka email'], sa_no_email_srv:['Invio email non ancora attivo: manca la chiave Resend','Email sending not active yet: Resend key missing','Dërgimi i email-it nuk është aktiv'], nl_title:['Iscritti newsletter','Newsletter sign-ups','Të regjistruarit në newsletter'], nl_sub:['dal negozio online · codice 10% su 1 capo per nuovi clienti','from the online shop · 10% code on 1 item for new customers','nga dyqani online · kod 10% për 1 artikull'], nl_subs:['iscritti','sign-ups','të regjistruar'], nl_used_n:['hanno usato il codice','used the code','e përdorën kodin'], nl_code:['Codice','Code','Kodi'], nl_unused:['non usato','not used','i papërdorur'], gender:['Genere','Gender','Gjinia'], fb_title:['Esito della consegna','Delivery outcome','Rezultati i dorëzimit'], fb_ask:['Com\'è andata la consegna?','How did the delivery go?','Si shkoi dorëzimi?'], fb_btn:['Registra esito','Record outcome','Regjistro rezultatin'],
   fb_ok:['Tutto ok','All good','Gjithçka në rregull'], fb_return:['Reso','Return','Kthim'], fb_exchange:['Cambio taglia','Size exchange','Ndërrim mase'], fb_refused:['Rifiutato alla consegna','Refused at delivery','Refuzuar në dorëzim'], fb_mixed:['Misto','Mixed','Përzier'],
   fb_deliv_rating:['Voto consegna','Delivery rating','Vlerësimi i dorëzimit'], fb_prod_rating:['Voto prodotto','Product rating','Vlerësimi i produktit'], fb_comments:['Commenti del cliente','Customer comments','Komentet e klientit'],
   fb_lines:['Cosa succede a ogni capo','What happens to each item','Çfarë ndodh me çdo artikull'], fb_keep:['Tiene il capo','Keeps the item','E mban artikullin'], fb_ret_refund:['Reso con rimborso','Return with refund','Kthim me rimbursim'], fb_ret_credit:['Reso con credito','Return for store credit','Kthim me kredi'], fb_swap:['Cambio con altra taglia/colore','Exchange for another size/colour','Ndërrim me masë/ngjyrë tjetër'],
@@ -301,6 +301,7 @@ const E = {
   variant_status:{da_ordinare:['Da ordinare','To order','Për t\'u porositur'],ordinato:['Ordinato','Ordered','Porositur'],in_arrivo:['In arrivo','Incoming','Në ardhje'],in_magazzino:['In magazzino','In stock','Në magazinë'],riservato:['Riservato','Reserved','Rezervuar'],venduto:['Venduto','Sold','Shitur']},
   location:{italia:['Italia','Italy','Itali'],spagna:['Spagna','Spain','Spanjë'],in_viaggio:['In viaggio','In transit','Në rrugë'],albania:['Albania','Albania','Shqipëri'],kosovo:['Kosovo','Kosovo','Kosovë'],macedonia:['Macedonia del Nord','North Macedonia','Maqedoni e Veriut'],uk:['Regno Unito','UK','Mbretëri e Bashkuar']},
   condition:{nuovo_cartellino:['Nuovo con cartellino','New with tags','I ri me etiketë'],nuovo:['Nuovo','New','I ri'],outlet:['Outlet','Outlet','Outlet'],difetto:['Con difetto','Flawed','Me defekt']},
+  gender:{donna:['Donna','Women','Femra'],uomo:['Uomo','Men','Meshkuj'],bambini:['Bambini','Kids','Fëmijë'],unisex:['Unisex','Unisex','Unisex']},
   instagram_status:{non_pubblicato:['Non pubblicato','Not posted','Pa publikuar'],post:['Post','Post','Postim'],storia:['Storia','Story','Story'],highlight:['Highlight','Highlight','Highlight']},
   purchase_status:{da_ordinare:['Da ordinare','To order','Për t\'u porositur'],ordinato:['Ordinato','Ordered','Porositur'],in_arrivo:['In arrivo','Incoming','Në ardhje'],ricevuto:['Ricevuto','Received','Marrë']},
   cost_kind:{trasporto:['Trasporto','Transport','Transporti'],carburante:['Carburante','Fuel','Karburanti'],pedaggi:['Pedaggi','Tolls','Pagesat rrugore'],alloggio:['Alloggio','Accommodation','Akomodimi'],spedizione:['Spedizione','Shipping','Dërgesa'],dazi:['Dazi','Duties','Doganat'],altro:['Altro','Other','Tjetër']},
@@ -388,13 +389,13 @@ function form({title, fields, values = {}, onSubmit, submitLabel, extra = ''}){
   };
   return m;
 }
-const SIZE_SETS = [['XS','S','M','L','XL'], ['36','38','40','42','44','46'], ['TU']];
+const SIZE_SETS = [['XS','S','M','L','XL'], ['36','38','40','42','44','46'], ['TU'], ['👠','35','36','37','38','39','40','41'], ['👞','39','40','41','42','43','44','45','46'], ['🧒','24','26','28','30','32','34','36'], ['🧒','4A','6A','8A','10A','12A','14A']];
 function sizesEditor(name){
   const row = (n = '', q = 1) => `<div class="sz-row row" style="flex-wrap:nowrap;margin-bottom:6px"><input class="sz-n" placeholder="${t('size')}" value="${esc(n)}" style="flex:1"><input class="sz-q" type="number" min="0" value="${q}" style="width:90px" aria-label="${t('qty')}"><button type="button" class="link" onclick="this.closest('.sz-row').remove()">✕</button></div>`;
   window._szRow = row;
   return `<div data-sz="${name}"><div class="row small muted" style="flex-wrap:nowrap;margin-bottom:4px"><span style="flex:1">${t('size')}</span><span style="width:110px">${t('qty_pieces')}</span></div>
   <div class="sz-rows">${row('TU', 1)}</div>
-  <div class="chips" style="margin-top:6px">${SIZE_SETS.map(set => `<button type="button" class="small" onclick="fillSizes(this, ${esc(JSON.stringify(set))})">${set.join(' ')}</button>`).join('')}<button type="button" class="small" onclick="this.closest('[data-sz]').querySelector('.sz-rows').insertAdjacentHTML('beforeend', window._szRow('', 1))">+ ${t('add_size')}</button></div>
+  <div class="chips" style="margin-top:6px">${SIZE_SETS.map(set => { const ic = /^\D+$/.test(set[0]) && set[0].length <= 2 && !/[A-Z]/.test(set[0]) ? set[0] : '', sz = ic ? set.slice(1) : set; return `<button type="button" class="small" onclick="fillSizes(this, ${esc(JSON.stringify(sz))})">${ic ? ic + ' ' + sz[0] + '–' + sz[sz.length - 1] : sz.join(' ')}</button>`; }).join('')}<button type="button" class="small" onclick="this.closest('[data-sz]').querySelector('.sz-rows').insertAdjacentHTML('beforeend', window._szRow('', 1))">+ ${t('add_size')}</button></div>
   <p class="small muted" style="margin:6px 0 0">${t('sizes_hint')}</p></div>`;
 }
 function fillSizes(btn, set){
@@ -596,20 +597,21 @@ async function viewDashboard(main){
 }
 
 // ====== Catalogo ======
-let catFilter = {q:'', brand:'', cat:'', archived:false};
+let catFilter = {q:'', brand:'', cat:'', archived:false, gender:''};
 async function viewCatalog(main){
-  const models = check(await sb.from('models').select('id,name,season,brand_id,category_id,instagram_status,variants(id,qty,sale_price),photos(path,is_main,sort)').eq('archived', !!catFilter.archived).order('created_at', {ascending:false}));
+  const models = check(await sb.from('models').select('id,name,season,brand_id,category_id,gender,instagram_status,variants(id,qty,sale_price),photos(path,is_main,sort)').eq('archived', !!catFilter.archived).order('created_at', {ascending:false}));
   const mains = models.map(m => { const ph = (m.photos || []).sort((a, b) => (b.is_main - a.is_main) || a.sort - b.sort)[0]; return ph?.path; });
   await signedUrls(mains);
   main.innerHTML = `<div class="row spread"><h1>${t('catalog')}</h1>${can.catalogWrite() ? `<button class="primary" onclick="newModel()">+ ${t('new_model')}</button>` : ''}</div>
   <div class="row" style="margin-bottom:14px"><input class="search" id="cq" placeholder="${t('search')}" value="${esc(catFilter.q)}">
   <select id="cb" style="max-width:200px"><option value="">${t('brand')}: ${t('all')}</option>${S.brands.map(b => `<option value="${b.id}" ${String(b.id) === catFilter.brand ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}</select>
   <button class="${catFilter.archived ? 'primary' : ''}" onclick="catFilter.archived=!catFilter.archived;route()">${t('archived')}</button><select id="cc" style="max-width:240px"><option value="">${t('category')}: ${t('all')}</option>${catOptions().map(([k, l]) => `<option value="${k}" ${String(k) === catFilter.cat ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
+  <div class="chips" style="margin:-4px 0 12px">${[['', t('all')], ...opts('gender')].map(([k, l]) => `<button class="small ${catFilter.gender === k ? 'primary' : ''}" onclick="catFilter.gender='${k}';route()">${esc(l)}</button>`).join('')}</div>
   <div class="models" id="ml"></div>`;
   const draw = () => {
     const q = catFilter.q.toLowerCase();
     const list = models.map((m, i) => ({m, ph: mains[i]})).filter(({m}) =>
-      (!catFilter.brand || String(m.brand_id) === catFilter.brand) &&
+      (!catFilter.brand || String(m.brand_id) === catFilter.brand) && (!catFilter.gender || m.gender === catFilter.gender) &&
       (!catFilter.cat || String(m.category_id) === catFilter.cat || String(S.categories.find(c => c.id === m.category_id)?.parent_id) === catFilter.cat) &&
       (!q || (m.name + ' ' + brandName(m.brand_id) + ' ' + (m.season || '')).toLowerCase().includes(q)));
     $('#ml').innerHTML = list.length ? list.map(({m, ph}) => {
@@ -629,6 +631,7 @@ function modelFields(){
     {name:'brand_id', label:t('brand'), type:'select', options:S.brands.map(b => [b.id, b.name]), required:true},
     {name:'new_brand', label:`${t('brand')} (+ ${t('add')})`},
     {name:'category_id', label:t('category'), type:'select', options:catOptions()},
+    {name:'gender', label:t('gender'), type:'select', options:opts('gender'), empty:false},
     {name:'name', label:t('name'), required:true},
     {name:'season', label:t('season')},
     {name:'list_price', label:t('list_price'), type:'number'},
@@ -647,11 +650,11 @@ async function ensureBrand(v){
 }
 function newModel(){
   const f = modelFields(); f[0].required = false;
-  f.splice(4, 0, {name:'photos', label:t('photos'), type:'file'},
+  f.splice(5, 0, {name:'photos', label:t('photos'), type:'file'},
     {name:'sale_price', label:t('sale_price') + ' (€)', type:'number', required:true},
     {name:'sizes', label:t('sizes_stock'), type:'sizes'},
     {name:'color', label:`${t('color')} (${t('optional')})`, type:'colorname'});
-  form({title:t('new_model'), fields:f, values:{instagram_status:'non_pubblicato'}, onSubmit: async v => {
+  form({title:t('new_model'), fields:f, values:{instagram_status:'non_pubblicato', gender:'donna'}, onSubmit: async v => {
     await ensureBrand(v);
     const files = v.photos, sizes = v.sizes || [], color = v.color, colorHx = v.color_hex, price = v.sale_price;
     delete v.photos; delete v.sizes; delete v.color; delete v.color_hex; delete v.sale_price;
@@ -1095,7 +1098,7 @@ async function soldWithoutCost(){
 async function addPurchaseLine(pid){
   const flag = await soldWithoutCost();
   const vs = (await allVariants()).filter(v => !v.models?.archived).sort((a, b) => (flag.has(b.id) - flag.has(a.id)) || variantLabel(a).localeCompare(variantLabel(b)));
-  const newF = ['brand_id','new_brand','category_id','name','size','color','sale_price','photos'], oldF = ['variant_id','add_stock'];
+  const newF = ['brand_id','new_brand','category_id','gender','name','size','color','sale_price','photos'], oldF = ['variant_id','add_stock'];
   const m = form({title:t('add_line'), fields:[
     {name:'line_kind', label:t('line_kind'), type:'select', empty:false, value: flag.size ? 'sold' : 'new', options:[...(flag.size ? [['sold', `⚠ ${t('lk_sold')} (${flag.size})`]] : []), ['new', t('lk_new')], ['existing', t('lk_existing')]]},
     {name:'sold_variant_id', label:t('lk_sold'), type:'select', empty:false, options:vs.filter(v => flag.has(v.id)).map(v => [v.id, variantLabel(v)])},
@@ -1104,6 +1107,7 @@ async function addPurchaseLine(pid){
     {name:'brand_id', label:t('brand'), type:'select', options:S.brands.map(b => [b.id, b.name])},
     {name:'new_brand', label:`${t('brand')}: ${t('or_new')}`},
     {name:'category_id', label:t('category'), type:'select', options:catOptions()},
+    {name:'gender', label:t('gender'), type:'select', options:opts('gender'), empty:false, value:'donna'},
     {name:'name', label:t('name')},
     {name:'size', label:t('size')},
     {name:'color', label:t('color'), type:'colorname'},
@@ -1122,7 +1126,7 @@ async function addPurchaseLine(pid){
     } else {
       if (!v.name){ toast(t('pick_or_new'), true); throw new Error('item'); }
       await ensureBrand(v);
-      const md = check(await sb.from('models').insert({brand_id: v.brand_id, category_id: v.category_id, name: v.name, list_price: v.sale_price}).select().single());
+      const md = check(await sb.from('models').insert({brand_id: v.brand_id, category_id: v.category_id, gender: v.gender || 'donna', name: v.name, list_price: v.sale_price}).select().single());
       await uploadPhotos(md.id, v.photos);
       const nv = (await insertVariant({model_id: md.id, size: v.size, color: v.color, color_hex: v.color_hex, sale_price: v.sale_price, status:'ordinato', sku: skuFor(md, v.size, v.color)}));
       vid = nv.id;
