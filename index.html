@@ -1225,7 +1225,7 @@ async function resetShopPw(id, name){
   toast(r.data ? t('sa_sent') : t('sa_no_email'), !r.data);
 }
 async function viewCustomers(main){
-  const cs = check(await sb.from('customers').select('id,full_name,instagram,phone,country,orders(id,status)').order('full_name'));
+  const cs = check(await sb.from('customers').select('id,full_name,instagram,phone,email,country,source,created_at,orders(id,status)').order('full_name'));
   main.innerHTML = `<div class="row spread"><h1>${t('customers')}</h1><button class="primary" onclick="editCustomer()">+ ${t('new_customer')}</button></div>
   <input class="search" id="cuq" placeholder="${t('search')}" value="${esc(custQ)}" style="margin-bottom:12px"><div class="card"><div class="table-wrap"><table id="ct"></table></div></div>
   <details class="card" id="nlcard"><summary><b>🎁 ${t('nl_title')}</b> <span class="small muted">${t('nl_sub')}</span></summary><div id="nlbody" class="small muted">…</div></details>
@@ -1235,9 +1235,9 @@ async function viewCustomers(main){
   if (location.hash.includes('?acc')) $('#acccard').open = true;
   const draw = () => {
     const q = custQ.toLowerCase();
-    const list = cs.filter(c => !q || [c.full_name, c.instagram, c.phone].join(' ').toLowerCase().includes(q));
+    const list = cs.filter(c => !q || [c.full_name, c.instagram, c.phone, c.email].join(' ').toLowerCase().includes(q));
     $('#ct').innerHTML = `<tr><th>${t('name')}</th><th>Instagram</th><th>${t('phone')}</th><th>${t('country')}</th><th class="right">${t('orders')}</th></tr>` +
-      (list.map(c => `<tr class="click" onclick="location.hash='#/cliente/${c.id}'"><td>${esc(c.full_name)}</td><td>${c.instagram ? '@' + esc(c.instagram) : ''}</td><td>${esc(c.phone || '')}</td><td>${esc(ev('country', c.country))}</td><td class="right">${c.orders.filter(o => o.status !== 'annullato').length}</td></tr>`).join('') || `<tr><td colspan="5" class="empty">${t('no_data')}</td></tr>`);
+      (list.map(c => `<tr class="click" onclick="location.hash='#/cliente/${c.id}'"><td>${esc(c.full_name)}${c.source === 'sito' ? ` <span class="pill" title="${esc(c.email || '')}">🌐 ${t('sa_new_pill')}</span>` : ''}${c.source === 'sito' && Date.now() - new Date(c.created_at) < 3 * 864e5 ? ' <span class="pill warn">NEW</span>' : ''}</td><td>${c.instagram ? '@' + esc(c.instagram) : ''}</td><td>${esc(c.phone || '')}</td><td>${esc(ev('country', c.country))}</td><td class="right">${c.orders.filter(o => o.status !== 'annullato').length}</td></tr>`).join('') || `<tr><td colspan="5" class="empty">${t('no_data')}</td></tr>`);
   };
   draw(); $('#cuq').oninput = e => { custQ = e.target.value; draw(); };
 }
