@@ -25,7 +25,11 @@ const FREE = ["composition", "lining", "padding", "details", "style_code", "meas
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
-    const key = Deno.env.get("ANTHROPIC_API_KEY");
+    let key = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!key) {
+      const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      key = (await admin.rpc("_secret", { p_name: "anthropic_api_key" })).data ?? undefined;
+    }
     if (!key) return json({ error: "no_key" }, 503);
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
