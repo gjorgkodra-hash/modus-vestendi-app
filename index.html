@@ -218,6 +218,15 @@ const T = {
   rq_msg_yes:['Ciao! La taglia che hai chiesto ({x}) arriverà intorno al {d}. Ti scriviamo appena arriva per fare il cambio.','Hi! The size you asked for ({x}) should arrive around {d}. We will message you as soon as it arrives for the exchange.','Përshëndetje! Masa që kërkuat ({x}) do të vijë rreth {d}. Ju shkruajmë sapo të mbërrijë për ndërrimin.'],
   rq_msg_no:['Ciao! Purtroppo la taglia {x} non è più disponibile. Procediamo con il rimborso.','Hi! Unfortunately size {x} is no longer available. We will refund you.','Përshëndetje! Na vjen keq, masa {x} nuk është më e disponueshme. Do t\'ju rimbursojmë.'],
   rq_arrived_q:['Pezzo previsto in arrivo: è arrivato?','Piece due: has it arrived?','Copa duhej të vinte: ka ardhur?'], rq_from_order:['dall\'ordine','from order','nga porosia'], rq_customer_has:['Il cliente ha','Customer has','Klienti ka'], rq_wants:['vuole','wants','do'],
+  ai_btn:['✨ Compila con AI','✨ Fill with AI','✨ Plotëso me AI'], ai_hint:['Link del prodotto o codice articolo (facoltativo, rende la ricerca più precisa)','Product link or style code (optional, makes the search more accurate)','Linku i produktit ose kodi (opsional, e bën kërkimin më të saktë)'],
+  ai_wait:['L\'AI sta cercando il prodotto online… (30–90 secondi)','AI is searching the product online… (30–90 seconds)','AI po e kërkon produktin online… (30–90 sekonda)'], ai_go:['Cerca','Search','Kërko'],
+  ai_nokey:['Manca la chiave API di Anthropic: va inserita una volta nelle impostazioni di Supabase.','The Anthropic API key is missing: it must be set once in Supabase settings.','Mungon çelësi API i Anthropic.'],
+  ai_fail:['Ricerca AI non riuscita','AI search failed','Kërkimi me AI dështoi'], ai_title:['Proposta AI','AI proposal','Propozimi i AI'],
+  ai_m_exact:['Prodotto trovato','Product found','Produkti u gjet'], ai_m_similar:['Trovato un prodotto simile: controlla bene','Similar product found: check carefully','U gjet një produkt i ngjashëm: kontrolloni'], ai_m_none:['Prodotto non trovato','Product not found','Produkti nuk u gjet'],
+  ai_cur:['Attuale','Current','Aktuale'], ai_new:['Proposta','Proposed','Propozimi'], ai_prices:['Prezzi sul mercato','Market prices','Çmimet në treg'],
+  ai_range:['Fascia di prezzo','Price range','Diapazoni i çmimit'], ai_typical:['tipico','typical','tipik'], ai_setprice:['Imposta prezzo di listino','Set list price','Vendos çmimin'],
+  ai_apply:['Salva le voci selezionate','Save selected items','Ruaj zgjedhjet'], ai_check:['Controlla sempre prima di salvare: l\'AI può sbagliare.','Always check before saving: AI can make mistakes.','Kontrolloni gjithmonë para se të ruani: AI mund të gabojë.'],
+  ai_sale:['saldo','sale','ulje'], ai_sources:['Fonti','Sources','Burimet'],
   lk_model:['Prodotto già in catalogo: aggiungi taglie','Product in the catalogue: add sizes','Produkt në katalog: shto masa'], lk_model_pick:['Prodotto','Product','Produkti'], lk_need_sizes:['Inserisci almeno una taglia con i pezzi','Enter at least one size with pieces','Shto të paktën një masë'], per_piece:['per pezzo','per piece','për copë'], det_title:['Dettagli prodotto','Product details','Detajet e produktit'], det_empty:['Nessun dettaglio: aggiungi composizione, lavaggio, vestibilità… Compaiono nel negozio online.','No details yet: add composition, care, fit… They show in the online shop.','Pa detaje: shtoni përbërjen, larjen, përshtatjen…'], det_hint:['Compila solo quello che serve: i campi vuoti non compaiono nel negozio. Le scelte dei menu vengono tradotte da sole in albanese e inglese; nei campi liberi scrivi in italiano (i materiali più comuni vengono tradotti).','Fill in only what you need: empty fields are hidden in the shop.','Plotësoni vetëm atë që duhet.'], det_g_comp:['Composizione e lavaggio','Composition & care','Përbërja dhe larja'], det_g_det:['Dettagli','Details','Detaje'], det_g_fit:['Taglia e fit','Size & fit','Masa dhe përshtatja'], det_g_shoes:['Solo per scarpe','Shoes only','Vetëm për këpucë'], sa_new:['Nuovi clienti registrati sul sito','New customers signed up on the website','Klientë të rinj të regjistruar'], sa_new_pill:['Sito','Website','Faqja'], sa_title:['Account del negozio online','Online shop accounts','Llogaritë e dyqanit online'], sa_sub:['clienti registrati con telefono e password','customers registered with phone and password','klientë të regjistruar'], sa_n:['account','accounts','llogari'], sa_last:['Ultimo accesso','Last login','Hyrja e fundit'], sa_reset:['Invia email di recupero','Send recovery email','Dërgo email rikuperimi'], sa_reset_hint:['Il cliente riceve sulla sua email un codice di 6 cifre per creare lui stesso una nuova password. Nessuno vede la password.','The customer receives a 6-digit code by email to set a new password themselves. Nobody sees the password.','Klienti merr në email një kod për të krijuar vetë fjalëkalimin e ri.'], sa_sent:['Email con il codice inviata al cliente','Email with the code sent to the customer','Email-i u dërgua'], sa_no_email:['Questo account non ha un\'email: il cliente deve aggiungerla dal suo profilo','This account has no email','Kjo llogari nuk ka email'], sa_no_email_srv:['Invio email non ancora attivo: manca la chiave Resend','Email sending not active yet: Resend key missing','Dërgimi i email-it nuk është aktiv'], nl_title:['Iscritti newsletter','Newsletter sign-ups','Të regjistruarit në newsletter'], nl_sub:['dal negozio online · codice 10% su 1 capo per nuovi clienti','from the online shop · 10% code on 1 item for new customers','nga dyqani online · kod 10% për 1 artikull'], nl_subs:['iscritti','sign-ups','të regjistruar'], nl_used_n:['hanno usato il codice','used the code','e përdorën kodin'], nl_code:['Codice','Code','Kodi'], nl_unused:['non usato','not used','i papërdorur'], gender:['Genere','Gender','Gjinia'], fb_title:['Esito della consegna','Delivery outcome','Rezultati i dorëzimit'], fb_ask:['Com\'è andata la consegna?','How did the delivery go?','Si shkoi dorëzimi?'], fb_btn:['Registra esito','Record outcome','Regjistro rezultatin'],
   fb_ok:['Tutto ok','All good','Gjithçka në rregull'], fb_return:['Reso','Return','Kthim'], fb_exchange:['Cambio taglia','Size exchange','Ndërrim mase'], fb_refused:['Rifiutato alla consegna','Refused at delivery','Refuzuar në dorëzim'], fb_mixed:['Misto','Mixed','Përzier'],
   fb_deliv_rating:['Voto consegna','Delivery rating','Vlerësimi i dorëzimit'], fb_prod_rating:['Voto prodotto','Product rating','Vlerësimi i produktit'], fb_comments:['Commenti del cliente','Customer comments','Komentet e klientit'],
@@ -869,7 +878,8 @@ function detailsCard(m, w){
   const d = m.details || {};
   const rows = DET_GROUPS.flatMap(([, ks]) => ks).filter(k => d[k]).map(k => `<div class="row" style="flex-wrap:nowrap;gap:8px;padding:3px 0"><span class="muted small" style="min-width:130px">${esc(dlab(k))}</span><span class="small">${esc(dval(k, d[k]))}</span></div>`).join('');
   return `<div class="card"><div class="row spread"><h3 style="margin:0">${t('det_title')}</h3>${w ? `<button class="small" onclick="editDetails()">✎ ${t('edit')}</button>` : ''}</div>
-    ${rows ? `<div style="margin-top:8px">${rows}</div>` : `<p class="small muted" style="margin:8px 0 0">${t('det_empty')}</p>`}</div>`;
+    ${rows ? `<div style="margin-top:8px">${rows}</div>` : `<p class="small muted" style="margin:8px 0 0">${t('det_empty')}</p>`}
+    ${w ? `<button class="small" style="margin-top:10px" onclick="aiFill()">${t('ai_btn')}</button>` : ''}</div>`;
 }
 function editDetails(){
   const m = window._model, d = m.details || {};
@@ -883,6 +893,52 @@ function editDetails(){
   const ci = f.querySelector('[name=d_composition]'); if (ci) ci.placeholder = '100% lana · 70% cotone, 30% poliestere';
   const mi = f.querySelector('[name=d_measures]'); if (mi) mi.placeholder = 'Lunghezza 70 cm sulla taglia M';
   const hi = f.querySelector('[name=d_heel]'); if (hi) hi.placeholder = '8 cm';
+}
+function aiFill(){
+  const bg = modal(`<h3>${t('ai_btn')}</h3><div class="field"><label>${t('ai_hint')}</label><input id="aihint" placeholder="https://… · 1234567"></div>
+    <div class="row" style="justify-content:flex-end;gap:8px"><button onclick="this.closest('.modal-bg').remove()">${t('cancel')}</button><button class="primary" id="aigo">${t('ai_go')}</button></div>`);
+  bg.querySelector('#aigo').onclick = async () => {
+    const hint = bg.querySelector('#aihint').value.trim();
+    bg.querySelector('.modal').innerHTML = `<p style="text-align:center;padding:24px 8px">⏳ ${t('ai_wait')}</p>`;
+    bg.onclick = null;
+    let data, error;
+    try { ({data, error} = await sb.functions.invoke('ai-fill', {body:{model_id: window._model.id, hint}})); } catch (e) { error = e; }
+    if (error){ let code = ''; try { code = (await error.context.json()).error; } catch {} bg.remove(); toast(code === 'no_key' ? t('ai_nokey') : t('ai_fail') + (code ? ' (' + code + ')' : ''), true); return; }
+    bg.remove(); aiReview(data);
+  };
+}
+function aiReview(r){
+  const m = window._model, d = m.details || {};
+  window._ai = r;
+  const keys = DET_GROUPS.flatMap(([, ks]) => ks).filter(k => r.details?.[k]);
+  const row = (id, label, cur, nv, on) => `<label style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line, #e5ddd3);margin:0;font-weight:normal"><input type="checkbox" data-ai="${id}" ${on ? 'checked' : ''} style="width:auto;flex:none;margin-top:3px"><span style="flex:1;min-width:0;white-space:normal"><span class="small muted">${esc(label)}</span><br><b class="small">${esc(nv)}</b>${cur ? `<br><span class="small muted">${t('ai_cur')}: ${esc(cur)}</span>` : ''}</span></label>`;
+  const det = keys.map(k => row('d:' + k, dlab(k), d[k] ? dval(k, d[k]) : '', dval(k, r.details[k]), !d[k])).join('');
+  const ds = r.description || {};
+  const desc = [['it','description','IT'],['sq','description_sq','SQ'],['en','description_en','EN']].filter(([l]) => ds[l])
+    .map(([l, col, lab]) => row('t:' + col, t('description') + ' ' + lab, m[col], ds[l], !m[col])).join('');
+  const pr = r.price_range || {}, prices = (r.prices || []).filter(p => p.price);
+  const plist = prices.map(p => `<li class="small">${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.seller || p.url)}</a>` : esc(p.seller)}: <b>${eur(p.price)}</b>${p.sale_price ? ` · ${t('ai_sale')} ${eur(p.sale_price)}` : ''}</li>`).join('');
+  const mt = r.match || (r.found ? 'exact' : 'none');
+  modal(`<h3>${t('ai_title')}</h3>
+    <p class="small"><b>${t('ai_m_' + mt)}</b>${r.match_note ? ' — ' + esc(r.match_note) : ''}</p>
+    ${det || desc ? `<div>${det}${desc}</div>` : ''}
+    ${pr.min || prices.length ? `<h4 style="margin:14px 0 4px">${t('ai_prices')}</h4>
+      ${pr.min ? `<p class="small" style="margin:0 0 4px">${t('ai_range')}: <b>${eur(pr.min)} – ${eur(pr.max)}</b>${pr.typical ? ` · ${t('ai_typical')} ${eur(pr.typical)}` : ''}${m.list_price ? ` · ${t('ai_cur')} ${eur(m.list_price)}` : ''}</p>${pr.note ? `<p class="small muted" style="margin:0">${esc(pr.note)}</p>` : ''}` : ''}
+      <ul style="margin:6px 0;padding-left:18px">${plist}</ul>
+      ${pr.typical ? `<div class="small" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap"><input type="checkbox" data-ai="price" id="aipc" style="width:auto;flex:none"><label for="aipc" style="margin:0;flex:1">${t('ai_setprice')}</label><input id="aiprice" type="number" step="0.01" value="${pr.typical}" style="width:100px;flex:none"></div>` : ''}` : ''}
+    ${(r.sources || []).length ? `<details class="small" style="margin-top:8px"><summary>${t('ai_sources')}</summary>${r.sources.map(u => `<div><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.slice(0, 70))}</a></div>`).join('')}</details>` : ''}
+    <p class="small muted">${t('ai_check')}</p>
+    <div class="row" style="justify-content:flex-end;gap:8px"><button onclick="this.closest('.modal-bg').remove()">${t('cancel')}</button><button class="primary" onclick="aiApply(this)">${t('ai_apply')}</button></div>`);
+}
+async function aiApply(btn){
+  const m = window._model, r = window._ai, box = btn.closest('.modal');
+  const upd = {}, nd = {...(m.details || {})};
+  box.querySelectorAll('[data-ai]:checked').forEach(c => { const [kind, k] = c.dataset.ai.split(':');
+    if (kind === 'd') nd[k] = r.details[k];
+    else if (kind === 't') upd[k] = r.description[{description:'it', description_sq:'sq', description_en:'en'}[k]];
+    else if (kind === 'price') { const v = parseFloat(box.querySelector('#aiprice').value); if (v > 0) upd.list_price = v; } });
+  upd.details = nd; btn.disabled = true;
+  check(await sb.from('models').update(upd).eq('id', m.id)); btn.closest('.modal-bg').remove(); toast(t('saved')); route();
 }
 function editModel(id){
   const m = window._model;
