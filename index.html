@@ -639,7 +639,9 @@ function modelFields(){
     {name:'list_price', label:t('list_price'), type:'number'},
     {name:'instagram_status', label:t('instagram'), type:'select', options:opts('instagram_status'), empty:false},
     {name:'instagram_url', label:t('ig_link')},
-    {name:'description', label:t('description'), type:'textarea'}
+    {name:'description', label:t('description') + ' (IT)', type:'textarea'},
+    {name:'description_sq', label:t('description') + ' (SQ · shqip)', type:'textarea'},
+    {name:'description_en', label:t('description') + ' (EN)', type:'textarea'}
   ];
 }
 async function ensureBrand(v){
