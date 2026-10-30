@@ -20,7 +20,8 @@ const ENUMS: Record<string, string[]> = {
   care: ["mano", "lavatrice30", "lavatrice40", "delicato", "secco", "non_lavare"],
   closure: ["zip", "bottoni", "lacci", "velcro", "fibbia", "senza"],
 };
-const FREE = ["composition", "lining", "padding", "details", "style_code", "measures", "heel", "upper", "sole"];
+const TR = ["composition", "lining", "padding", "details", "measures", "upper", "sole"];
+const FREE = [...TR, ...TR.map((k) => k + "_sq"), ...TR.map((k) => k + "_en"), "style_code", "heel"];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -57,7 +58,8 @@ Product from our inventory (JSON): ${JSON.stringify(product)}
 1. Use web search to find THIS exact product (brand + model name + colour; the user hint may be a style code or a link) on the brand's official site and on retailers (e.g. Zalando, Farfetch, YOOX, Mytheresa, brand stores). Prefer the official site.
 2. Extract the product details. Only fill a field when a source states it or it is clearly visible from the product description; otherwise leave it out. Never guess composition.
 3. Collect current selling prices in EUR (full price and, separately, sale price if discounted) from up to 6 different sellers.
-4. Write a short original product description (2-3 sentences, do not copy text from websites) in Italian, Albanian and English.
+4. For every text field among ${JSON.stringify(TR)} that you fill, ALSO give its Albanian version as "<field>_sq" and English version as "<field>_en" (correct, natural Albanian fashion terms). Write only product facts: no notes about sources or uncertainty inside the fields.
+5. Write a short original product description (2-3 sentences, do not copy text from websites) in Italian, Albanian and English.
 
 Answer with ONLY one JSON object, no other text, in this shape:
 {"found": true|false, "match": "exact"|"similar"|"none", "match_note": "short note in Italian about how sure you are / what you matched",
@@ -65,7 +67,8 @@ Answer with ONLY one JSON object, no other text, in this shape:
    ${Object.entries(ENUMS).map(([k, v]) => `"${k}": one of ${JSON.stringify(v)}`).join(",\n   ")},
    "composition": "e.g. 70% lana, 30% poliammide (write in Italian)", "lining": "Italian", "padding": "Italian",
    "details": "Italian, short, e.g. tasche laterali, spacco posteriore", "style_code": "brand article code if found",
-   "measures": "Italian, e.g. Lunghezza 70 cm sulla taglia M", "heel": "e.g. 8 cm", "upper": "Italian", "sole": "Italian" },
+   "measures": "Italian, e.g. Lunghezza 70 cm sulla taglia M", "heel": "e.g. 8 cm", "upper": "Italian", "sole": "Italian",
+   "details_sq": "Albanian", "details_en": "English", "composition_sq": "Albanian", "composition_en": "English" /* same for every text field you fill */ },
  "description": {"it": "...", "sq": "...", "en": "..."},
  "prices": [{"seller": "...", "url": "...", "price": 0, "sale_price": null, "currency": "EUR"}],
  "price_range": {"min": 0, "max": 0, "typical": 0, "currency": "EUR", "note": "short note in Italian"},

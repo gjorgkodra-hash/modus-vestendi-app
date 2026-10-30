@@ -889,6 +889,7 @@ function editDetails(){
       : {name:'d_' + k, label:dlab(k), value:d[k] || '', type: k === 'details' || k === 'measures' ? 'textarea' : undefined})); });
   const f = form({title:t('det_title'), fields, extra:`<p class="small muted">${t('det_hint')}</p>`, onSubmit: async v => {
     const nd = {}; Object.entries(v).forEach(([k, val]) => { if (k.startsWith('d_') && val != null && String(val).trim() !== '') nd[k.slice(2)] = String(val).trim(); });
+    Object.keys(nd).forEach(k => ['sq','en'].forEach(l => { if (d[k + '_' + l] && d[k] === nd[k]) nd[k + '_' + l] = d[k + '_' + l]; }));
     check(await sb.from('models').update({details: nd}).eq('id', m.id)); toast(t('saved')); route(); }});
   const ci = f.querySelector('[name=d_composition]'); if (ci) ci.placeholder = '100% lana · 70% cotone, 30% poliestere';
   const mi = f.querySelector('[name=d_measures]'); if (mi) mi.placeholder = 'Lunghezza 70 cm sulla taglia M';
@@ -912,7 +913,7 @@ function aiReview(r){
   window._ai = r;
   const keys = DET_GROUPS.flatMap(([, ks]) => ks).filter(k => r.details?.[k]);
   const row = (id, label, cur, nv, on) => `<label style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line, #e5ddd3);margin:0;font-weight:normal"><input type="checkbox" data-ai="${id}" ${on ? 'checked' : ''} style="width:auto;flex:none;margin-top:3px"><span style="flex:1;min-width:0;white-space:normal"><span class="small muted">${esc(label)}</span><br><b class="small">${esc(nv)}</b>${cur ? `<br><span class="small muted">${t('ai_cur')}: ${esc(cur)}</span>` : ''}</span></label>`;
-  const det = keys.map(k => row('d:' + k, dlab(k), d[k] ? dval(k, d[k]) : '', dval(k, r.details[k]), !d[k])).join('');
+  const det = keys.map(k => row('d:' + k, dlab(k), d[k] ? dval(k, d[k]) : '', dval(k, r.details[k]) + (r.details[k + '_sq'] ? '  ·  SQ: ' + r.details[k + '_sq'] : ''), !d[k])).join('');
   const ds = r.description || {};
   const desc = [['it','description','IT'],['sq','description_sq','SQ'],['en','description_en','EN']].filter(([l]) => ds[l])
     .map(([l, col, lab]) => row('t:' + col, t('description') + ' ' + lab, m[col], ds[l], !m[col])).join('');
@@ -934,7 +935,7 @@ async function aiApply(btn){
   const m = window._model, r = window._ai, box = btn.closest('.modal');
   const upd = {}, nd = {...(m.details || {})};
   box.querySelectorAll('[data-ai]:checked').forEach(c => { const [kind, k] = c.dataset.ai.split(':');
-    if (kind === 'd') nd[k] = r.details[k];
+    if (kind === 'd') { nd[k] = r.details[k]; ['sq','en'].forEach(l => { if (r.details[k + '_' + l]) nd[k + '_' + l] = r.details[k + '_' + l]; else delete nd[k + '_' + l]; }); }
     else if (kind === 't') upd[k] = r.description[{description:'it', description_sq:'sq', description_en:'en'}[k]];
     else if (kind === 'price') { const v = parseFloat(box.querySelector('#aiprice').value); if (v > 0) upd.list_price = v; } });
   upd.details = nd; btn.disabled = true;
