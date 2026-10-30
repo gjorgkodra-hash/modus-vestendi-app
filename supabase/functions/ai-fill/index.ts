@@ -23,6 +23,22 @@ const ENUMS: Record<string, string[]> = {
 const TR = ["composition", "lining", "padding", "details", "measures", "upper", "sole"];
 const FREE = [...TR, ...TR.map((k) => k + "_sq"), ...TR.map((k) => k + "_en"), "style_code", "heel"];
 
+async function translate(key: string, texts: Record<string, string>) {
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({
+      model: Deno.env.get("AI_TR_MODEL") || "claude-haiku-5-5", max_tokens: 1500,
+      messages: [{ role: "user", content: `Translate these Italian fashion product fields into Albanian (natural, correct Albanian fashion terms, as used in Albanian online shops) and English. Keep numbers, percentages and brand names. Answer with ONLY JSON: {"sq": {same keys}, "en": {same keys}}.\n${JSON.stringify(texts)}` }],
+    }),
+  });
+  const res = await r.json();
+  if (!r.ok) throw new Error(res?.error?.message ?? "translate failed");
+  const text = (res.content ?? []).filter((c: any) => c.type === "text").map((c: any) => c.text).join("");
+  const o = JSON.parse(text.match(/\{[\s\S]*\}/)![0]);
+  return { sq: o.sq ?? {}, en: o.en ?? {} };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
@@ -38,7 +54,14 @@ Deno.serve(async (req) => {
     const { data: ok } = await sb.rpc("has_role", { roles: ["admin", "magazzino"] });
     if (!ok) return json({ error: "forbidden" }, 403);
 
-    const { model_id, hint } = await req.json();
+    const body = await req.json();
+    if (body.mode === "translate") {
+      const texts: Record<string, string> = {};
+      for (const [k, v] of Object.entries(body.texts ?? {})) if (TR.includes(k) && v) texts[k] = String(v).slice(0, 400);
+      if (!Object.keys(texts).length) return json({ sq: {}, en: {} });
+      return json(await translate(key, texts));
+    }
+    const { model_id, hint } = body;
     const { data: m, error } = await sb.from("models")
       .select("id,name,season,description,list_price,gender,details,brands(name),categories(name),variants(color,size)")
       .eq("id", model_id).single();
@@ -102,6 +125,17 @@ Answer with ONLY one JSON object, no other text, in this shape:
       if (v == null || String(v).trim() === "") continue;
       if (ENUMS[k]) { if (ENUMS[k].includes(String(v))) d[k] = String(v); }
       else if (FREE.includes(k)) d[k] = String(v).trim().slice(0, 400);
+    }
+    const missing: Record<string, string> = {};
+    for (const k of TR) if (d[k] && (!d[k + "_sq"] || !d[k + "_en"])) missing[k] = d[k];
+    if (Object.keys(missing).length) {
+      try {
+        const tr = await translate(key, missing);
+        for (const k of Object.keys(missing)) {
+          if (tr.sq[k]) d[k + "_sq"] = String(tr.sq[k]).slice(0, 400);
+          if (tr.en[k]) d[k + "_en"] = String(tr.en[k]).slice(0, 400);
+        }
+      } catch (_) { /* keep Italian only */ }
     }
     out.details = d;
     out.usage = { ...res.usage };
