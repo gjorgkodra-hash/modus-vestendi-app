@@ -254,7 +254,9 @@ const T = {
   ai_cust_hint:['L\'AI legge DM, ordini e richieste e ricava taglie, gusti, budget e cosa sta cercando.','AI reads DMs, orders and requests to infer sizes, taste, budget and what they are looking for.','AI lexon DM-të dhe porositë.'],
   ai_sizes:['Taglie','Sizes','Masat'], sz_top:['sopra','top','sipër'], sz_bottom:['sotto','bottom','poshtë'], sz_shoes:['scarpe','shoes','këpucë'], ai_styles:['Stile','Style','Stili'], ai_interests:['Interessi','Interests','Interesat'], ai_open:['Richieste aperte','Open requests','Kërkesa të hapura'], ai_sentiment:['Tono','Mood','Toni'],
   story_make:['Crea story','Create story','Krijo story'], story_price:['mostra prezzo','show price','shfaq çmimin'], story_share:['Condividi / scarica','Share / download','Ndaj / shkarko'], story_publish:['Pubblica story','Publish story','Publiko story'],
-  story_hint:['"Condividi" apre l\'immagine nell\'app Instagram: lì puoi aggiungere lo sticker link allo shop. "Pubblica" la mette subito in story (senza sticker).','"Share" opens the image in the Instagram app where you can add the link sticker. "Publish" posts it right away (no sticker).','"Ndaj" e hap në Instagram për sticker link.'],
+  story_save:['Salva','Save','Ruaj'], story_saved:['Immagine salvata: apri Instagram → + → Storia e sceglila dalla galleria.','Image saved: open Instagram → + → Story and pick it from the gallery.','Imazhi u ruajt: hap Instagram → + → Story dhe zgjidhe nga galeria.'],
+  story_pick:['Nel menu scegli l\'icona Instagram con scritto "Storie" (non "Feed").','In the menu pick the Instagram icon labelled "Stories" (not "Feed").','Në menu zgjidh Instagram "Story" (jo "Feed").'],
+  story_hint:['Per aggiungere lo sticker link: "Salva" e poi in Instagram → + → Storia scegli l\'immagine dalla galleria, oppure "Condividi" e scegli Instagram "Storie" (non "Feed"). "Pubblica story" la mette subito, senza sticker.','"Share" opens the image in the Instagram app where you can add the link sticker. "Publish" posts it right away (no sticker).','"Ndaj" e hap në Instagram për sticker link.'],
   story_confirm:['Pubblicare subito questa story su @modus.vestendi?','Publish this story on @modus.vestendi now?','Ta publikoj story-n tani?'], story_done:['Story pubblicata','Story published','Story u publikua'],
   ord_title:['Su ordinazione','On request','Me porosi'], ord_stock:['In magazzino','In stock','Në magazinë'], ord_new:['Prodotto su ordinazione','On-request product','Produkt me porosi'],
   ord_hint:['Capi visti in un negozio, non comprati: li condividi in story, e solo quando un cliente li vuole chiedi al negozio, li compri e li spedisci. Non compaiono nello shop online.','Items seen in a shop, not bought: share them in stories; when a customer wants one, check with the shop, buy and ship. Not shown in the online shop.','Artikuj të parë në dyqan, të pablerë.'],
@@ -2357,10 +2359,10 @@ async function storyCompose(modelId){
       <label class="small row" style="gap:4px;margin:0;flex:none"><input type="checkbox" id="stp" checked style="width:auto"> ${t('story_price')}</label></div>
     <canvas id="stc" width="1080" height="1920" style="width:100%;max-width:270px;display:block;margin:10px auto;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.15)"></canvas>
     <p class="small muted">${t('story_hint')}</p>
-    <div class="row" style="justify-content:flex-end;gap:8px;flex-wrap:wrap"><button onclick="this.closest('.modal-bg').remove()">${t('cancel')}</button><button id="sts">📲 ${t('story_share')}</button><button class="primary" id="stg">📤 ${t('story_publish')}</button></div>`);
+    <div class="row" style="justify-content:flex-end;gap:8px;flex-wrap:wrap"><button onclick="this.closest('.modal-bg').remove()">${t('cancel')}</button><button id="std">⬇ ${t('story_save')}</button><button id="sts">📲 ${t('story_share')}</button><button class="primary" id="stg">📤 ${t('story_publish')}</button></div>`);
   bg.querySelectorAll('.stph').forEach(el => el.onclick = () => { bg.querySelectorAll('.stph').forEach(x => x.style.outline = 'none'); el.style.outline = '3px solid var(--accent)'; window._st.path = el.dataset.p; storyDraw(bg); });
   bg.querySelector('#stl').onchange = () => storyDraw(bg); bg.querySelector('#stp').onchange = () => storyDraw(bg);
-  bg.querySelector('#sts').onclick = () => storyShare(bg); bg.querySelector('#stg').onclick = () => storyPublish(bg);
+  bg.querySelector('#sts').onclick = () => storyShare(bg); bg.querySelector('#std').onclick = () => storySave(bg); bg.querySelector('#stg').onclick = () => storyPublish(bg);
   await storyDraw(bg);
 }
 async function storyDraw(bg){
@@ -2386,7 +2388,13 @@ async function storyDraw(bg){
   if (m.kind === 'ordine'){ g.font = `700 38px ${F}`; const tw = g.measureText(x.order).width; g.fillStyle = '#f1e1d2'; g.fillRect(W - tw - 110, 80, tw + 60, 70); g.fillStyle = '#4c2f2a'; g.fillText(x.order, W - tw - 80, 128); }
 }
 const storyBlob = bg => new Promise(res => bg.querySelector('#stc').toBlob(res, 'image/jpeg', .92));
+async function storySave(bg){
+  const blob = await storyBlob(bg), a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `story_${(window._st?.m?.name || 'mv').replace(/[^A-Za-z0-9]+/g, '_')}.jpg`; document.body.appendChild(a); a.click(); a.remove();
+  toast(t('story_saved'));
+}
 async function storyShare(bg){
+  toast(t('story_pick'));
   const blob = await storyBlob(bg), file = new File([blob], 'story.jpg', {type:'image/jpeg'});
   try { if (navigator.canShare && navigator.canShare({files:[file]})) return await navigator.share({files:[file]}); } catch (e) { if (e.name === 'AbortError') return; }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'story.jpg'; a.click();
