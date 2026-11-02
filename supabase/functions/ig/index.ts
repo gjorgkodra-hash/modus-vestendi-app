@@ -267,10 +267,12 @@ Answer with ONLY a JSON object, all text values in Italian:
  "sentiment":"positivo|neutro|negativo","last_contact":"YYYY-MM-DD or null","next_action":"one concrete suggestion for the shop"}`;
   const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST",
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 1500, messages: [{ role: "user", content: prompt }] }) });
+    body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 6000, messages: [{ role: "user", content: prompt }] }) });
   const j = await r.json(); if (!r.ok) throw new Error(j?.error?.message ?? "ai_error");
   const text = (j.content ?? []).filter((x: any) => x.type === "text").map((x: any) => x.text).join("");
-  const prof = JSON.parse(text.match(/\{[\s\S]*\}/)![0]);
+  const mt = text.match(/\{[\s\S]*\}/);
+  if (!mt) throw new Error("ai_no_json: " + (j.stop_reason ?? "") + " " + text.slice(0, 300));
+  const prof = JSON.parse(mt[0]);
   await admin.from("customers").update({ profile_ai: prof, profile_ai_at: new Date().toISOString() }).eq("id", customerId);
   return prof;
 }

@@ -28,7 +28,7 @@ async function translate(key: string, texts: Record<string, string>) {
     method: "POST",
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({
-      model: Deno.env.get("AI_TR_MODEL") || "claude-haiku-5-5", max_tokens: 1500,
+      model: Deno.env.get("AI_TR_MODEL") || "claude-haiku-5-5", max_tokens: 5000,
       messages: [{ role: "user", content: `Translate these Italian fashion product fields into Albanian (natural, correct Albanian fashion terms, as used in Albanian online shops) and English. Keep numbers, percentages and brand names. Answer with ONLY JSON: {"sq": {same keys}, "en": {same keys}}.\n${JSON.stringify(texts)}` }],
     }),
   });
@@ -105,7 +105,7 @@ Answer with ONLY one JSON object, no other text, in this shape:
         headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
         body: JSON.stringify({
           model: Deno.env.get("AI_MODEL") || "claude-sonnet-5-5",
-          max_tokens: 4000,
+          max_tokens: 12000,
           tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 6 }],
           messages,
         }),
