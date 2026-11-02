@@ -133,10 +133,11 @@ async function syncMedia(limit = 50) {
 // ---------- ads ----------
 const STATUS = (c: any) => {
   const s = c.effective_status ?? c.status;
-  if (s === "ACTIVE") return "attiva";
   if (c.stop_time && new Date(c.stop_time) < new Date()) return "conclusa";
+  if (s === "ACTIVE") return "attiva";
   return s === "ARCHIVED" || s === "DELETED" ? "conclusa" : "fermata";
 };
+const act = (actions: any[] = [], re: RegExp) => { const a = actions.find((x) => re.test(x.action_type)); return a ? Number(a.value) : null; };
 const msgs = (actions: any[] = []) => {
   const a = actions.find((x) => /messaging_conversation_started/.test(x.action_type));
   return a ? Number(a.value) : null;
@@ -160,7 +161,7 @@ async function syncAdsInner(full: boolean) {
   const since = addDays(day(new Date()), full ? -180 : -10), until = day(new Date());
   for (const acc of accounts) {
     const list = await gAll(`/${acc.id}/campaigns`, { fields: "id,name,status,effective_status,start_time,stop_time,daily_budget,lifetime_budget,created_time", limit: 100 });
-    const tot = await gAll(`/${acc.id}/insights`, { level: "campaign", fields: "campaign_id,spend,impressions,reach,clicks,actions", date_preset: "maximum", limit: 500 });
+    const tot = await gAll(`/${acc.id}/insights`, { level: "campaign", fields: "campaign_id,spend,impressions,reach,frequency,clicks,inline_link_clicks,ctr,cpm,cpc,actions", date_preset: "maximum", limit: 500 });
     const totals = new Map(tot.map((x: any) => [x.campaign_id, x]));
     const ids = new Map<string, number>();
     for (const c of list) {
@@ -171,6 +172,12 @@ async function syncAdsInner(full: boolean) {
         start_date: (c.start_time ?? c.created_time ?? "").slice(0, 10) || null, end_date: c.stop_time ? c.stop_time.slice(0, 10) : null,
         spend: Number(t.spend ?? 0), impressions: t.impressions ? Number(t.impressions) : null, reach: t.reach ? Number(t.reach) : null,
         clicks: t.clicks ? Number(t.clicks) : null, synced_at: new Date().toISOString(),
+        frequency: t.frequency ? Number(t.frequency) : null, link_clicks: t.inline_link_clicks ? Number(t.inline_link_clicks) : null,
+        engagement: act(t.actions, /^post_engagement$/), calls: act(t.actions, /^call_confirm_grouped$|click_to_call/),
+        metrics: { ctr: t.ctr ? Number(t.ctr) : null, cpm: t.cpm ? Number(t.cpm) : null, cpc: t.cpc ? Number(t.cpc) : null,
+          reactions: act(t.actions, /^post_reaction$|^like$/), photo_views: act(t.actions, /^photo_view$/), video_views: act(t.actions, /^video_view$/),
+          saves: act(t.actions, /post_save/), shares: act(t.actions, /^post$/), profile_visits: act(t.actions, /profile_visit/), follows: act(t.actions, /follow/),
+          actions: t.actions ?? [] },
       };
       const m = msgs(t.actions); if (m != null) row.dms = m;
       if (budget) row.budget = budget;
@@ -178,10 +185,10 @@ async function syncAdsInner(full: boolean) {
       if (up) ids.set(c.id, up.id);
       camps++;
     }
-    const daily = await gAll(`/${acc.id}/insights`, { level: "campaign", time_increment: 1, fields: "campaign_id,spend,impressions,reach,clicks,actions,date_start", time_range: { since, until }, limit: 500 }, 30);
+    const daily = await gAll(`/${acc.id}/insights`, { level: "campaign", time_increment: 1, fields: "campaign_id,spend,impressions,reach,clicks,inline_link_clicks,actions,date_start", time_range: { since, until }, limit: 500 }, 30);
     for (const d of daily) {
       const cid = ids.get(d.campaign_id); if (!cid) continue;
-      await admin.from("campaign_daily").upsert({ campaign_id: cid, day: d.date_start, spend: Number(d.spend ?? 0), impressions: d.impressions ? Number(d.impressions) : null, reach: d.reach ? Number(d.reach) : null, clicks: d.clicks ? Number(d.clicks) : null, messages: msgs(d.actions) }, { onConflict: "campaign_id,day" });
+      await admin.from("campaign_daily").upsert({ campaign_id: cid, day: d.date_start, spend: Number(d.spend ?? 0), impressions: d.impressions ? Number(d.impressions) : null, reach: d.reach ? Number(d.reach) : null, clicks: d.clicks ? Number(d.clicks) : null, messages: msgs(d.actions), link_clicks: d.inline_link_clicks ? Number(d.inline_link_clicks) : null, engagement: act(d.actions, /^post_engagement$/) }, { onConflict: "campaign_id,day" });
     }
   }
   return { ad_accounts: accounts.length, campaigns: camps };
