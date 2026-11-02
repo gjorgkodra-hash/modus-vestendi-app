@@ -93,7 +93,7 @@ const MEDIA_FIELDS = "id,caption,media_type,media_product_type,media_url,thumbna
 async function mediaInsights(id: string, type: string) {
   const sets = type === "VIDEO" || type === "REELS"
     ? ["reach,views,saved,shares,total_interactions", "reach,saved,shares,total_interactions", "reach"]
-    : ["reach,views,saved,shares,total_interactions", "reach,saved,total_interactions", "reach"];
+    : ["reach,views,saved,shares,total_interactions,follows,profile_visits", "reach,views,saved,shares,total_interactions", "reach,saved,total_interactions", "reach"];
   for (const s of sets) {
     try {
       const j = await g(`/${id}/insights`, { metric: s });
@@ -111,6 +111,7 @@ function mediaRow(m: any, ins: Record<string, number>) {
     media_url: m.media_url ?? null, thumbnail_url: m.thumbnail_url ?? null, permalink: m.permalink, ts: m.timestamp,
     like_count: m.like_count ?? 0, comments_count: m.comments_count ?? 0,
     reach: ins.reach ?? null, views: ins.views ?? null, saved: ins.saved ?? null, shares: ins.shares ?? null, interactions: ins.total_interactions ?? null,
+    follows: ins.follows ?? null, profile_visits: ins.profile_visits ?? null,
     synced_at: new Date().toISOString(),
   };
   if (link) r.model_id = Number(link[1]);
@@ -142,8 +143,10 @@ const msgs = (actions: any[] = []) => {
   const a = actions.find((x) => /messaging_conversation_started/.test(x.action_type));
   return a ? Number(a.value) : null;
 };
+let mainTokCache = "", adsTokCache = "";
 async function syncAds(full: boolean) {
   const adsTok = await secret("meta_ads_token"), mainTok = TOKEN;
+  mainTokCache = mainTok; adsTokCache = adsTok ?? "";
   if (adsTok) {
     TOKEN = adsTok;
     try {
@@ -185,6 +188,26 @@ async function syncAdsInner(full: boolean) {
       if (up) ids.set(c.id, up.id);
       camps++;
     }
+    // which Instagram post each campaign boosts (to read that post's own follows)
+    try {
+      const ads = await gAll(`/${acc.id}/ads`, { fields: "campaign_id,creative{effective_instagram_media_id}", limit: 200 }, 5);
+      const byCamp = new Map<string, string>();
+      for (const a of ads) { const mid = a.creative?.effective_instagram_media_id; if (mid && !byCamp.has(a.campaign_id)) byCamp.set(a.campaign_id, mid); }
+      const { data: have } = await admin.from("ig_media").select("id,follows,synced_at");
+      const known = new Map((have ?? []).map((m: any) => [m.id, m]));
+      for (const [cmeta, mid] of byCamp) {
+        const cid = ids.get(cmeta); if (!cid) continue;
+        await admin.from("campaigns").update({ ig_media_id: mid }).eq("id", cid);
+        const k: any = known.get(mid);
+        if (!k) { // sponsored posts: Instagram gives only reach/saves, so fetch once
+          try {
+            TOKEN = mainTokCache;
+            const m = await g(`/${mid}`, { fields: MEDIA_FIELDS });
+            await admin.from("ig_media").upsert(mediaRow(m, await mediaInsights(m.id, m.media_product_type === "REELS" ? "REELS" : m.media_type)), { onConflict: "id" });
+          } catch (_) { /* post deleted or not ours */ } finally { TOKEN = adsTokCache || TOKEN; }
+        }
+      }
+    } catch (_) { /* ads list not readable */ }
     const daily = await gAll(`/${acc.id}/insights`, { level: "campaign", time_increment: 1, fields: "campaign_id,spend,impressions,reach,clicks,inline_link_clicks,actions,date_start", time_range: { since, until }, limit: 500 }, 30);
     for (const d of daily) {
       const cid = ids.get(d.campaign_id); if (!cid) continue;
@@ -342,10 +365,13 @@ Extract ONLY what the conversation says; use null when unknown. Answer with ONLY
 "sizes":{"top":null,"bottom":null,"shoes":null},"budget_max":null,
 "items":[{"brand":"brand exactly as in the known list, or other name, or null","category_id":null,"what":"short Italian, e.g. cappotto lungo nero","size":null,"color":null,"price":null,"model_id":null,"date":"YYYY-MM-DD","outcome":"chiesto|non_disponibile|ordinato|rifiutato_prezzo|in_attesa"}],
 "brands":["brands she/he likes"],"category_ids":[],"styles":["e.g. elegante, casual, classico"],"objections":["prezzo|taglia|spedizione|tempi|qualita|pagamento"],
-"last_client_msg":"YYYY-MM-DD or null"}`;
+"last_client_msg":"YYYY-MM-DD or null",
+"contact":{"full_name":"name and surname the CLIENT gave for delivery, or null","phone":"phone number the CLIENT wrote, with country prefix if given, or null","email":null,
+ "address":{"line1":"street / neighbourhood","city":null,"zip":null,"country":"AL|XK|MK|IT|UK|other|null"},"height_cm":null,"weight_kg":null,"bust_cm":null,"waist_cm":null,"hips_cm":null,"shoe_size":null,"brand_sizes":{"brand":"size she/he wears in that brand"},"notes":"other fit info the client gave (e.g. wears 44 in jackets, wide foot), or null"}}
+For "contact" use only data the CLIENT wrote about herself/himself (not the shop's data).`;
   const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST",
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 5000, messages: [{ role: "user", content: prompt }] }) });
+    body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 6000, messages: [{ role: "user", content: prompt }] }) });
   const j = await r.json(); if (!r.ok) throw new Error(j?.error?.message ?? "ai_error");
   const text = (j.content ?? []).filter((x: any) => x.type === "text").map((x: any) => x.text).join("");
   const mt = text.match(/\{[\s\S]*\}/); if (!mt) throw new Error("ai_no_json");
@@ -376,13 +402,66 @@ async function interests(limit = 12, force = false) {
         const { data: msgs } = await admin.from("ig_messages").select("from_me,text,attachments,created_at").eq("thread_id", t.id).order("created_at");
         const data = await analyzeThread(key, t, msgs ?? [], ctx);
         const s: any = st.get(t.id);
-        await admin.from("ig_interest").upsert({ thread_id: t.id, customer_id: t.customer_id, username: t.username, data, msg_count: s.n, last_msg_at: s.last, analyzed_at: new Date().toISOString() }, { onConflict: "thread_id" });
+        const cid = await applyContact(t, data).catch(() => t.customer_id);
+        await admin.from("ig_interest").upsert({ thread_id: t.id, customer_id: cid ?? t.customer_id, username: t.username, data, msg_count: s.n, last_msg_at: s.last, analyzed_at: new Date().toISOString() }, { onConflict: "thread_id" });
         ok++;
       } catch (e) { errors.push(`${t.username}: ${(e as Error).message}`); }
     }));
   }
   const left = (th ?? []).filter((t: any) => { const s: any = st.get(t.id); return s && s.client_msgs > 0 && doneMap.get(t.id) !== s.n; }).length - ok;
   return { analyzed: ok, left: Math.max(0, left), errors };
+}
+
+// fill the customer card from what the client wrote; never overwrites values already there
+const clean = (v: any) => v == null || String(v).trim() === "" || String(v).toLowerCase() === "null" ? null : String(v).trim();
+async function applyContact(t: any, d: any) {
+  const c = d?.contact ?? {}, a = c.address ?? {};
+  const phone = clean(c.phone)?.replace(/[^\d+]/g, "") || null, name = clean(c.full_name), line1 = clean(a.line1), city = clean(a.city);
+  const country = ["AL", "XK", "MK", "IT", "UK"].includes(String(a.country ?? d.country)) ? (a.country ?? d.country) : null;
+  const sizes: any = {}; for (const k of ["top", "bottom", "shoes"]) if (clean(d.sizes?.[k])) sizes[k] = clean(d.sizes[k]);
+  if (clean(c.shoe_size) && !sizes.shoes) sizes.shoes = clean(c.shoe_size);
+  const height = Number(c.height_cm) > 100 && Number(c.height_cm) < 220 ? Math.round(Number(c.height_cm)) : null;
+  const weight = Number(c.weight_kg) > 30 && Number(c.weight_kg) < 200 ? Number(c.weight_kg) : null;
+  let cid = t.customer_id;
+  if (!cid) {
+    if (!phone && !(line1 || city)) return null; // only people who gave delivery data become customers
+    const { data: nc } = await admin.from("customers").insert({ full_name: name || t.username, instagram: t.username, phone, country, source: "instagram_organico", preferred_lang: "sq", ai_filled: { created: true, at: new Date().toISOString() } }).select("id").single();
+    if (!nc) return null;
+    cid = nc.id;
+    await admin.from("ig_threads").update({ customer_id: cid }).eq("id", t.id);
+    const { data: th } = await admin.from("ig_threads").select("ig_user_id").eq("id", t.id).single();
+    if (th?.ig_user_id) await admin.from("customers").update({ ig_user_id: th.ig_user_id }).eq("id", cid);
+  }
+  const { data: cu } = await admin.from("customers").select("*").eq("id", cid).single();
+  if (!cu) return cid;
+  const up: any = {}, filled: string[] = [];
+  const set = (k: string, v: any) => { if (v != null && (cu[k] == null || cu[k] === "" || (k === "full_name" && cu[k] === cu.instagram))) { up[k] = v; filled.push(k); } };
+  set("phone", phone); set("email", clean(c.email)); set("country", country);
+  if (name && /\s/.test(name)) set("full_name", name);
+  // body data and sizes go to the measurements card (only empty fields are filled)
+  const cm = (v: any, lo: number, hi: number) => Number(v) > lo && Number(v) < hi ? Number(v) : null;
+  const bs: any = {}; for (const [b, z] of Object.entries(c.brand_sizes ?? {})) if (b !== "brand" && clean(z)) bs[b] = clean(z);
+  if (sizes.bottom) bs["Pantaloni / gonne"] = sizes.bottom;
+  const mv: any = { height_cm: height, weight_kg: weight, bust_cm: cm(c.bust_cm, 50, 160), waist_cm: cm(c.waist_cm, 40, 150), hips_cm: cm(c.hips_cm, 50, 170), shoe_size: sizes.shoes ?? null, usual_size: sizes.top ?? null };
+  if (Object.values(mv).some((v) => v != null) || Object.keys(bs).length || clean(c.notes)) {
+    const { data: ex } = await admin.from("customer_measurements").select("*").eq("customer_id", cid).order("taken_on", { ascending: false }).limit(1).maybeSingle();
+    if (!ex) {
+      await admin.from("customer_measurements").insert({ customer_id: cid, ...mv, brand_sizes: bs, notes: ["AI (Instagram)", clean(c.notes)].filter(Boolean).join(": ") });
+      filled.push("measurements");
+    } else {
+      const mu: any = {}; for (const [k, v] of Object.entries(mv)) if (v != null && ex[k] == null) mu[k] = v;
+      const nb = { ...bs, ...(ex.brand_sizes ?? {}) }; if (JSON.stringify(nb) !== JSON.stringify(ex.brand_sizes ?? {})) mu.brand_sizes = nb;
+      if (clean(c.notes) && !(ex.notes ?? "").includes(clean(c.notes)!)) mu.notes = [ex.notes, "AI: " + clean(c.notes)].filter(Boolean).join(" · ");
+      if (Object.keys(mu).length) { await admin.from("customer_measurements").update(mu).eq("id", ex.id); filled.push("measurements"); }
+    }
+  }
+  if (filled.length) { up.ai_filled = { ...(cu.ai_filled ?? {}), fields: [...new Set([...(cu.ai_filled?.fields ?? []), ...filled])], at: new Date().toISOString() }; await admin.from("customers").update(up).eq("id", cid); }
+  if (line1 || city) {
+    const { data: ad } = await admin.from("addresses").select("id,line1,city").eq("customer_id", cid);
+    const same = (ad ?? []).some((x: any) => (x.line1 ?? "").toLowerCase() === (line1 ?? "").toLowerCase() && (x.city ?? "").toLowerCase() === (city ?? "").toLowerCase());
+    if (!same) await admin.from("addresses").insert({ customer_id: cid, label: "Instagram (AI)", line1, city, zip: clean(a.zip), country, is_default: !(ad ?? []).length });
+  }
+  return cid;
 }
 
 // ---------- AI promo message for a customer group ----------

@@ -264,7 +264,7 @@ const T = {
   g_size:['Non c’era la taglia o il prodotto','Size or product not available','Nuk kishim masën ose produktin'], g_new:['Clienti nuovi (1 ordine)','New customers (1 order)','Klientë të rinj (1 porosi)'],
   g_loyal:['Clienti fedeli (2+ ordini)','Loyal customers (2+ orders)','Klientë besnikë (2+ porosi)'], g_sleep:['Non comprano da 60+ giorni','No purchase in 60+ days','Pa blerë prej 60+ ditësh'],
   g_brand:['Amano','Love','Pëlqejnë'], g_cat:['Cercano','Looking for','Kërkojnë'],
-  tr_match:['Prodotti da proporre','Products to offer','Produkte për t’u ofruar'], tr_who:['Chi lo comprerebbe','Who would buy it','Kush do e blinte'], tr_who_none:['Nessuno per ora: servono più conversazioni analizzate.','Nobody yet: more analysed conversations are needed.','Askush për tani: duhen më shumë biseda të analizuara.'],
+  tr_match:['Prodotti da proporre','Products to offer','Produkte për t’u ofruar'], tr_potential:['clienti potenziali','potential customers','klientë të mundshëm'], tr_who:['Chi lo comprerebbe','Who would buy it','Kush do e blinte'], tr_who_none:['Nessuno per ora: servono più conversazioni analizzate.','Nobody yet: more analysed conversations are needed.','Askush për tani: duhen më shumë biseda të analizuara.'],
   tr_write:['Scrivi messaggio','Write message','Shkruaj mesazh'], tr_msg_hint:['{name} viene sostituito col nome. Instagram permette di scrivere per primi solo a mano dall’app: copia e apri la chat.','{name} is replaced by the name. Instagram only lets you message first by hand in the app: copy and open the chat.','{name} zëvendësohet me emrin. Instagram të lejon të shkruash i pari vetëm me dorë nga aplikacioni: kopjo dhe hap bisedën.'],
   tr_copy_open:['Copia e apri chat','Copy & open chat','Kopjo dhe hap bisedën'], tr_score:['affinità','match','përputhje'], tr_no_data:['Ancora nessuna conversazione analizzata.','No analysed conversations yet.','Ende asnjë bisedë e analizuar.'],
   why_brand:['marca','brand','marka'], why_cat:['tipo','type','lloji'], why_size:['taglia disponibile','size available','masa ka'], why_nosize:['taglia non disponibile','size not available','masa s’ka'], why_price:['nel budget','within budget','brenda buxhetit'], why_overp:['sopra budget','over budget','mbi buxhet'], why_asked:['l’aveva chiesto','asked for it','e kishte kërkuar'], why_recent:['scritto di recente','wrote recently','shkroi së fundmi'], ce_fol_total:['Totale del profilo in quei giorni','Profile total on those days','Totali i profilit në ato ditë'], ce_without:['Senza','Without','Pa'],
@@ -803,6 +803,7 @@ async function viewModel(main, id){
   ${m.description ? `<p>${esc(m.description)}</p>` : ''}
   ${w ? `<div class="card" style="padding:12px 14px"><div class="row spread" style="flex-wrap:nowrap;gap:10px"><label class="row" style="flex-wrap:nowrap;gap:10px;cursor:pointer;margin:0;font-weight:600"><input type="checkbox" style="width:22px;height:22px;flex:none" ${m.published ? 'checked' : ''} onchange="togglePublished(${m.id}, this.checked)"> 🛍 ${t('show_on_site')}</label>${m.published ? `<button class="small" onclick="shareShop(${m.id})">${t('share_link')}</button>` : ''}</div><p class="small muted" style="margin:6px 0 0">${t('site_hint')}${m.published && !m.photos.length ? ' ⚠ ' + t('photos') + ': 0' : ''}</p></div>` : ''}
   ${detailsCard(m, w)}
+  <div id="whocard"></div>
   <div id="igcard"></div>
   <div class="card"><h3>${t('photos')}</h3>
   <div class="photos">${w ? `<label class="photo-add"><span class="plus" style="display:flex"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><span>${t('take_photo')}</span><input type="file" accept="image/*" capture="environment" class="hide" id="pfc"></label><label class="photo-add"><span class="plus">+</span><span>${t('from_gallery')}</span><input type="file" accept="image/*" multiple class="hide" id="pf"></label>` : ''}${m.photos.map(p => `<div class="p ${p.is_main ? 'main' : ''}" style="background-image:url('${urlCache[p.path] || ''}')" onclick="window.open('${urlCache[p.path] || ''}','_blank')">${w ? `<button onclick="event.stopPropagation();photoMenu(${p.id},${m.id})">⋯</button>` : ''}</div>`).join('') || (w ? '' : `<span class="muted small">${t('no_data')}</span>`)}</div></div>
@@ -831,7 +832,8 @@ async function viewModel(main, id){
     <div style="flex:none">${statusPill('order_status', s.orders.status)}</div></div>`; }).join('') || `<div class="empty">${t('no_sales_yet')}</div>`}</div>` : ''}
   ${w ? `<div class="row" style="justify-content:center"><button onclick="editModel(${m.id})">${t('edit')}</button>${m.archived ? `<button onclick="unarchiveModel(${m.id})">${t('restore')}</button>` : `<button class="danger" onclick="archiveModel(${m.id})">${t('archive')}</button>`}<button class="danger" onclick="deleteModel(${m.id})">${t('delete')}</button></div>` : ''}`;
   window._model = m;
-  if (['admin','vendite'].includes(S.profile.role)) Promise.all([igModelCard(m), whoWouldBuy(m).catch(() => '')]).then(([h, w]) => { const el = $('#igcard'); if (el) el.innerHTML = h + w; }).catch(() => {});
+  if (['admin','vendite'].includes(S.profile.role)) igModelCard(m).then(h => { const el = $('#igcard'); if (el) el.innerHTML = h; }).catch(() => {});
+    whoWouldBuy(m).then(h => { const el = $('#whocard'); if (el) el.innerHTML = h; }).catch(() => {});
   ['#pf', '#pfc'].forEach(sel => { const el = $(sel); if (el) el.onchange = async e => { await uploadPhotos(m.id, [...e.target.files], m.photos.length); route(); }; });
 }
 async function deleteVariant(vid){
@@ -2268,7 +2270,7 @@ function scorePerson(p, m, avail){
   if (age < 30){ s += 1; why.push(t('why_recent')); } else if (age > 150) s -= 1;
   if (d.stage === 'perso') s -= 1;
   const core = why.some(w => [t('why_brand'), t('why_cat'), t('why_asked')].includes(w));
-  return core && s >= 3 ? {s, why} : null;
+  return core && s >= 4 ? {s, why} : null;
 }
 async function stockModels(){
   const [ms, st] = await Promise.all([sb.from('models').select('id,name,brand_id,category_id,list_price,gender,kind,variants(id,size,status)').eq('archived', false).then(check), sb.from('v_variant_stock').select('variant_id,available').then(check)]);
@@ -2387,9 +2389,10 @@ async function whoWouldBuy(m){
   const avail = [...new Set(m.variants.filter(v => (av[v.id] || 0) > 0 || m.kind === 'ordine').map(v => String(v.size || '').toUpperCase()).filter(Boolean))];
   const R = window._people.map(p => ({p, r: scorePerson(p, m, avail)})).filter(x => x.r).sort((a, b) => b.r.s - a.r.s).slice(0, 12);
   window._grp = {g: {name: `${brandName(m.brand_id)} ${m.name}`, people: R.map(x => x.p)}, prods: [{m: {...m, avail}, n: R.length, s: 0}]};
-  return `<div class="card"><div class="row spread"><h3 style="margin:0">🎯 ${t('tr_who')}</h3>${R.length ? `<button class="small primary" onclick="whoMsg()">✍ ${t('tr_write')}</button>` : ''}</div>
+  return `<details class="card fold"><summary><h3 style="display:inline">🎯 ${t('tr_who')}</h3> <span class="pill ${R.length ? 'good' : ''}">${R.length} ${t('tr_potential')}</span></summary>
+    ${R.length ? `<div class="row" style="justify-content:flex-end;margin:8px 0"><button class="small primary" onclick="whoMsg()">✍ ${t('tr_write')}</button></div>` : ''}
     ${R.length ? R.map(x => personRow(x.p, `<div class="small" style="color:var(--good)">${x.r.why.filter(w => !w.startsWith('✗')).join(' · ')}${x.r.why.some(w => w.startsWith('✗')) ? ` <span style="color:var(--bad)">${x.r.why.filter(w => w.startsWith('✗')).join(' · ')}</span>` : ''}</div>`)).join('') : `<p class="small muted" style="margin:8px 0 0">${t('tr_who_none')}</p>`}
-    <div id="gmsg"></div><input type="checkbox" class="gprod" value="${m.id}" checked hidden></div>`;
+    <div id="gmsg"></div><input type="checkbox" class="gprod" value="${m.id}" checked hidden></details>`;
 }
 function whoMsg(){ groupMsg(); }
 
