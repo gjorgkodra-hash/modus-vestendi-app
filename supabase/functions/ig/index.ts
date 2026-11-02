@@ -313,6 +313,92 @@ Answer with ONLY JSON: {"brand":"brand name as written or recognised, or null","
   return ai;
 }
 
+// ---------- AI interests from DM conversations ----------
+const normLink = (u: string) => String(u ?? "").split("?")[0].replace(/\/$/, "");
+async function analyzeThread(key: string, th: any, msgs: any[], ctx: any) {
+  const lines = msgs.map((m: any) => {
+    const parts: string[] = [];
+    if (m.text) parts.push(m.text);
+    const a = m.attachments ?? {};
+    for (const sh of a.s ?? []) {
+      const md = ctx.media.get(normLink(sh.link));
+      parts.push(md ? `[shared our post${md.model_id ? ` model_id=${md.model_id}` : ""}: ${String(md.caption ?? "").slice(0, 120)}]` : `[shared a post ${sh.name ?? ""}]`);
+    }
+    const st = a.st?.reply_to?.id ? ctx.stories.get(a.st.reply_to.id) : null;
+    if (a.st?.reply_to) parts.push(st ? `[reply to our story${st.model_id ? ` model_id=${st.model_id}` : ""}${st.ai ? `: ${[st.ai.brand, st.ai.name, st.ai.price ? st.ai.price + "€" : ""].filter(Boolean).join(" ")}` : ""}]` : "[reply to our story]");
+    if (!parts.length && a.a) parts.push("[photo/attachment]");
+    return `[${String(m.created_at).slice(0, 10)}] ${m.from_me ? "SHOP" : "CLIENT"}: ${parts.join(" ")}`;
+  }).join("\n").slice(-20000);
+  const prompt = `You analyse Instagram DM conversations of Modus Vestendi, a small online shop selling Italian/Spanish fashion brands (mostly women) to Albania, Kosovo, North Macedonia. Messages are mostly in Albanian.
+Known brands: ${ctx.brands.join(", ")}
+Categories (id: name): ${ctx.cats}
+Our products (model_id: brand name price): ${ctx.models}
+Conversation with @${th.username ?? "?"}:
+${lines}
+
+Extract ONLY what the conversation says; use null when unknown. Answer with ONLY JSON:
+{"summary":"1 sentence in Italian: who and what she/he wants","intent":"acquisto|informazioni|post_vendita|altro",
+"stage":"curioso|interessato|trattativa|acquistato|perso","gender":"donna|uomo|null","country":"AL|XK|MK|IT|UK|other|null",
+"sizes":{"top":null,"bottom":null,"shoes":null},"budget_max":null,
+"items":[{"brand":"brand exactly as in the known list, or other name, or null","category_id":null,"what":"short Italian, e.g. cappotto lungo nero","size":null,"color":null,"price":null,"model_id":null,"date":"YYYY-MM-DD","outcome":"chiesto|non_disponibile|ordinato|rifiutato_prezzo|in_attesa"}],
+"brands":["brands she/he likes"],"category_ids":[],"styles":["e.g. elegante, casual, classico"],"objections":["prezzo|taglia|spedizione|tempi|qualita|pagamento"],
+"last_client_msg":"YYYY-MM-DD or null"}`;
+  const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST",
+    headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 5000, messages: [{ role: "user", content: prompt }] }) });
+  const j = await r.json(); if (!r.ok) throw new Error(j?.error?.message ?? "ai_error");
+  const text = (j.content ?? []).filter((x: any) => x.type === "text").map((x: any) => x.text).join("");
+  const mt = text.match(/\{[\s\S]*\}/); if (!mt) throw new Error("ai_no_json");
+  return JSON.parse(mt[0]);
+}
+async function interests(limit = 12, force = false) {
+  const key = await secret("anthropic_api_key"); if (!key) throw new Error("no_ai_key");
+  const [{ data: th }, { data: done }, { data: stats }] = await Promise.all([
+    admin.from("ig_threads").select("id,username,customer_id"),
+    admin.from("ig_interest").select("thread_id,msg_count"),
+    admin.rpc("ig_thread_stats")]);
+  const doneMap = new Map((done ?? []).map((d: any) => [d.thread_id, d.msg_count]));
+  const st = new Map((stats ?? []).map((x: any) => [x.thread_id, x]));
+  const todo = (th ?? []).filter((t: any) => { const s: any = st.get(t.id); return s && s.client_msgs > 0 && (force || doneMap.get(t.id) !== s.n); })
+    .sort((a: any, b: any) => String((st.get(b.id) as any).last).localeCompare(String((st.get(a.id) as any).last))).slice(0, limit);
+  if (!todo.length) return { analyzed: 0, left: 0 };
+  const [{ data: media }, { data: stories }, { data: brands }, { data: cats }, { data: models }] = await Promise.all([
+    admin.from("ig_media").select("permalink,caption,model_id"), admin.from("ig_stories").select("id,model_id,ai"),
+    admin.from("brands").select("name"), admin.from("categories").select("id,name"),
+    admin.from("models").select("id,name,list_price,brands(name)").eq("archived", false)]);
+  const ctx = { media: new Map((media ?? []).map((m: any) => [normLink(m.permalink), m])), stories: new Map((stories ?? []).map((s: any) => [s.id, s])),
+    brands: (brands ?? []).map((b: any) => b.name.trim()), cats: (cats ?? []).map((c: any) => `${c.id}: ${c.name}`).join("; "),
+    models: (models ?? []).map((m: any) => `${m.id}: ${m.brands?.name?.trim() ?? ""} ${m.name} ${m.list_price ?? ""}€`).join("; ") };
+  let ok = 0; const errors: string[] = [];
+  for (let i = 0; i < todo.length; i += 4) {
+    await Promise.all(todo.slice(i, i + 4).map(async (t: any) => {
+      try {
+        const { data: msgs } = await admin.from("ig_messages").select("from_me,text,attachments,created_at").eq("thread_id", t.id).order("created_at");
+        const data = await analyzeThread(key, t, msgs ?? [], ctx);
+        const s: any = st.get(t.id);
+        await admin.from("ig_interest").upsert({ thread_id: t.id, customer_id: t.customer_id, username: t.username, data, msg_count: s.n, last_msg_at: s.last, analyzed_at: new Date().toISOString() }, { onConflict: "thread_id" });
+        ok++;
+      } catch (e) { errors.push(`${t.username}: ${(e as Error).message}`); }
+    }));
+  }
+  const left = (th ?? []).filter((t: any) => { const s: any = st.get(t.id); return s && s.client_msgs > 0 && doneMap.get(t.id) !== s.n; }).length - ok;
+  return { analyzed: ok, left: Math.max(0, left), errors };
+}
+
+// ---------- AI promo message for a customer group ----------
+async function promoText(body: any) {
+  const key = await secret("anthropic_api_key"); if (!key) throw new Error("no_ai_key");
+  const prompt = `You write Instagram DM messages for Modus Vestendi, a small online shop of Italian fashion brands (Albania, Kosovo, North Macedonia).
+Customer group: ${String(body.group ?? "").slice(0, 400)}
+Products to propose: ${JSON.stringify(body.products ?? []).slice(0, 3000)}
+Write a short, warm, personal DM (max 450 characters) in ${body.lang === "it" ? "Italian" : body.lang === "en" ? "English" : "Albanian"} that a shop owner would send by hand: greet, say we thought of her/him because of what she/he likes, name the product(s) with price, invite to reply for size/photos. Use {name} where the first name goes. No hashtags, max 1 emoji. Answer with ONLY the message text.`;
+  const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST",
+    headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 3000, messages: [{ role: "user", content: prompt }] }) });
+  const j = await r.json(); if (!r.ok) throw new Error(j?.error?.message ?? "ai_error");
+  return { text: (j.content ?? []).filter((x: any) => x.type === "text").map((x: any) => x.text).join("").trim() };
+}
+
 // ---------- AI customer profile ----------
 async function aiProfile(customerId: number) {
   const key = await secret("anthropic_api_key"); if (!key) throw new Error("no_ai_key");
@@ -410,6 +496,8 @@ Deno.serve(async (req) => {
         return json({ ok: true });
       }
       case "profile": return json(await aiProfile(Number(body.customer_id)));
+      case "interests": return json(await interests(Math.min(Number(body.limit) || 12, 30), !!body.force));
+      case "promo_text": return json(await promoText(body));
       case "story": {
         const c = await g(`/${IG}/media`, { image_url: body.image_url, media_type: "STORIES" }, "POST");
         await waitReady(c.id);
