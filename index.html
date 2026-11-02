@@ -261,6 +261,11 @@ const T = {
   ord_shop:['Negozio dove si trova','Shop where it is','Dyqani'], ord_sizes:['Taglie viste in negozio','Sizes seen in the shop','Masat në dyqan'], ord_seen:['visto il','seen on','parë më'], ord_req:['Richiesta cliente','Customer request','Kërkesë klienti'],
   ord_flow:['Flusso: richiesta cliente → chiedi al negozio → confermato → acquistato e ordine → spedizione.','Flow: customer request → ask the shop → confirmed → bought & order → shipping.','Kërkesë → dyqani → konfirmim → blerje → dërgesë.'],
   ord_buy:['Acquistato → crea ordine','Bought → create order','Blerë → krijo porosi'], ord_buy_hint:['Registra l\'acquisto in negozio (entra in magazzino) e crea subito l\'ordine per il cliente.','Records the shop purchase (into stock) and creates the customer order right away.','Regjistron blerjen dhe krijon porosinë.'], ord_cost:['Prezzo pagato in negozio','Price paid in shop','Çmimi i paguar'],
+  st_inbox:['Story da trasformare in prodotti','Stories to turn into products','Story për t\'u bërë produkte'], st_inbox_hint:['Le story pubblicate arrivano qui da sole. Con ➕ l\'AI legge marca, nome e prezzo dall\'immagine e crea il prodotto su ordinazione. 💬 = clienti che hanno risposto.','Published stories land here automatically. ➕ lets AI read brand, name and price from the image and create the on-request product. 💬 = customers who replied.','Story-t e publikuara vijnë këtu.'],
+  st_make:['Prodotto','Product','Produkt'], st_ignore:['Ignora','Ignore','Injoro'], st_ai_wait:['L\'AI sta leggendo la story…','AI is reading the story…','AI po lexon story-n…'], st_ai_fail:['AI non disponibile: compila a mano','AI unavailable: fill in manually','AI s\'është e disponueshme'],
+  st_ai_done:['Campi compilati dall\'AI: controllali','Fields filled by AI: please check','Fushat i plotësoi AI: kontrolloji'], st_sizes_seen:['Taglie scritte nella story','Sizes on the story','Masat në story'],
+  st_replies:['Clienti che hanno risposto alla story','Customers who replied to the story','Klientët që iu përgjigjën story-t'], st_replies_hint:['Per quelli spuntati creo subito una richiesta (e il cliente, se non esiste).','For the ticked ones I create a request right away (and the customer if missing).','Për të zgjedhurit krijoj kërkesë.'],
+  st_from_story:['Dalla risposta alla story Instagram','From Instagram story reply','Nga përgjigja e story-t'], st_req_made:['richieste create','requests created','kërkesa u krijuan'],
   ship_fee:['Spedizione pagata dal cliente','Shipping charged to customer','Dërgesa e paguar nga klienti'], ship_free:['gratuita','free','falas'], translating:['Traduco in albanese e inglese…','Translating to Albanian and English…','Po përkthej në shqip dhe anglisht…'], ai_sale:['saldo','sale','ulje'], ai_sources:['Fonti','Sources','Burimet'],
   lk_model:['Prodotto già in catalogo: aggiungi taglie','Product in the catalogue: add sizes','Produkt në katalog: shto masa'], lk_model_pick:['Prodotto','Product','Produkti'], lk_need_sizes:['Inserisci almeno una taglia con i pezzi','Enter at least one size with pieces','Shto të paktën një masë'], per_piece:['per pezzo','per piece','për copë'], det_title:['Dettagli prodotto','Product details','Detajet e produktit'], det_empty:['Nessun dettaglio: aggiungi composizione, lavaggio, vestibilità… Compaiono nel negozio online.','No details yet: add composition, care, fit… They show in the online shop.','Pa detaje: shtoni përbërjen, larjen, përshtatjen…'], det_hint:['Compila solo quello che serve: i campi vuoti non compaiono nel negozio. Le scelte dei menu vengono tradotte da sole in albanese e inglese; nei campi liberi scrivi in italiano (i materiali più comuni vengono tradotti).','Fill in only what you need: empty fields are hidden in the shop.','Plotësoni vetëm atë që duhet.'], det_g_comp:['Composizione e lavaggio','Composition & care','Përbërja dhe larja'], det_g_det:['Dettagli','Details','Detaje'], det_g_fit:['Taglia e fit','Size & fit','Masa dhe përshtatja'], det_g_shoes:['Solo per scarpe','Shoes only','Vetëm për këpucë'], sa_new:['Nuovi clienti registrati sul sito','New customers signed up on the website','Klientë të rinj të regjistruar'], sa_new_pill:['Sito','Website','Faqja'], sa_title:['Account del negozio online','Online shop accounts','Llogaritë e dyqanit online'], sa_sub:['clienti registrati con telefono e password','customers registered with phone and password','klientë të regjistruar'], sa_n:['account','accounts','llogari'], sa_last:['Ultimo accesso','Last login','Hyrja e fundit'], sa_reset:['Invia email di recupero','Send recovery email','Dërgo email rikuperimi'], sa_reset_hint:['Il cliente riceve sulla sua email un codice di 6 cifre per creare lui stesso una nuova password. Nessuno vede la password.','The customer receives a 6-digit code by email to set a new password themselves. Nobody sees the password.','Klienti merr në email një kod për të krijuar vetë fjalëkalimin e ri.'], sa_sent:['Email con il codice inviata al cliente','Email with the code sent to the customer','Email-i u dërgua'], sa_no_email:['Questo account non ha un\'email: il cliente deve aggiungerla dal suo profilo','This account has no email','Kjo llogari nuk ka email'], sa_no_email_srv:['Invio email non ancora attivo: manca la chiave Resend','Email sending not active yet: Resend key missing','Dërgimi i email-it nuk është aktiv'], nl_title:['Iscritti newsletter','Newsletter sign-ups','Të regjistruarit në newsletter'], nl_sub:['dal negozio online · codice 10% su 1 capo per nuovi clienti','from the online shop · 10% code on 1 item for new customers','nga dyqani online · kod 10% për 1 artikull'], nl_subs:['iscritti','sign-ups','të regjistruar'], nl_used_n:['hanno usato il codice','used the code','e përdorën kodin'], nl_code:['Codice','Code','Kodi'], nl_unused:['non usato','not used','i papërdorur'], gender:['Genere','Gender','Gjinia'], fb_title:['Esito della consegna','Delivery outcome','Rezultati i dorëzimit'], fb_ask:['Com\'è andata la consegna?','How did the delivery go?','Si shkoi dorëzimi?'], fb_btn:['Registra esito','Record outcome','Regjistro rezultatin'],
   fb_ok:['Tutto ok','All good','Gjithçka në rregull'], fb_return:['Reso','Return','Kthim'], fb_exchange:['Cambio taglia','Size exchange','Ndërrim mase'], fb_refused:['Rifiutato alla consegna','Refused at delivery','Refuzuar në dorëzim'], fb_mixed:['Misto','Mixed','Përzier'],
@@ -650,12 +655,13 @@ async function viewCatalog(main){
   await signedUrls(mains);
   main.innerHTML = `<div class="row spread"><h1>${t('catalog')}</h1>${can.catalogWrite() ? (catFilter.kind === 'ordine' ? `<button class="primary" onclick="newOrdine()">+ ${t('ord_new')}</button>` : `<button class="primary" onclick="newModel()">+ ${t('new_model')}</button>`) : ''}</div>
   <div class="chips" style="margin:0 0 12px">${[['stock', '📦 ' + t('ord_stock')], ['ordine', '🏬 ' + t('ord_title')]].map(([k, l]) => `<button class="${catFilter.kind === k ? 'primary' : ''}" onclick="catFilter.kind='${k}';route()">${l}</button>`).join('')}</div>
-  ${catFilter.kind === 'ordine' ? `<div class="help">${t('ord_hint')}</div>` : ''}
+  ${catFilter.kind === 'ordine' ? `<div class="help">${t('ord_hint')}</div><div id="stinbox"></div>` : ''}
   <div class="row" style="margin-bottom:14px"><input class="search" id="cq" placeholder="${t('search')}" value="${esc(catFilter.q)}">
   <select id="cb" style="max-width:200px"><option value="">${t('brand')}: ${t('all')}</option>${S.brands.map(b => `<option value="${b.id}" ${String(b.id) === catFilter.brand ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}</select>
   <button class="${catFilter.archived ? 'primary' : ''}" onclick="catFilter.archived=!catFilter.archived;route()">${t('archived')}</button><select id="cc" style="max-width:240px"><option value="">${t('category')}: ${t('all')}</option>${catOptions().map(([k, l]) => `<option value="${k}" ${String(k) === catFilter.cat ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
   <div class="chips" style="margin:-4px 0 12px">${[['', t('all')], ...opts('gender')].map(([k, l]) => `<button class="small ${catFilter.gender === k ? 'primary' : ''}" onclick="catFilter.gender='${k}';route()">${esc(l)}</button>`).join('')}</div>
   <div class="models" id="ml"></div>`;
+  if (catFilter.kind === 'ordine') storyInbox().then(h => { const el = $('#stinbox'); if (el) el.innerHTML = h; }).catch(e => console.error(e));
   const draw = () => {
     const q = catFilter.q.toLowerCase();
     const list = models.map((m, i) => ({m, ph: mains[i]})).filter(({m}) =>
@@ -2246,8 +2252,9 @@ async function igModelCard(m){
   const {data} = await sb.from('ig_media').select('id,permalink,ts,like_count,comments_count,reach,media_url,thumbnail_url,media_type').eq('model_id', m.id).order('ts', {ascending:false});
   const L = data || [];
   const sup = m.kind === 'ordine' ? (S.suppliers || []).find(s => s.id === m.source_supplier_id) : null;
+  const interested = m.kind === 'ordine' ? await storyInterested(m).catch(() => '') : '';
   return `${m.kind === 'ordine' ? `<div class="card" style="border-color:var(--tan)"><div class="row spread"><h3 style="margin:0">🏬 ${t('ord_title')}</h3><button class="small primary" onclick="ordRequest(${m.id})">🛒 ${t('ord_req')}</button></div>
-    <p class="small" style="margin:8px 0 0">${t('ord_shop')}: <b>${esc(sup?.name || '—')}</b>${m.seen_on ? ` · ${t('ord_seen')} ${fdate(m.seen_on)}` : ''}</p><p class="small muted" style="margin:4px 0 0">${t('ord_flow')}</p></div>` : ''}
+    <p class="small" style="margin:8px 0 0">${t('ord_shop')}: <b>${esc(sup?.name || '—')}</b>${m.seen_on ? ` · ${t('ord_seen')} ${fdate(m.seen_on)}` : ''}</p><p class="small muted" style="margin:4px 0 0">${t('ord_flow')}</p>${interested}</div>` : ''}
   <div class="card"><div class="row spread"><h3 style="margin:0">📷 Instagram</h3><div class="row" style="gap:6px"><button class="small" onclick="storyCompose(${m.id})">📱 Story</button>${m.kind === 'ordine' ? '' : `<button class="small primary" onclick="igCompose(${m.id})">📤 ${t('ig_publish')}</button>`}</div></div>
     ${L.length ? L.map(x => `<a href="${esc(x.permalink)}" target="_blank" rel="noopener" class="row" style="flex-wrap:nowrap;gap:10px;padding:8px 0;border-top:1px solid var(--line)"><img src="${esc((x.media_type === 'VIDEO' ? x.thumbnail_url : x.media_url) || '')}" alt="" style="width:44px;height:55px;object-fit:cover;border-radius:6px"><div class="small">${fdate(x.ts)}<br>❤ ${fnum(x.like_count)} · 💬 ${fnum(x.comments_count)}${x.reach != null ? ` · 👁 ${fnum(x.reach)}` : ''}</div></a>`).join('') : `<p class="small muted" style="margin:8px 0 0">${t('ig_not_posted')}</p>`}</div>`;
 }
@@ -2277,11 +2284,13 @@ async function viewDMs(main){
 async function dmSync(){ toast(t('ig_syncing')); try { await igCall({action:'dm_sync'}); route(); } catch (e) { toast(e.message, true); } }
 const dmBubble = m => {
   const a = m.attachments || {}, imgs = (a.a || []).map(x => x.image_data?.url || x.image_data?.preview_url || x.video_data?.preview_url).filter(Boolean);
-  const share = (a.s || [])[0], story = a.st;
+  const share = (a.s || [])[0], story = a.st, sm = story?.reply_to?.id ? (window._stMap || {})[story.reply_to.id] : null;
   return `<div style="display:flex;justify-content:${m.from_me ? 'flex-end' : 'flex-start'};margin:4px 0"><div style="max-width:78%;padding:8px 11px;border-radius:14px;${m.from_me ? 'background:var(--accent);color:var(--surface)' : 'background:var(--accent-soft)'}">
     ${imgs.map(u => `<img src="${esc(u)}" alt="" style="max-width:100%;border-radius:8px;display:block;margin-bottom:4px">`).join('')}
     ${share ? `<a href="${esc(share.link || '#')}" target="_blank" rel="noopener" class="small" style="color:inherit;text-decoration:underline">↗ ${esc(share.name || t('dm_shared_post'))}</a><br>` : ''}
     ${story ? `<span class="small" style="opacity:.8">${story.mention ? t('dm_story_mention') : t('dm_story_reply')}</span><br>` : ''}
+    ${sm?.image_path && urlCache[sm.image_path] ? `<img src="${esc(urlCache[sm.image_path])}" alt="" style="width:90px;aspect-ratio:9/16;object-fit:cover;border-radius:8px;display:block;margin:4px 0">` : ''}
+    ${sm && !m.from_me ? (sm.model_id ? `<div class="small" style="margin:4px 0">🏷 <a href="#/articolo/${sm.model_id}" onclick="document.querySelectorAll('.modal-bg').forEach(x=>x.remove())">${esc(sm.models?.name || '')}</a> <button class="small" onclick="storyReplyRequest('${m.thread_id}',${sm.model_id})">🛒 ${t('ord_req')}</button></div>` : `<button class="small" style="margin:4px 0" onclick="document.querySelectorAll('.modal-bg').forEach(x=>x.remove());storyToProduct('${story.reply_to.id}')">➕ ${t('st_make')}</button>`) : ''}
     ${m.text ? `<span style="white-space:pre-wrap">${esc(m.text)}</span>` : (!imgs.length && !share && !story ? '📎' : '')}
     <div style="font-size:10px;opacity:.65;text-align:right">${new Date(m.created_at).toLocaleString(LANG === 'en' ? 'en-GB' : 'it-IT', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</div></div></div>`;
 };
@@ -2290,6 +2299,9 @@ async function dmOpen(tid){
   try { await igCall({action:'dm_thread', thread_id: tid}); } catch (e) { toast(e.message, true); }
   const [th, ms] = await Promise.all([sb.from('ig_threads').select('*,customers(id,full_name)').eq('id', tid).single(), sb.from('ig_messages').select('*').eq('thread_id', tid).order('created_at')]);
   const x = check(th), M = check(ms);
+  const sids = [...new Set(M.map(m => m.attachments?.st?.reply_to?.id).filter(Boolean))];
+  window._stMap = {};
+  if (sids.length){ const {data: ss} = await sb.from('ig_stories').select('id,image_path,model_id,models(name)').in('id', sids); (ss || []).forEach(s => window._stMap[s.id] = s); await signedUrls((ss || []).map(s => s.image_path).filter(Boolean)); }
   const cs = window._custLite || (window._custLite = await loadCustomersLite());
   bg.querySelector('.modal').innerHTML = `<div class="row spread" style="flex-wrap:nowrap"><div><h3 style="margin:0">@${esc(x.username || '')}</h3>
       <div class="small">${x.customers ? `👤 <a href="#/cliente/${x.customers.id}" onclick="this.closest('.modal-bg').remove()">${esc(x.customers.full_name)}</a> · <button class="link small" onclick="dmLink('${tid}',null)">${t('dm_unlink')}</button>` : `<span class="muted">${t('dm_not_linked')}</span>`}</div></div>
@@ -2390,14 +2402,14 @@ async function storyPublish(bg){
 }
 
 // ====== Products on request (seen in a shop, not in stock) ======
-function newOrdine(){
+function newOrdine(pre = {}, extra2 = '', after = null){
   const f = modelFields().filter(x => !['instagram_status','instagram_url','list_price','season'].includes(x.name)); f[0].required = false;
   f.splice(5, 0, {name:'source_supplier_id', label:t('ord_shop'), type:'select', options:S.suppliers.map(s => [s.id, s.name]), required:true},
     {name:'photos', label:t('photos'), type:'file'},
     {name:'sale_price', label:t('sale_price') + ' (€)', type:'number', required:true},
     {name:'sizes', label:t('ord_sizes'), type:'sizes'},
     {name:'color', label:`${t('color')} (${t('optional')})`, type:'colorname'});
-  form({title:'🏬 ' + t('ord_new'), fields:f, extra:`<p class="small muted">${t('ord_hint')}</p>`, values:{gender:'donna'}, onSubmit: async v => {
+  const fm = form({title:'🏬 ' + t('ord_new'), fields:f, extra:`${extra2}<p class="small muted" style="clear:both">${t('ord_hint')}</p>`, values:Object.assign({gender:'donna'}, pre), onSubmit: async v => {
     await ensureBrand(v);
     const files = v.photos, sizes = v.sizes || [], color = v.color, colorHx = v.color_hex, price = v.sale_price;
     delete v.photos; delete v.sizes; delete v.color; delete v.color_hex; delete v.sale_price;
@@ -2405,7 +2417,8 @@ function newOrdine(){
     Object.assign(v, {kind:'ordine', list_price: price, seen_on: today(), instagram_status:'non_pubblicato', published:false});
     const m = check(await sb.from('models').insert(v).select().single());
     for (const {size: sz0} of sizes){ const sz = sz0 || 'TU'; await insertVariant({model_id: m.id, size: sz, color: color || null, color_hex: colorHx, sale_price: price, status:'in_magazzino', sku: skuFor(m, sz, color)}); }
-    await uploadPhotos(m.id, files);
+    if (after) await after(m, fm);
+    await uploadPhotos(m.id, files, after ? 1 : 0);
     location.hash = '#/articolo/' + m.id;
   }});
 }
@@ -2437,6 +2450,75 @@ async function reqBuy(id){
       check(await sb.from('wishlist').update({status:'completato', resolution:'ordine', resolved_at: new Date().toISOString(), order_id: oid}).eq('id', id));
       toast(t('saved')); location.hash = '#/ordine/' + oid;
     }});
+}
+
+// ====== Stories → on-request products ======
+async function storyInbox(){
+  const [st, rp] = await Promise.all([
+    sb.from('ig_stories').select('*').is('model_id', null).eq('dismissed', false).not('image_path', 'is', null).order('ts', {ascending:false}).limit(40),
+    sb.from('v_story_replies').select('story_id,username')]);
+  const S2 = check(st) || [], R = check(rp) || [];
+  if (!S2.length) return '';
+  await signedUrls(S2.map(s => s.image_path));
+  const cnt = id => R.filter(r => r.story_id === id).length;
+  return `<div class="card"><h3>📱 ${t('st_inbox')} (${S2.length})</h3><p class="small muted">${t('st_inbox_hint')}</p>
+    <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px">${S2.map(s => `<div style="flex:0 0 110px"><div style="aspect-ratio:9/16;border-radius:8px;background:var(--accent-soft) center/cover;background-image:url('${esc(urlCache[s.image_path] || '')}');position:relative">${cnt(s.id) ? `<span class="pill warn" style="position:absolute;top:6px;left:6px">💬 ${cnt(s.id)}</span>` : ''}</div>
+      <div class="small muted" style="margin:3px 0">${s.ts ? fdate(s.ts) : ''}</div>
+      <div class="row" style="gap:4px;flex-wrap:nowrap"><button class="small primary" style="flex:1;padding:6px 4px" onclick="storyToProduct('${s.id}')">➕ ${t('st_make')}</button><button class="small" style="padding:6px 8px" title="${t('st_ignore')}" onclick="storyDismiss('${s.id}')">✕</button></div></div>`).join('')}</div></div>`;
+}
+async function storyDismiss(id){ check(await sb.from('ig_stories').update({dismissed: true}).eq('id', id)); route(); }
+async function ensureThreadCustomer(tid){
+  const th = check(await sb.from('ig_threads').select('id,username,customer_id').eq('id', tid).single());
+  if (th.customer_id) return th.customer_id;
+  const c = check(await sb.from('customers').insert({full_name: th.username, instagram: th.username, source:'instagram_organico', preferred_lang:'sq'}).select().single());
+  await igCall({action:'dm_link', thread_id: tid, customer_id: c.id}); window._custLite = null;
+  return c.id;
+}
+async function storyToProduct(sid){
+  const bg = modal(`<p style="text-align:center;padding:24px 8px">✨ ${t('st_ai_wait')}</p>`);
+  let st = check(await sb.from('ig_stories').select('*').eq('id', sid).single()), ai = st.ai;
+  if (!ai){ try { ai = await igCall({action:'story_ai', story_id: sid}); } catch (e) { ai = {}; toast(t('st_ai_fail'), true); } }
+  const reps = check(await sb.from('v_story_replies').select('*').eq('story_id', sid)) || [];
+  bg.remove();
+  const brand = ai.brand ? S.brands.find(b => b.name.trim().toLowerCase() === String(ai.brand).trim().toLowerCase()) : null;
+  await signedUrls([st.image_path]);
+  const pre = {brand_id: brand?.id || '', new_brand: brand ? '' : (ai.brand || ''), category_id: ai.category_id || '', gender: ai.gender || 'donna', name: ai.name || '', sale_price: ai.price || '', description: ai.description || '', color: ai.color || ''};
+  const extra = `<img src="${esc(urlCache[st.image_path] || '')}" alt="" style="width:90px;aspect-ratio:9/16;object-fit:cover;border-radius:8px;float:right;margin:0 0 8px 10px">
+    <p class="small">${ai.brand || ai.name ? '✨ ' + t('st_ai_done') : ''}${ai.sizes?.length ? `<br>${t('st_sizes_seen')}: <b>${esc(ai.sizes.join(', '))}</b>` : ''}${ai.text_on_image ? `<br><span class="muted">${esc(ai.text_on_image)}</span>` : ''}</p>
+    ${reps.length ? `<div style="clear:both"><b class="small">${t('st_replies')}</b>${reps.map(r => `<label class="small row" style="gap:6px;margin:4px 0;font-weight:normal"><input type="checkbox" class="strep" value="${esc(r.thread_id)}" checked style="width:auto"> @${esc(r.username || '')}${r.first_text ? ` <span class="muted">“${esc(r.first_text.slice(0, 60))}”</span>` : ''}</label>`).join('')}<p class="small muted">${t('st_replies_hint')}</p></div>` : ''}`;
+  newOrdine(pre, extra, async (m, box) => {
+    check(await sb.from('photos').insert({model_id: m.id, path: st.image_path, is_main: true, sort: 0}));
+    check(await sb.from('ig_stories').update({model_id: m.id}).eq('id', sid));
+    const tids = [...box.querySelectorAll('.strep:checked')].map(x => x.value);
+    for (const tid of tids){ const cid = await ensureThreadCustomer(tid);
+      check(await sb.from('wishlist').insert({customer_id: cid, model_id: m.id, supplier_id: m.source_supplier_id, status:'attesa', notes: t('st_from_story')})); }
+    if (tids.length) toast(`✓ ${tids.length} ${t('st_req_made')}`);
+  }, ai.sizes);
+}
+async function storyReplyRequest(tid, modelId){
+  const cid = await ensureThreadCustomer(tid);
+  document.querySelectorAll('.modal-bg').forEach(x => x.remove());
+  await ordRequestFor(modelId, cid);
+}
+async function ordRequestFor(modelId, customerId){
+  const m = check(await sb.from('models').select('id,name,source_supplier_id,variants(size,color)').eq('id', modelId).single());
+  const cs = await loadCustomersLite();
+  const sizes = [...new Set(m.variants.map(v => v.size).filter(Boolean))], colors = [...new Set(m.variants.map(v => v.color).filter(Boolean))];
+  form({title:'🛒 ' + t('ord_req') + ' · ' + m.name, values:{customer_id: customerId || ''}, fields:[
+    {name:'customer_id', label:t('customer'), type:'select', required:true, options:cs.map(c => [c.id, custLabel(c)])},
+    {name:'size', label:t('size'), type:'datalist', options:sizes, value: sizes.length === 1 ? sizes[0] : ''},
+    {name:'color', label:t('color'), type:'datalist', options:colors, value: colors.length === 1 ? colors[0] : ''},
+    {name:'notes', label:t('notes'), type:'textarea'}],
+    onSubmit: async v => { check(await sb.from('wishlist').insert({...v, customer_id: Number(v.customer_id), model_id: modelId, supplier_id: m.source_supplier_id, status:'attesa'})); toast(t('saved')); location.hash = '#/richieste'; }});
+}
+async function storyInterested(m){
+  const {data: st} = await sb.from('ig_stories').select('id').eq('model_id', m.id);
+  const ids = (st || []).map(x => x.id); if (!ids.length) return '';
+  const {data: rp} = await sb.from('v_story_replies').select('*').in('story_id', ids);
+  const {data: wl} = await sb.from('wishlist').select('customer_id').eq('model_id', m.id);
+  const has = new Set((wl || []).map(w => w.customer_id));
+  return (rp || []).length ? `<div style="margin-top:10px"><b class="small">💬 ${t('st_replies')}</b>${rp.map(r => `<div class="row" style="flex-wrap:nowrap;gap:8px;padding:6px 0;border-top:1px solid var(--line)"><div class="small" style="flex:1;min-width:0">@${esc(r.username || '')}${r.first_text ? ` <span class="muted">“${esc(r.first_text.slice(0, 50))}”</span>` : ''}</div>
+    ${r.customer_id && has.has(r.customer_id) ? `<span class="pill good small">✓ ${t('ord_req')}</span>` : `<button class="small" onclick="storyReplyRequest('${esc(r.thread_id)}',${m.id})">🛒 ${t('ord_req')}</button>`}<button class="small" onclick="dmOpen('${esc(r.thread_id)}')">💬</button></div>`).join('')}</div>` : '';
 }
 
 // ====== Report (admin) ======

@@ -228,6 +228,10 @@ async function syncThread(conv: any, msgs?: any[]) {
   const rows = msgs.map((m: any) => ({ id: m.id, thread_id: conv.id, from_me: m.from?.id === IG, text: m.message ?? null,
     attachments: m.attachments || m.shares || m.story ? { a: m.attachments?.data ?? null, s: m.shares?.data ?? null, st: m.story ?? null } : null, created_at: m.created_time }));
   if (rows.length) await admin.from("ig_messages").upsert(rows, { onConflict: "id" });
+  for (const m of msgs) {
+    const rt = m.story?.reply_to;
+    if (rt?.id) await saveStory(rt.id, rt.link ?? null, { ts: m.created_time });
+  }
   return cust;
 }
 async function syncDMs(full: boolean) {
@@ -240,6 +244,55 @@ async function syncDMs(full: boolean) {
     await syncThread(c); n++;
   }
   return { threads: convs.length, updated: n };
+}
+
+// ---------- stories ----------
+async function saveStory(id: string, url: string | null, extra: any = {}) {
+  const { data: ex } = await admin.from("ig_stories").select("id,image_path").eq("id", id).maybeSingle();
+  if (ex?.image_path) return;
+  let path: string | null = null;
+  if (url) {
+    try {
+      const r = await fetch(url);
+      if (r.ok) {
+        const buf = new Uint8Array(await r.arrayBuffer());
+        path = `ig_stories/${id}.jpg`;
+        const up = await admin.storage.from("foto").upload(path, buf, { contentType: r.headers.get("content-type") ?? "image/jpeg", upsert: true });
+        if (up.error) path = null;
+      }
+    } catch (_) { /* image not reachable anymore */ }
+  }
+  await admin.from("ig_stories").upsert({ id, image_path: path, ...extra }, { onConflict: "id" });
+}
+async function syncStories() {
+  const list = (await g(`/${IG}/stories`, { fields: "id,media_type,media_url,thumbnail_url,permalink,timestamp" })).data ?? [];
+  for (const s of list) await saveStory(s.id, s.media_type === "VIDEO" ? s.thumbnail_url : s.media_url, { media_type: s.media_type, ts: s.timestamp, permalink: s.permalink });
+  return list.length;
+}
+async function storyAI(id: string) {
+  const key = await secret("anthropic_api_key"); if (!key) throw new Error("no_ai_key");
+  const { data: st } = await admin.from("ig_stories").select("image_path").eq("id", id).single();
+  if (!st?.image_path) throw new Error("no_image");
+  const { data: file } = await admin.storage.from("foto").download(st.image_path);
+  const bytes = new Uint8Array(await file!.arrayBuffer());
+  let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  const { data: brands } = await admin.from("brands").select("name");
+  const { data: cats } = await admin.from("categories").select("id,name");
+  const prompt = `This is an Instagram story of Modus Vestendi, a fashion reseller. It shows ONE clothing/shoe/bag item, often with brand and price written on it.
+Known brands: ${(brands ?? []).map((b: any) => b.name).join(", ")}
+Categories (id: name): ${(cats ?? []).map((c: any) => c.id + ": " + c.name).join("; ")}
+Answer with ONLY JSON: {"brand":"brand name as written or recognised, or null","name":"short Italian product name, e.g. Cappotto lungo in lana","category_id":number or null,
+"gender":"donna|uomo|bambini|unisex","color":"main colour in Italian","price":number or null (price written on the story, EUR),"sizes":["sizes written on the story"],"text_on_image":"other text visible","description":"1 sentence in Italian"}`;
+  const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST",
+    headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 4000, messages: [{ role: "user", content: [
+      { type: "image", source: { type: "base64", media_type: "image/jpeg", data: btoa(bin) } }, { type: "text", text: prompt }] }] }) });
+  const j = await r.json(); if (!r.ok) throw new Error(j?.error?.message ?? "ai_error");
+  const text = (j.content ?? []).filter((x: any) => x.type === "text").map((x: any) => x.text).join("");
+  const mt = text.match(/\{[\s\S]*\}/); if (!mt) throw new Error("ai_no_json");
+  const ai = JSON.parse(mt[0]);
+  await admin.from("ig_stories").update({ ai }).eq("id", id);
+  return ai;
 }
 
 // ---------- AI customer profile ----------
@@ -312,7 +365,11 @@ Deno.serve(async (req) => {
       case "reply": return json(await g(`/${body.comment_id}/replies`, { message: String(body.message ?? "").slice(0, 2000) }, "POST"));
       case "hide": return json(await g(`/${body.comment_id}`, { hide: !!body.hide }, "POST"));
       case "delete_comment": return json(await g(`/${body.comment_id}`, {}, "DELETE"));
-      case "dm_sync": return json(await syncDMs(!!body.full));
+      case "dm_sync": {
+        const stories = await syncStories().catch((e) => ({ error: e.message }));
+        return json({ stories, ...(await syncDMs(!!body.full)) });
+      }
+      case "story_ai": return json(await storyAI(String(body.story_id)));
       case "dm_thread": {
         const conv = await g(`/${body.thread_id}`, { fields: `id,updated_time,participants,messages.limit(100){${MSG_FIELDS}}` });
         await syncThread(conv, conv.messages?.data ?? []);
