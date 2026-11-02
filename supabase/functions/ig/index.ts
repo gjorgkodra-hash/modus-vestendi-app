@@ -142,6 +142,17 @@ const msgs = (actions: any[] = []) => {
   return a ? Number(a.value) : null;
 };
 async function syncAds(full: boolean) {
+  const adsTok = await secret("meta_ads_token"), mainTok = TOKEN;
+  if (adsTok) {
+    TOKEN = adsTok;
+    try {
+      const d = (await g("/debug_token", { input_token: adsTok })).data ?? {};
+      await admin.from("ig_state").upsert({ k: "ads_token", v: { valid: d.is_valid, expires_at: d.expires_at ? new Date(d.expires_at * 1000).toISOString() : null }, updated_at: new Date().toISOString() });
+    } catch (e) { await admin.from("ig_state").upsert({ k: "ads_token", v: { valid: false, error: (e as Error).message }, updated_at: new Date().toISOString() }); }
+  }
+  try { return await syncAdsInner(full); } finally { TOKEN = mainTok; }
+}
+async function syncAdsInner(full: boolean) {
   let accounts: any[] = [];
   try { accounts = await gAll("/me/adaccounts", { fields: "id,name,currency,account_status" }); }
   catch (e) { return { ad_accounts: 0, error: (e as GErr).message }; }
@@ -369,6 +380,7 @@ Deno.serve(async (req) => {
         const stories = await syncStories().catch((e) => ({ error: e.message }));
         return json({ stories, ...(await syncDMs(!!body.full)) });
       }
+      case "ads": return json(await syncAds(!!body.full));
       case "story_ai": return json(await storyAI(String(body.story_id)));
       case "dm_thread": {
         const conv = await g(`/${body.thread_id}`, { fields: `id,updated_time,participants,messages.limit(100){${MSG_FIELDS}}` });
