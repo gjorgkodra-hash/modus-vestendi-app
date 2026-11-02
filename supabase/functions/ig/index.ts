@@ -206,6 +206,75 @@ async function publish(urls: string[], caption: string, modelId?: number) {
   return { id: pub.id, permalink: m.permalink };
 }
 
+// ---------- direct messages ----------
+const MSG_FIELDS = "id,message,from,created_time,attachments{image_data,video_data,file_url,name},shares{link,name},story";
+async function linkCustomer(threadId: string, username: string, igUserId: string) {
+  if (!username) return null;
+  const { data: c } = await admin.from("customers").select("id,ig_user_id").ilike("instagram", username).limit(1).maybeSingle();
+  if (!c) return null;
+  if (!c.ig_user_id) await admin.from("customers").update({ ig_user_id: igUserId }).eq("id", c.id);
+  return c.id;
+}
+async function syncThread(conv: any, msgs?: any[]) {
+  const other = (conv.participants?.data ?? []).find((p: any) => p.id !== IG) ?? {};
+  if (!msgs) msgs = (await g(`/${conv.id}`, { fields: `messages.limit(100){${MSG_FIELDS}}` })).messages?.data ?? [];
+  const { data: ex } = await admin.from("ig_threads").select("customer_id").eq("id", conv.id).maybeSingle();
+  let cust = ex?.customer_id ?? null;
+  if (!cust) { const { data: c2 } = await admin.from("customers").select("id").eq("ig_user_id", other.id ?? "-").maybeSingle(); cust = c2?.id ?? await linkCustomer(conv.id, other.username, other.id); }
+  const last = msgs[0];
+  await admin.from("ig_threads").upsert({ id: conv.id, ig_user_id: other.id ?? null, username: other.username ?? null, customer_id: cust,
+    updated_at: conv.updated_time, last_text: last ? (last.message || (last.attachments ? "📎" : last.shares ? "↗" : "")) : null,
+    last_from_me: last ? last.from?.id === IG : null, synced_at: new Date().toISOString() }, { onConflict: "id" });
+  const rows = msgs.map((m: any) => ({ id: m.id, thread_id: conv.id, from_me: m.from?.id === IG, text: m.message ?? null,
+    attachments: m.attachments || m.shares || m.story ? { a: m.attachments?.data ?? null, s: m.shares?.data ?? null, st: m.story ?? null } : null, created_at: m.created_time }));
+  if (rows.length) await admin.from("ig_messages").upsert(rows, { onConflict: "id" });
+  return cust;
+}
+async function syncDMs(full: boolean) {
+  const { data: known } = await admin.from("ig_threads").select("id,updated_at");
+  const k = new Map((known ?? []).map((t: any) => [t.id, t.updated_at ? new Date(t.updated_at).getTime() : 0]));
+  const convs = await gAll(`/${IG}/conversations`, { fields: "id,updated_time,participants", limit: 50 }, full ? 6 : 1);
+  let n = 0;
+  for (const c of convs) {
+    if (!full && k.get(c.id) && k.get(c.id)! >= new Date(c.updated_time).getTime()) continue;
+    await syncThread(c); n++;
+  }
+  return { threads: convs.length, updated: n };
+}
+
+// ---------- AI customer profile ----------
+async function aiProfile(customerId: number) {
+  const key = await secret("anthropic_api_key"); if (!key) throw new Error("no_ai_key");
+  const { data: c } = await admin.from("customers").select("id,full_name,instagram,phone,country,preferred_lang,notes,created_at").eq("id", customerId).single();
+  const { data: th } = await admin.from("ig_threads").select("id").eq("customer_id", customerId);
+  const ids = (th ?? []).map((t: any) => t.id);
+  const { data: ms } = ids.length ? await admin.from("ig_messages").select("from_me,text,created_at").in("thread_id", ids).order("created_at").limit(400) : { data: [] };
+  const { data: ords } = await admin.from("orders").select("order_no,order_date,status,order_lines(qty,unit_price,variants(size,color,models(name,brands(name))))").eq("customer_id", customerId);
+  const { data: wl } = await admin.from("wishlist").select("size,color,status,notes,created_at,models(name,brands(name))").eq("customer_id", customerId);
+  const chat = (ms ?? []).map((m: any) => `[${String(m.created_at).slice(0, 10)}] ${m.from_me ? "SHOP" : "CLIENT"}: ${m.text ?? "(attachment)"}`).join("\n").slice(-24000);
+  const prompt = `You are the CRM assistant of Modus Vestendi, a small online fashion shop (Italian/Spanish brands) selling to Albania, Kosovo, North Macedonia via Instagram.
+Build a customer profile ONLY from the data below (Instagram DMs, orders, requests). Do not invent facts; when unknown use null.
+Customer: ${JSON.stringify(c)}
+Orders: ${JSON.stringify(ords ?? [])}
+Requests/wishlist: ${JSON.stringify(wl ?? [])}
+DM conversation:
+${chat || "(no messages)"}
+
+Answer with ONLY a JSON object, all text values in Italian:
+{"summary":"2-3 sentences: who she/he is as a customer and what she/he wants","language":"sq|it|en|...","gender_guess":null,
+ "sizes":{"top":null,"bottom":null,"shoes":null,"notes":null},"brands":[],"styles":[],"colors":[],"budget":"e.g. 50-150 € or null",
+ "interests":["products or categories asked about"],"open_requests":["things asked and not yet answered/fulfilled"],
+ "sentiment":"positivo|neutro|negativo","last_contact":"YYYY-MM-DD or null","next_action":"one concrete suggestion for the shop"}`;
+  const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST",
+    headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 1500, messages: [{ role: "user", content: prompt }] }) });
+  const j = await r.json(); if (!r.ok) throw new Error(j?.error?.message ?? "ai_error");
+  const text = (j.content ?? []).filter((x: any) => x.type === "text").map((x: any) => x.text).join("");
+  const prof = JSON.parse(text.match(/\{[\s\S]*\}/)![0]);
+  await admin.from("customers").update({ profile_ai: prof, profile_ai_at: new Date().toISOString() }).eq("id", customerId);
+  return prof;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
@@ -241,6 +310,35 @@ Deno.serve(async (req) => {
       case "reply": return json(await g(`/${body.comment_id}/replies`, { message: String(body.message ?? "").slice(0, 2000) }, "POST"));
       case "hide": return json(await g(`/${body.comment_id}`, { hide: !!body.hide }, "POST"));
       case "delete_comment": return json(await g(`/${body.comment_id}`, {}, "DELETE"));
+      case "dm_sync": return json(await syncDMs(!!body.full));
+      case "dm_thread": {
+        const conv = await g(`/${body.thread_id}`, { fields: `id,updated_time,participants,messages.limit(100){${MSG_FIELDS}}` });
+        await syncThread(conv, conv.messages?.data ?? []);
+        await admin.from("ig_threads").update({ read_at: new Date().toISOString() }).eq("id", body.thread_id);
+        return json({ ok: true });
+      }
+      case "dm_send": {
+        const { data: t } = await admin.from("ig_threads").select("ig_user_id").eq("id", body.thread_id).single();
+        if (!t?.ig_user_id) return json({ error: "no_recipient" }, 400);
+        const r = await g(`/${IG}/messages`, { recipient: { id: t.ig_user_id }, message: { text: String(body.text ?? "").slice(0, 1000) } }, "POST");
+        const conv = await g(`/${body.thread_id}`, { fields: `id,updated_time,participants,messages.limit(20){${MSG_FIELDS}}` });
+        await syncThread(conv, conv.messages?.data ?? []);
+        return json(r);
+      }
+      case "dm_link": {
+        const { data: t } = await admin.from("ig_threads").update({ customer_id: body.customer_id ?? null }).eq("id", body.thread_id).select("ig_user_id,username").single();
+        if (body.customer_id && t) await admin.from("customers").update({ ig_user_id: t.ig_user_id }).eq("id", body.customer_id).is("ig_user_id", null);
+        if (body.customer_id && t?.username) await admin.from("customers").update({ instagram: t.username }).eq("id", body.customer_id).is("instagram", null);
+        return json({ ok: true });
+      }
+      case "profile": return json(await aiProfile(Number(body.customer_id)));
+      case "story": {
+        const c = await g(`/${IG}/media`, { image_url: body.image_url, media_type: "STORIES" }, "POST");
+        await waitReady(c.id);
+        const pub = await g(`/${IG}/media_publish`, { creation_id: c.id }, "POST");
+        if (body.model_id) await admin.from("models").update({ instagram_status: "storia" }).eq("id", body.model_id).eq("instagram_status", "non_pubblicato");
+        return json({ id: pub.id });
+      }
       case "publish": return json(await publish(body.image_urls, String(body.caption ?? "").slice(0, 2200), body.model_id));
       default: return json({ error: "unknown_action" }, 400);
     }
