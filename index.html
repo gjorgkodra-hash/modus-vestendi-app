@@ -199,6 +199,9 @@ const T = {
   yoy_vs:['Confronto con lo stesso periodo dell\'anno prima:','Compared with the same period last year:','Krahasuar me të njëjtën periudhë një vit më parë:'], prev_year:['anno prima','last year','viti i kaluar'],
   revenue_net:['Fatturato netto','Net revenue','Të ardhura neto'], gross_margin:['Margine lordo','Gross margin','Marzhi bruto'], net_profit:['Utile netto','Net profit','Fitimi neto'],
   pnl:['Conto economico','Profit and loss','Pasqyra e fitimit'], gross_lbl:['lordo','gross','bruto'], goods_bought:['Merce acquistata nel periodo (con costi d\'acquisto)','Goods bought in the period (with buying costs)','Malli i blerë në periudhë (me kostot e blerjes)'],
+  data_start_note:['Conti calcolati solo dal giorno in cui l\'app ha i dati di vendita:','Figures only count from the day the app has sales data:','Llogaritë nisin vetëm nga dita kur aplikacioni ka të dhëna shitjesh:'],
+  data_start:['Inizio dati per i conti','Data start for reports','Fillimi i të dhënave për llogaritë'], data_start_hint:['Campagne e spese prima di questa data non entrano nei conti, perché in quel periodo le vendite non sono registrate nell\'app.','Campaigns and expenses before this date are left out of reports, because sales from that time are not in the app.','Fushatat dhe shpenzimet para kësaj date nuk llogariten, sepse shitjet e asaj kohe nuk janë në aplikacion.'],
+  before_app:['prima dell\'app','before the app','para aplikacionit'],
   pnl_hint:['Le vendite contano dalla data dell\'ordine (confermati, spediti, consegnati). Il costo merce è quello dei pezzi venduti; la merce comprata ma non venduta resta in magazzino.','Sales count from the order date (confirmed, shipped, delivered). Cost of goods is for items sold; goods bought but unsold stay in stock.','Shitjet llogariten nga data e porosisë (të konfirmuara, të dërguara, të dorëzuara). Kosto e mallit është ajo e copëve të shitura; malli i blerë e pa shitur mbetet në magazinë.'],
   sold_items:['Pezzi venduti nel periodo','Items sold in the period','Copët e shitura në periudhë'],
   weight:['Peso (kg)','Weight (kg)','Pesha (kg)'],
@@ -525,12 +528,15 @@ async function boot(){
   route();
 }
 async function loadRefs(){
-  const [b, c, k] = await Promise.all([
+  const [b, c, k, st] = await Promise.all([
     sb.from('brands').select('*').order('name'),
     sb.from('categories').select('*').order('name'),
-    sb.from('carriers').select('*').order('name')
+    sb.from('carriers').select('*').order('name'),
+    sb.from('app_settings').select('k,v')
   ]);
   S.brands = b.data || []; S.categories = c.data || []; S.carriers = k.data || [];
+  S.app = Object.fromEntries((st.data || []).map(r => [r.k, r.v]));
+  S.dataStart = S.app.data_start || '2000-01-01';
   if (can.costs()){
     const [s, tr] = await Promise.all([sb.from('suppliers').select('*').order('name'), sb.from('trips').select('*').order('start_date', {ascending:false})]);
     S.suppliers = s.data || []; S.trips = tr.data || [];
@@ -2034,7 +2040,7 @@ async function viewExpenses(main){
   const row = (left, sub, right, actions) => `<div class="row" style="flex-wrap:nowrap;padding:10px 0;border-top:1px solid var(--line)"><div style="flex:1;min-width:0">${left}<div class="small muted">${sub}</div><div>${actions}</div></div><div class="right" style="flex:none">${right}</div></div>`;
   main.innerHTML = `<div class="row spread"><h1>${t('expenses')}</h1><div class="row"><button onclick="editCampaign()">+ ${t('campaign')}</button><button class="primary" onclick="editExpense()">+ ${t('expense')}</button></div></div>
   <div class="card"><h3>${t('campaigns')}</h3>
-  ${window._camps.map(c => row(`<b>${esc(c.name)}</b> ${statusPill('camp_status', campSt(c))}${c.meta_id ? ` <span class="pill" title="${esc(t('meta_auto'))}">🔄 Meta</span>` : ''}`,
+  ${window._camps.map(c => row(`<b>${esc(c.name)}</b> ${statusPill('camp_status', campSt(c))}${(c.end_date || c.start_date) && (c.end_date || c.start_date) < S.dataStart ? ` <span class="pill grey">${t('before_app')}</span>` : ''}${c.meta_id ? ` <span class="pill" title="${esc(t('meta_auto'))}">🔄 Meta</span>` : ''}`,
     `${c.models ? `<a href="#/articolo/${c.models.id}">${esc(brandName(c.models.brand_id))} ${esc(c.models.name)}</a> · ` : ''}${esc(c.platform || '')} ${fdate(c.start_date)} – ${fdate(c.end_date)}${c.budget ? ` · ${t('budget')} ${eur(c.budget)}` : ''}<br>${c.new_followers != null ? `<b>+${c.new_followers}</b> ${t('followers')}${c.spend && c.new_followers ? ` (${eur(c.spend / c.new_followers)} ${t('per_follower')})` : ''} · ` : ''}${c.reach != null ? `${c.reach} ${t('reach').toLowerCase()} · ` : ''}${c.dms != null ? `${c.dms} DM · ` : ''}${custs.filter(x => x.campaign_id === c.id).length} ${t('customers').toLowerCase()}`,
     `<div class="small muted">${t('spent')}</div><b>${eur(c.spend)}</b>`,
     `${c.meta_id ? `<button class="link" onclick="campDetail(${c.id})">📊 ${t('cd_open')}</button>` : ''}${campSt(c) === 'attiva' && !c.meta_id ? `<button class="link" style="color:var(--bad)" onclick="stopCampaign(${c.id})">■ ${t('stop_now')}</button>` : ''}<button class="link" onclick="editCampaign(${c.id})">${t('edit')}</button><button class="link" onclick="delRow('campaigns',${c.id})">${t('delete')}</button>`)).join('') || `<div class="empty">${t('no_data')}</div>`}</div>
@@ -2446,7 +2452,7 @@ async function viewCampEff(main){
   const best = [...C].filter(c => c.revenue > 0).sort((a, b) => roas(b) - roas(a)).slice(0, 3);
   const bestConv = [...C].filter(c => c.conversations > 0 && Number(c.spend) > 0).sort((a, b) => Number(a.spend) / a.conversations - Number(b.spend) / b.conversations).slice(0, 3);
   const th = 'style="text-align:right;padding:6px 8px;white-space:nowrap"', td = 'style="text-align:right;padding:6px 8px;white-space:nowrap"';
-  main.innerHTML = `<h1>📈 ${t('camp_eff')}</h1><p class="small muted">${t('ce_hint')}</p>
+  main.innerHTML = `<h1>📈 ${t('camp_eff')}</h1><p class="small muted">${t('ce_hint')}${data.data_start ? `<br>ℹ ${t('data_start_note')} <b>${fdate(data.data_start)}</b>` : ''}</p>
   <div class="row" style="gap:6px;margin:8px 0 12px">${[30, 90, 180].map(n => `<button class="small ${CER === n ? 'primary' : ''}" onclick="CER=${n};route()">${n} ${t('days')}</button>`).join('')}</div>
   <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
     ${tile(t('ce_spend'), eur(spend), `${C.length} ${t('campaigns').toLowerCase()}`)}
@@ -2886,7 +2892,10 @@ async function viewReports(main){
     sb.from('defects').select('*').in('status', ['rimborsato','perso','coupon']).gte('resolved_on', pf).lte('resolved_on', to).then(check)
   ]);
   const inR = (d, a, b) => d && d >= a && d <= b;
+  // costs (campaigns, expenses) count only from the day the app has sales data
   const calc = (a, b) => {
+    if (b < S.dataStart) return null;
+    if (a < S.dataStart) a = S.dataStart;
     const L = lines.filter(l => inR(l.order_date, a, b));
     const gross = L.reduce((s, l) => s + Number(l.gross), 0), disc = L.reduce((s, l) => s + Number(l.discount_share), 0);
     const cogs = L.reduce((s, l) => s + Number(l.qty) * Number(l.landed_cost || 0), 0), ship = L.reduce((s, l) => s + Number(l.shipping_share), 0);
@@ -2898,17 +2907,20 @@ async function viewReports(main){
     const loss = defs.filter(d => inR(d.resolved_on, a, b)).reduce((s, d) => s + Math.max(0, d.qty * Number(d.unit_cost || 0) - Number(d.refund_amount || 0)), 0);
     return {L, E, gross, disc, net: gross - disc, cogs, ship, margin, exp, camp, loss, profit: margin - exp - camp - loss, bought, orders, pieces: L.reduce((s, l) => s + l.qty, 0)};
   };
-  const cur = calc(from, to), prev = calc(pf, pt);
+  const Z = {L:[], E:[], gross:0, disc:0, net:0, cogs:0, ship:0, margin:0, exp:0, camp:0, loss:0, profit:0, bought:0, orders:0, pieces:0};
+  const cur = calc(from, to) || Z, prevR = calc(pf, pt), prev = prevR || Z, noPrev = !prevR;
+  const cFrom = from < S.dataStart ? S.dataStart : from;
   const delta = (a, b) => { if (!b) return ''; const d = (a - b) / Math.abs(b) * 100; return `<span class="small" style="color:${d >= 0 ? 'var(--good)' : 'var(--bad)'}">${d >= 0 ? '▲' : '▼'} ${Math.abs(Math.round(d))}%</span>`; };
-  const kpi = (label, a, b, money = true) => `<div class="card kpi"><div class="v">${money ? eur(a) : a}</div><div class="l">${label}</div><div class="small muted">${t('prev_year')}: ${money ? eur(b) : b} ${money ? delta(a, b) : ''}</div></div>`;
+  const kpi = (label, a, b, money = true) => `<div class="card kpi"><div class="v">${money ? eur(a) : a}</div><div class="l">${label}</div><div class="small muted">${t('prev_year')}: ${noPrev ? '—' : `${money ? eur(b) : b} ${money ? delta(a, b) : ''}`}</div></div>`;
+  const pv = v => noPrev ? '—' : eur(v);
   const pct = (a, b) => b ? Math.round(a / b * 1000) / 10 + '%' : '—';
   // per mese
   const months = {};
   cur.L.forEach(l => { const k = l.order_date.slice(0, 7); const m = months[k] = months[k] || {net:0, cogs:0, ship:0, margin:0, exp:0, camp:0}; m.net += Number(l.gross) - Number(l.discount_share); m.cogs += l.qty * Number(l.landed_cost || 0); m.ship += Number(l.shipping_share); m.margin += Number(l.margin); });
   cur.E.forEach(e => { const k = e.expense_date.slice(0, 7); (months[k] = months[k] || {net:0, cogs:0, ship:0, margin:0, exp:0, camp:0}).exp += Number(e.amount); });
   camps.forEach(c => { const add = (d, v) => { const k = d.slice(0, 7); (months[k] = months[k] || {net:0, cogs:0, ship:0, margin:0, exp:0, camp:0}).camp += v; };
-    if (c.campaign_daily?.length) c.campaign_daily.filter(d => inR(d.day, from, to)).forEach(d => add(d.day, Number(d.spend)));
-    else if (inR(c.start_date || c.end_date, from, to)) add(c.start_date || c.end_date, Number(c.spend)); });
+    if (c.campaign_daily?.length) c.campaign_daily.filter(d => inR(d.day, cFrom, to)).forEach(d => add(d.day, Number(d.spend)));
+    else if (inR(c.start_date || c.end_date, cFrom, to)) add(c.start_date || c.end_date, Number(c.spend)); });
   // per marca / categoria spese
   const brands = {};
   cur.L.forEach(l => { const b = (l.item || '').split(' ')[0] || '—'; const x = brands[b] = brands[b] || {q:0, net:0, margin:0}; x.q += l.qty; x.net += Number(l.gross) - Number(l.discount_share); x.margin += Number(l.margin); });
@@ -2918,7 +2930,7 @@ async function viewReports(main){
   main.innerHTML = `<h1>${t('reports')}</h1>
   <div class="chips" style="margin-bottom:10px">${presets.map(([k, l]) => `<button class="${repF.preset === k ? 'primary' : ''}" onclick="repF.preset='${k}';route()">${l}</button>`).join('')}</div>
   <div class="row" style="margin-bottom:6px;flex-wrap:nowrap"><input type="date" id="rf" value="${from}"><span>→</span><input type="date" id="rt" value="${to}"></div>
-  <p class="small muted" style="margin:0 0 14px">${t('yoy_vs')} ${fdate(pf)} – ${fdate(pt)}</p>
+  <p class="small muted" style="margin:0 0 14px">${t('yoy_vs')} ${fdate(pf)} – ${fdate(pt)}${from < S.dataStart || noPrev ? `<br>ℹ ${t('data_start_note')} <b>${fdate(S.dataStart)}</b>` : ''}</p>
   <div class="grid g4">
     ${kpi(t('revenue_net'), cur.net, prev.net)}
     ${kpi(t('gross_margin'), cur.margin, prev.margin)}
@@ -2926,24 +2938,24 @@ async function viewReports(main){
     ${kpi(t('orders') + ' · ' + t('qty_pieces').toLowerCase(), `${cur.orders} · ${cur.pieces}`, `${prev.orders} · ${prev.pieces}`, false)}
   </div>
   <div class="card"><h3>${t('pnl')}</h3><table class="pnl"><tr><th></th><th class="right">${t('period')}</th><th class="right">${t('prev_year')}</th></tr>
-    <tr><td>${t('revenue')} (${t('gross_lbl')})</td><td class="right">${eur(cur.gross)}</td><td class="right small muted">${eur(prev.gross)}</td></tr>
-    <tr><td>− ${t('discount')}</td><td class="right">${eur(cur.disc)}</td><td class="right small muted">${eur(prev.disc)}</td></tr>
-    <tr><td><b>${t('revenue_net')}</b></td><td class="right"><b>${eur(cur.net)}</b></td><td class="right small muted">${eur(prev.net)}</td></tr>
-    <tr><td>− ${t('goods_cost')}</td><td class="right">${eur(cur.cogs)}</td><td class="right small muted">${eur(prev.cogs)}</td></tr>
-    <tr><td>− ${t('shipping_cost')}</td><td class="right">${eur(cur.ship)}</td><td class="right small muted">${eur(prev.ship)}</td></tr>
-    <tr><td><b>${t('gross_margin')}</b> <span class="small muted">${pct(cur.margin, cur.net)}</span></td><td class="right"><b>${eur(cur.margin)}</b></td><td class="right small muted">${eur(prev.margin)}</td></tr>
-    <tr><td>− ${t('expenses')}</td><td class="right">${eur(cur.exp)}</td><td class="right small muted">${eur(prev.exp)}</td></tr>
-    <tr><td>− ${t('campaigns')}</td><td class="right">${eur(cur.camp)}</td><td class="right small muted">${eur(prev.camp)}</td></tr>
-    <tr><td>− ${t('defect_loss')}</td><td class="right">${eur(cur.loss)}</td><td class="right small muted">${eur(prev.loss)}</td></tr>
-    <tr><td><b>${t('net_profit')}</b> <span class="small muted">${pct(cur.profit, cur.net)}</span></td><td class="right"><b style="color:${cur.profit >= 0 ? 'var(--good)' : 'var(--bad)'}">${eur(cur.profit)}</b></td><td class="right small muted">${eur(prev.profit)}</td></tr>
-    <tr><td class="small muted">${t('goods_bought')}</td><td class="right small muted">${eur(cur.bought)}</td><td class="right small muted">${eur(prev.bought)}</td></tr>
+    <tr><td>${t('revenue')} (${t('gross_lbl')})</td><td class="right">${eur(cur.gross)}</td><td class="right small muted">${pv(prev.gross)}</td></tr>
+    <tr><td>− ${t('discount')}</td><td class="right">${eur(cur.disc)}</td><td class="right small muted">${pv(prev.disc)}</td></tr>
+    <tr><td><b>${t('revenue_net')}</b></td><td class="right"><b>${eur(cur.net)}</b></td><td class="right small muted">${pv(prev.net)}</td></tr>
+    <tr><td>− ${t('goods_cost')}</td><td class="right">${eur(cur.cogs)}</td><td class="right small muted">${pv(prev.cogs)}</td></tr>
+    <tr><td>− ${t('shipping_cost')}</td><td class="right">${eur(cur.ship)}</td><td class="right small muted">${pv(prev.ship)}</td></tr>
+    <tr><td><b>${t('gross_margin')}</b> <span class="small muted">${pct(cur.margin, cur.net)}</span></td><td class="right"><b>${eur(cur.margin)}</b></td><td class="right small muted">${pv(prev.margin)}</td></tr>
+    <tr><td>− ${t('expenses')}</td><td class="right">${eur(cur.exp)}</td><td class="right small muted">${pv(prev.exp)}</td></tr>
+    <tr><td>− ${t('campaigns')}</td><td class="right">${eur(cur.camp)}</td><td class="right small muted">${pv(prev.camp)}</td></tr>
+    <tr><td>− ${t('defect_loss')}</td><td class="right">${eur(cur.loss)}</td><td class="right small muted">${pv(prev.loss)}</td></tr>
+    <tr><td><b>${t('net_profit')}</b> <span class="small muted">${pct(cur.profit, cur.net)}</span></td><td class="right"><b style="color:${cur.profit >= 0 ? 'var(--good)' : 'var(--bad)'}">${eur(cur.profit)}</b></td><td class="right small muted">${pv(prev.profit)}</td></tr>
+    <tr><td class="small muted">${t('goods_bought')}</td><td class="right small muted">${eur(cur.bought)}</td><td class="right small muted">${pv(prev.bought)}</td></tr>
   </table><p class="small muted">${t('pnl_hint')}</p></div>
   <div class="card"><h3>${t('by_month')}</h3><div class="table-wrap"><table><tr><th></th><th class="right">${t('revenue_net')}</th><th class="right">${t('goods_cost')}</th><th class="right">${t('gross_margin')}</th><th class="right">${t('expenses')}</th><th class="right">${t('campaigns')}</th><th class="right">${t('net_profit')}</th></tr>
   ${Object.keys(months).sort().reverse().map(k => { const m = months[k]; return `<tr><td>${k}</td><td class="right">${eur(m.net)}</td><td class="right">${eur(m.cogs + m.ship)}</td><td class="right">${eur(m.margin)}</td><td class="right">${eur(m.exp)}</td><td class="right">${eur(m.camp)}</td><td class="right"><b>${eur(m.margin - m.exp - m.camp)}</b></td></tr>`; }).join('') || `<tr><td colspan="7" class="empty">${t('no_data')}</td></tr>`}</table></div></div>
   <div class="grid g2">
   <div class="card"><h3>${t('by_brand')}</h3><table>${Object.entries(brands).sort((a, b) => b[1].margin - a[1].margin).map(([b, x]) => `<tr><td>${esc(b)} <span class="small muted">${x.q} pz</span></td><td class="right">${eur(x.net)}</td><td class="right"><b>${eur(x.margin)}</b> <span class="small muted">${pct(x.margin, x.net)}</span></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>
   <div class="card"><h3>${t('expenses')} · ${t('campaigns')}</h3><table>${Object.entries(expCat).map(([k, v]) => `<tr><td>${esc(ev('expense_cat', k))}</td><td class="right">${eur(v)}</td></tr>`).join('')}
-    ${camps.filter(c => inR(c.start_date || c.end_date, from, to)).map(c => `<tr><td>${esc(c.name)} <span class="small muted">${t('campaigns').toLowerCase()}${c.new_followers != null ? ` · +${c.new_followers} ${t('followers')}` : ''}</span></td><td class="right">${eur(c.spend)}</td></tr>`).join('')}
+    ${camps.filter(c => c.campaign_daily?.length ? c.campaign_daily.some(d => inR(d.day, cFrom, to)) : inR(c.start_date || c.end_date, cFrom, to)).map(c => `<tr><td>${esc(c.name)} <span class="small muted">${t('campaigns').toLowerCase()}${c.new_followers != null ? ` · +${c.new_followers} ${t('followers')}` : ''}</span></td><td class="right">${eur(c.spend)}</td></tr>`).join('')}
     ${!Object.keys(expCat).length && !cur.camp ? `<tr><td class="empty">${t('no_data')}</td></tr>` : ''}</table></div></div>
   <div class="card"><h3>${t('sold_items')}</h3><div class="table-wrap"><table><tr><th>${t('date')}</th><th>${t('items')}</th><th>${t('customer')}</th><th class="right">${t('revenue_net')}</th><th class="right">${t('cost')}</th><th class="right">${t('margin')}</th></tr>
   ${cur.L.sort((a, b) => b.order_date.localeCompare(a.order_date)).map(l => `<tr class="click" onclick="location.hash='#/ordine/${l.order_id}'"><td>${fdate(l.order_date)}</td><td>${esc(l.item)}</td><td>${esc(l.customer)}</td><td class="right">${eur(Number(l.gross) - Number(l.discount_share))}</td><td class="right">${l.landed_cost == null ? `<span style="color:var(--warn)">${t('cost_missing')}</span>` : eur(l.qty * Number(l.landed_cost) + Number(l.shipping_share))}</td><td class="right"><b>${eur(l.margin)}</b></td></tr>`).join('') || `<tr><td colspan="6" class="empty">${t('no_data')}</td></tr>`}</table></div></div>`;
@@ -2978,8 +2990,9 @@ async function viewSettings(main){
   const carriers = can.sales() ? `<div class="card"><div class="row spread"><h3>${t('carriers')}</h3><button onclick="editCarrier()">+ ${t('add')}</button></div><table>${S.carriers.map(c => `<tr><td><b>${esc(c.name)}</b><div class="small muted">${esc(c.tracking_url_template || t('forgot_template'))}</div></td><td class="right"><button class="link" onclick="editCarrier(${c.id})">${t('edit')}</button></td></tr>`).join('')}</table></div>` : '';
   const cats = can.catalogWrite() ? `<div class="card"><div class="row spread"><h3>${t('category')} / ${t('brand')}</h3><div class="row"><button onclick="addCategory()">+ ${t('category')}</button><button onclick="addBrand()">+ ${t('brand')}</button></div></div><p class="small">${catOptions().map(c => esc(c[1])).join(' · ')}</p><p class="small muted">${S.brands.map(b => esc(b.name)).join(' · ')}</p></div>` : '';
   const backup = can.admin() ? `<div class="card"><h3>${t('backup')}</h3><p class="small muted">${t('backup_hint')}</p><div class="chips">${['models','variants','variant_costs','purchases','purchase_lines','purchase_costs','customers','customer_measurements','addresses','orders','order_lines','payments','shipments','expenses','stock_movements','activity_log'].map(x => `<button onclick="exportCsv('${x}')">${x}</button>`).join('')}</div></div>` : '';
-  main.innerHTML = `<h1>${t('settings')}</h1><div class="card"><p>${esc(S.profile.full_name || '')} · ${esc(S.profile.email || '')} · <span class="pill">${esc(ev('role', S.profile.role))}</span></p><label>${t('language')}</label>${langSelect()}</div>${users}${carriers}${cats}${backup}`;
+  main.innerHTML = `<h1>${t('settings')}</h1><div class="card"><p>${esc(S.profile.full_name || '')} · ${esc(S.profile.email || '')} · <span class="pill">${esc(ev('role', S.profile.role))}</span></p><label>${t('language')}</label>${langSelect()}</div>${can.admin() ? `<div class="card"><h3>${t('data_start')}</h3><p class="small muted">${t('data_start_hint')}</p><input type="date" value="${esc(S.dataStart)}" onchange="setDataStart(this.value)" style="max-width:220px"></div>` : ''}${users}${carriers}${cats}${backup}`;
 }
+async function setDataStart(v){ if (!v) return; check(await sb.from('app_settings').upsert({k:'data_start', v, updated_at: new Date().toISOString()})); S.dataStart = v; toast(t('saved')); }
 async function setRole(id, role){ check(await sb.from('profiles').update({role: role || null}).eq('id', id)); toast(t('saved')); }
 function editCarrier(id){
   const c = id ? S.carriers.find(x => x.id === id) : {};
