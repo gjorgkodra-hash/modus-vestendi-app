@@ -199,6 +199,9 @@ const T = {
   yoy_vs:['Confronto con lo stesso periodo dell\'anno prima:','Compared with the same period last year:','Krahasuar me të njëjtën periudhë një vit më parë:'], prev_year:['anno prima','last year','viti i kaluar'],
   revenue_net:['Fatturato netto','Net revenue','Të ardhura neto'], gross_margin:['Margine lordo','Gross margin','Marzhi bruto'], net_profit:['Utile netto','Net profit','Fitimi neto'],
   pnl:['Conto economico','Profit and loss','Pasqyra e fitimit'], gross_lbl:['lordo','gross','bruto'], goods_bought:['Merce acquistata nel periodo (con costi d\'acquisto)','Goods bought in the period (with buying costs)','Malli i blerë në periudhë (me kostot e blerjes)'],
+  same_cost_q:['Stesso prezzo d\'acquisto ({p}) anche per le altre taglie/colori di questo prodotto che non hanno ancora un costo?','Use the same purchase price ({p}) for the other sizes/colours of this product that have no cost yet?','I njëjti çmim blerjeje ({p}) edhe për masat/ngjyrat e tjera të këtij produkti që nuk kanë ende kosto?'],
+  same_cost_done:['taglie aggiornate con lo stesso costo','sizes updated with the same cost','masa u përditësuan me të njëjtën kosto'], same_cost_btn:['Stesso costo delle altre taglie','Same cost as other sizes','Kosto si masat e tjera'],
+  same_cost_none:['Nessuna taglia di questo prodotto ha già un costo: aggiungilo da Acquisti.','No size of this product has a cost yet: add it from Purchases.','Asnjë masë e këtij produkti nuk ka kosto: shtoje nga Blerjet.'],
   variant_rename_warn:['Questa taglia ha già vendite o movimenti: se la rinomini, i pezzi venduti cambiano taglia e quella vecchia sparisce dal magazzino.\n\nOK = aggiungo invece una taglia NUOVA (quella vecchia resta com\'è). Poi usa ± sulla nuova per caricare i pezzi.','This size already has sales or movements: renaming it would change the size of the pieces sold and the old size would disappear from stock.\n\nOK = add a NEW size instead (the old one stays). Then use ± on the new one to load pieces.','Kjo masë ka shitje ose lëvizje: nëse e riemëron, copat e shitura ndryshojnë masë dhe masa e vjetër zhduket nga magazina.\n\nOK = shtoj një masë TË RE (e vjetra mbetet). Pastaj përdor ± te e reja për të ngarkuar copat.'],
   variant_added_instead:['Aggiunta come taglia nuova','Added as a new size','U shtua si masë e re'],
   data_start_note:['Conti calcolati solo dal giorno in cui l\'app ha i dati di vendita:','Figures only count from the day the app has sales data:','Llogaritë nisin vetëm nga dita kur aplikacioni ka të dhëna shitjesh:'],
@@ -1347,6 +1350,8 @@ async function addPurchaseLine(pid){
       const vid = v.line_kind === 'sold' ? v.sold_variant_id : v.variant_id;
       if (!vid){ toast(t('pick_or_new'), true); throw new Error('item'); }
       await addLine(vid, v.qty || 1, v.line_kind === 'existing' && !!v.add_stock);
+      const mv = vs.find(x => x.id === Number(vid));
+      if (mv) await offerSameCost(mv.model_id, v.unit_price, pid, [Number(vid)]);
     } else if (v.line_kind === 'model'){
       if (!v.model_id){ toast(t('pick_or_new'), true); throw new Error('item'); }
       if (!sizes.length){ toast(t('lk_need_sizes'), true); throw new Error('sizes'); }
@@ -1359,6 +1364,7 @@ async function addPurchaseLine(pid){
         if (!ex) ex = await insertVariant({model_id: mid, size: sz, color: col || null, color_hex: v.color_hex || ref.color_hex || null, sale_price: ref.sale_price ?? null, status: v.add_stock && received ? 'in_magazzino' : 'ordinato', sku: skuFor(mm, sz, col)});
         await addLine(ex.id, r.qty, !!v.add_stock);
       }
+      await offerSameCost(mid, v.unit_price, pid, []);
     } else {
       if (!v.name){ toast(t('pick_or_new'), true); throw new Error('item'); }
       if (!sizes.length){ toast(t('lk_need_sizes'), true); throw new Error('sizes'); }
@@ -2975,10 +2981,38 @@ async function viewReports(main){
   const onD = () => { repF = {preset:'custom', from: $('#rf').value, to: $('#rt').value}; route(); };
   $('#rf').onchange = onD; $('#rt').onchange = onD;
 }
+// other sizes/colours of the same product still without a purchase cost (in stock or already sold)
+async function siblingsNoCost(mid, exclude = []){
+  const vs = check(await sb.from('variants').select('id,size,color,qty').eq('model_id', mid));
+  const ids = vs.map(x => x.id).concat([0]);
+  const [vc, ol, pl] = await Promise.all([sb.from('variant_costs').select('variant_id,purchase_price').in('variant_id', ids).then(check),
+    sb.from('order_lines').select('variant_id,qty,orders!inner(status)').in('variant_id', ids).not('orders.status', 'in', '(annullato,bozza)').then(check),
+    sb.from('purchase_lines').select('variant_id').in('variant_id', ids).then(check)]);
+  const costed = new Set(vc.filter(x => x.purchase_price != null).map(x => x.variant_id)), bought = new Set(pl.map(x => x.variant_id));
+  return vs.filter(x => !exclude.includes(x.id) && !costed.has(x.id) && !bought.has(x.id)).map(x => ({...x, sold: ol.filter(o => o.variant_id === x.id).reduce((a, o) => a + o.qty, 0)}))
+    .filter(x => x.qty > 0 || x.sold > 0);
+}
+async function offerSameCost(mid, price, pid, exclude){
+  if (!price || !pid) return;
+  const L = await siblingsNoCost(mid, exclude);
+  if (!L.length) return;
+  const list = L.map(x => `• ${[x.size, x.color].filter(Boolean).join(' · ')} (${x.qty + x.sold} pz)`).join('\n');
+  if (!confirm(`${t('same_cost_q').replace('{p}', eur(price))}\n\n${list}`)) return;
+  for (const x of L) check(await sb.from('purchase_lines').insert({variant_id: x.id, qty: Math.max(1, x.qty + x.sold), unit_price: price, purchase_id: pid, add_to_stock: false}));
+  toast(`✓ ${L.length} ${t('same_cost_done')}`);
+}
+// from the "pieces without cost" list: reuse the cost of another size of the same product
+async function applySiblingCost(mid){
+  const vs = check(await sb.from('variants').select('id').eq('model_id', mid)).map(x => x.id);
+  const pl = check(await sb.from('purchase_lines').select('purchase_id,unit_price,variant_id,id').in('variant_id', vs.concat([0])).gt('unit_price', 0).order('id', {ascending:false}).limit(1));
+  if (!pl.length){ toast(t('same_cost_none'), true); return; }
+  await offerSameCost(mid, Number(pl[0].unit_price), pl[0].purchase_id, []);
+  document.querySelectorAll('.modal-bg').forEach(x => x.remove()); route();
+}
 function showNoCost(){
   modal(`<h2>${t('pieces_no_cost_title')}</h2><p class="small muted">${t('pieces_no_cost_hint')}</p>
   ${window._noCost.map(v => `<div class="row" style="flex-wrap:nowrap;padding:10px 0;border-top:1px solid var(--line);cursor:pointer" onclick="this.closest('.modal-bg').remove();location.hash='#/articolo/${v.models.id}'">
-    <div style="flex:1;min-width:0"><b>${esc(brandName(v.models.brand_id))} ${esc(v.models.name)}</b><div class="small muted">${esc([v.size, v.color].filter(Boolean).join(' · '))} · ${v.qty} pz</div></div><div class="right">${eur(v.sale_price)}</div></div>`).join('')}
+    <div style="flex:1;min-width:0"><b>${esc(brandName(v.models.brand_id))} ${esc(v.models.name)}</b><div class="small muted">${esc([v.size, v.color].filter(Boolean).join(' · '))} · ${v.qty} pz</div></div><div class="right">${eur(v.sale_price)}<br><button class="small" onclick="event.stopPropagation();applySiblingCost(${v.models.id})">💶 ${t('same_cost_btn')}</button></div></div>`).join('')}
   <div class="row" style="justify-content:flex-end;margin-top:12px"><button onclick="this.closest('.modal-bg').remove();location.hash='#/acquisti'">${t('purchases')} →</button><button class="primary" onclick="this.closest('.modal-bg').remove()">${t('close')}</button></div>`);
 }
 async function showMarginDetail(){
