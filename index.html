@@ -199,6 +199,8 @@ const T = {
   yoy_vs:['Confronto con lo stesso periodo dell\'anno prima:','Compared with the same period last year:','Krahasuar me të njëjtën periudhë një vit më parë:'], prev_year:['anno prima','last year','viti i kaluar'],
   revenue_net:['Fatturato netto','Net revenue','Të ardhura neto'], gross_margin:['Margine lordo','Gross margin','Marzhi bruto'], net_profit:['Utile netto','Net profit','Fitimi neto'],
   pnl:['Conto economico','Profit and loss','Pasqyra e fitimit'], gross_lbl:['lordo','gross','bruto'], goods_bought:['Merce acquistata nel periodo (con costi d\'acquisto)','Goods bought in the period (with buying costs)','Malli i blerë në periudhë (me kostot e blerjes)'],
+  variant_rename_warn:['Questa taglia ha già vendite o movimenti: se la rinomini, i pezzi venduti cambiano taglia e quella vecchia sparisce dal magazzino.\n\nOK = aggiungo invece una taglia NUOVA (quella vecchia resta com\'è). Poi usa ± sulla nuova per caricare i pezzi.','This size already has sales or movements: renaming it would change the size of the pieces sold and the old size would disappear from stock.\n\nOK = add a NEW size instead (the old one stays). Then use ± on the new one to load pieces.','Kjo masë ka shitje ose lëvizje: nëse e riemëron, copat e shitura ndryshojnë masë dhe masa e vjetër zhduket nga magazina.\n\nOK = shtoj një masë TË RE (e vjetra mbetet). Pastaj përdor ± te e reja për të ngarkuar copat.'],
+  variant_added_instead:['Aggiunta come taglia nuova','Added as a new size','U shtua si masë e re'],
   data_start_note:['Conti calcolati solo dal giorno in cui l\'app ha i dati di vendita:','Figures only count from the day the app has sales data:','Llogaritë nisin vetëm nga dita kur aplikacioni ka të dhëna shitjesh:'],
   data_start:['Inizio dati per i conti','Data start for reports','Fillimi i të dhënave për llogaritë'], data_start_hint:['Campagne e spese prima di questa data non entrano nei conti, perché in quel periodo le vendite non sono registrate nell\'app.','Campaigns and expenses before this date are left out of reports, because sales from that time are not in the app.','Fushatat dhe shpenzimet para kësaj date nuk llogariten, sepse shitjet e asaj kohe nuk janë në aplikacion.'],
   before_app:['prima dell\'app','before the app','para aplikacionit'],
@@ -1161,6 +1163,17 @@ function editVariant(vid, mid, presetColor){
     const q = x.initial_qty; delete x.initial_qty;
     x.low_stock_threshold = x.low_stock_threshold || 0;
     if (!x.sku) x.sku = skuFor(m, x.size, x.color);
+    // a size/colour that already has sales or movements is a real piece: don't rename it, add a new size instead
+    if (vid && ((x.size || '') !== (v.size || '') || (x.color || '').trim() !== (v.color || '').trim())){
+      const [{count: nl}, {count: nm}] = await Promise.all([sb.from('order_lines').select('id', {count:'exact', head:true}).eq('variant_id', vid), sb.from('stock_movements').select('id', {count:'exact', head:true}).eq('variant_id', vid)]);
+      if ((nl || 0) + (nm || 0) > 0){
+        if (!confirm(t('variant_rename_warn'))) return false;
+        const {sku, ...rest} = x;
+        const nv = await insertVariant({...rest, model_id: mid, sku: skuFor(m, x.size, x.color)});
+        toast(t('variant_added_instead')); location.hash = '#/articolo/' + mid; route(); return;
+      }
+      if (x.sku === v.sku) x.sku = skuFor(m, x.size, x.color);
+    }
     if (vid) check(await sb.from('variants').update(x).eq('id', vid));
     else {
       const nv = (await insertVariant({...x, model_id: mid}));
