@@ -2906,9 +2906,11 @@ const prevYear = d => { const [a, b, c] = d.split('-'); return `${Number(a) - 1}
 const XS = {norm: 0, head: 1, eur: 2, date: 3, pct: 4, bold: 5, beur: 6, title: 7, muted: 8, int: 9, band: 10, bandEur: 11, bandPct: 12, totEur: 13, tot: 14, totInt: 15};
 const xEsc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
 const xCol = n => { let s = ''; for (n++; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + (n - 1) % 26) + s; return s; };
+const xNum = n => String(Math.round(n * 1e6) / 1e6);
 const xSerial = d => { const t0 = Date.UTC(1899, 11, 30), x = new Date(String(d).slice(0, 10) + 'T00:00:00Z').getTime(); return isNaN(x) ? null : (x - t0) / 864e5; };
 class XBook {
-  constructor(){ this.sheets = []; }
+  constructor(){ this.sheets = []; this.sst = []; this.sstIx = new Map(); }
+  si(str){ str = String(str); let i = this.sstIx.get(str); if (i == null){ i = this.sst.length; this.sst.push(str); this.sstIx.set(str, i); } return i; }
   sheet(name){ const sh = {name: String(name).replace(/[\\\/\?\*\[\]:]/g, ' ').slice(0, 31), rows: {}, widths: [], freeze: 0, filter: null,
     set(r, c, v, s = 0){ (this.rows[r] = this.rows[r] || {})[c] = {v, s}; }, width(c, w){ this.widths[c] = w; }}; this.sheets.push(sh); return sh; }
   sheetXml(sh){
@@ -2916,9 +2918,10 @@ class XBook {
       const cells = Object.keys(sh.rows[r]).map(Number).sort((a, b) => a - b).map(c => {
         const {v, s} = sh.rows[r][c], ref = xCol(c) + (r + 1);
         if (v == null || v === '') return `<c r="${ref}" s="${s}"/>`;
-        if (typeof v === 'object' && v.f) return `<c r="${ref}" s="${s}"><f>${xEsc(v.f)}</f></c>`;
-        if (typeof v === 'number') return Number.isFinite(v) ? `<c r="${ref}" s="${s}"><v>${v}</v></c>` : `<c r="${ref}" s="${s}"/>`;
-        return `<c r="${ref}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${xEsc(v)}</t></is></c>`;
+        // formulas carry their computed value too, so viewers that don't recalculate (phone previews) still show numbers
+        if (typeof v === 'object' && v.f){ const cv = v.v; return Number.isFinite(cv) ? `<c r="${ref}" s="${s}"><f>${xEsc(v.f)}</f><v>${xNum(cv)}</v></c>` : cv != null && cv !== '' ? `<c r="${ref}" s="${s}" t="str"><f>${xEsc(v.f)}</f><v>${xEsc(cv)}</v></c>` : `<c r="${ref}" s="${s}"><f>${xEsc(v.f)}</f></c>`; }
+        if (typeof v === 'number') return Number.isFinite(v) ? `<c r="${ref}" s="${s}"><v>${xNum(v)}</v></c>` : `<c r="${ref}" s="${s}"/>`;
+        return `<c r="${ref}" s="${s}" t="s"><v>${this.si(v)}</v></c>`;
       }).join('');
       return `<row r="${r + 1}">${cells}</row>`;
     }).join('');
@@ -2927,11 +2930,11 @@ class XBook {
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0">${pane}</sheetView></sheetViews>${cols}<sheetData>${rows}</sheetData>${sh.filter ? `<autoFilter ref="${sh.filter}"/>` : ''}</worksheet>`;
   }
   files(){
-    const N = this.sheets.length, f = {};
-    f['[Content_Types].xml'] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${this.sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`;
+    const N = this.sheets.length, f = {}, sheetXmls = this.sheets.map(s => this.sheetXml(s));
+    f['[Content_Types].xml'] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>${this.sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`;
     f['_rels/.rels'] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
     f['xl/workbook.xml'] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${this.sheets.map((s, i) => `<sheet name="${xEsc(s.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets><definedNames>${this.sheets.map((s, i) => s.filter ? `<definedName name="_xlnm._FilterDatabase" localSheetId="${i}" hidden="1">'${xEsc(s.name).replace(/'/g, "''")}'!${s.filter.replace(/([A-Z]+)(\d+)/g, '$$$1$$$2')}</definedName>` : '').join('')}</definedNames><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`;
-    f['xl/_rels/workbook.xml.rels'] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${this.sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}<Relationship Id="rId${N + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+    f['xl/_rels/workbook.xml.rels'] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${this.sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}<Relationship Id="rId${N + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId${N + 2}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/></Relationships>`;
     // fonts: 0 normal, 1 bold white, 2 bold, 3 title, 4 muted italic | fills: 2 dark, 3 band | numFmts: 164 eur, 165 date, 166 pct
     const xf = (num, font, fill, extra = '') => `<xf numFmtId="${num}" fontId="${font}" fillId="${fill}" borderId="${extra.includes('top') ? 1 : 0}" applyNumberFormat="1" applyFont="1" applyFill="1"${extra.includes('wrap') ? ' applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>' : '/>'}`;
     f['xl/styles.xml'] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="3"><numFmt numFmtId="164" formatCode="#,##0.00\\ &quot;€&quot;;[Red]\\-#,##0.00\\ &quot;€&quot;"/><numFmt numFmtId="165" formatCode="dd/mm/yyyy"/><numFmt numFmtId="166" formatCode="0.0%"/></numFmts>
@@ -2939,7 +2942,8 @@ class XBook {
 <fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF4A2C25"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF1DFD2"/><bgColor indexed="64"/></patternFill></fill></fills>
 <borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left/><right/><top style="thin"/><bottom/><diagonal/></border></borders>
 <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="16">${[xf(0, 0, 0), xf(0, 1, 2, 'wrap'), xf(164, 0, 0), xf(165, 0, 0), xf(166, 0, 0), xf(0, 2, 0), xf(164, 2, 0), xf(0, 3, 0), xf(0, 4, 0), xf(1, 0, 0), xf(0, 2, 3), xf(164, 2, 3), xf(166, 2, 3), xf(164, 2, 0, 'top'), xf(0, 2, 0, 'top'), xf(1, 2, 0, 'top')].join('')}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
-    this.sheets.forEach((s, i) => { f[`xl/worksheets/sheet${i + 1}.xml`] = this.sheetXml(s); });
+    sheetXmls.forEach((x, i) => { f[`xl/worksheets/sheet${i + 1}.xml`] = x; });
+    f['xl/sharedStrings.xml'] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${this.sst.length}" uniqueCount="${this.sst.length}">${this.sst.map(x => `<si><t xml:space="preserve">${xEsc(x)}</t></si>`).join('')}</sst>`;
     return f;
   }
   blob(){ return new Blob([xZip(this.files())], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}); }
@@ -2968,14 +2972,15 @@ function xTable(book, name, cols, rows, title){
   cols.forEach((c, j) => { sh.width(j, c.w || (['eur', 'date', 'pct', 'int'].includes(c.t) ? 14 : 22)); sh.set(r0, j, c.h, XS.head); });
   const st = c => ({eur: XS.eur, date: XS.date, pct: XS.pct, int: XS.int}[c.t] ?? XS.norm);
   rows.forEach((o, i) => { const r = r0 + 1 + i; cols.forEach((c, j) => {
-    const v = c.f ? {f: c.f(r + 1)} : c.t === 'date' ? (o[c.k] ? xSerial(o[c.k]) : null) : (o[c.k] ?? null);
+    const v = c.f ? {f: c.f(r + 1), v: c.fv ? c.fv(o) : null} : c.t === 'date' ? (o[c.k] ? xSerial(o[c.k]) : null) : (o[c.k] ?? null);
     sh.set(r, j, typeof v === 'string' && ['eur', 'int', 'pct'].includes(c.t) && v !== '' ? Number(v) : v, st(c)); }); });
   sh.freeze = r0 + 1;
   if (rows.length){
     sh.filter = `A${r0 + 1}:${xCol(cols.length - 1)}${r0 + 1 + rows.length}`;
     if (cols.some(c => c.sum)){ const tr = r0 + 1 + rows.length;
       sh.set(tr, 0, t('total'), XS.tot);
-      cols.forEach((c, j) => { if (j && c.sum) sh.set(tr, j, {f: `SUBTOTAL(9,${xCol(j)}${r0 + 2}:${xCol(j)}${tr})`}, c.t === 'eur' ? XS.totEur : XS.totInt); else if (j) sh.set(tr, j, null, XS.tot); }); }
+      cols.forEach((c, j) => { if (j && c.sum){ const tot = rows.reduce((a, o) => a + (Number(c.fv ? c.fv(o) : o[c.k]) || 0), 0);
+        sh.set(tr, j, {f: `SUBTOTAL(9,${xCol(j)}${r0 + 2}:${xCol(j)}${tr})`, v: tot}, c.t === 'eur' ? XS.totEur : XS.totInt); } else if (j) sh.set(tr, j, null, XS.tot); }); }
   }
   return sh;
 }
@@ -3011,7 +3016,7 @@ function exportOrdersXlsx(btn){ return xBusy(btn, async () => {
   xTable(book, t('items'), [
     {h: t('order'), k: 'no', w: 16}, {h: t('date'), k: 'date', t: 'date', w: 12}, {h: t('status'), k: 'status', w: 13}, {h: t('customer'), k: 'customer'}, {h: t('items'), k: 'item', w: 44}, {h: t('qty'), k: 'qty', t: 'int', w: 7, sum: true},
     {h: t('unit_price_short'), k: 'price', t: 'eur'}, {h: cap(t('gross_lbl')), k: 'gross', t: 'eur', sum: true}, {h: t('discount'), k: 'disc', t: 'eur', sum: true}, {h: t('goods_cost'), k: 'cost', t: 'eur', sum: true},
-    {h: t('shipping_cost'), k: 'ship', t: 'eur', sum: true}, {h: t('margin'), k: 'margin', t: 'eur', sum: true}, {h: t('margin') + ' %', k: 'mp', t: 'pct', f: r => `IFERROR(L${r}/(H${r}-I${r}),"")`}], lr);
+    {h: t('shipping_cost'), k: 'ship', t: 'eur', sum: true}, {h: t('margin'), k: 'margin', t: 'eur', sum: true}, {h: t('margin') + ' %', k: 'mp', t: 'pct', f: r => `IFERROR(L${r}/(H${r}-I${r}),"")`, fv: o => o.gross - o.disc ? o.margin / (o.gross - o.disc) : ''}], lr);
   xDownload(book, `ordini-modus-vestendi-${isoD(new Date())}.xlsx`);
 }); }
 
@@ -3023,14 +3028,14 @@ function exportReportXlsx(btn){ return xBusy(btn, async () => {
   sh.set(1, 0, `${t('period')}: ${fdate(R.from < S.dataStart ? S.dataStart : R.from)} – ${fdate(R.to)}  ·  ${t('prev_year')}: ${noPrev ? '—' : fdate(R.pf) + ' – ' + fdate(R.pt)}`, XS.muted);
   ['', t('period'), t('prev_year'), '% ' + t('revenue_net').toLowerCase()].forEach((h, j) => sh.set(3, j, h, XS.head));
   // rows start at Excel row 5: 5 gross, 6 discount, 7 net, 8 cogs, 9 ship, 10 margin, 11 exp, 12 camp, 13 loss, 14 profit
-  const L = [[`${t('revenue')} (${t('gross_lbl')})`, cur.gross, prev.gross], [`− ${t('discount')}`, cur.disc, prev.disc], [t('revenue_net'), 'B5-B6'],
-    [`− ${t('goods_cost')}`, cur.cogs, prev.cogs], [`− ${t('shipping_cost')}`, cur.ship, prev.ship], [t('gross_margin'), 'B7-B8-B9'],
-    [`− ${t('expenses')}`, cur.exp, prev.exp], [`− ${t('campaigns')}`, cur.camp, prev.camp], [`− ${t('defect_loss')}`, cur.loss, prev.loss], [t('net_profit'), 'B10-B11-B12-B13']];
-  L.forEach(([lbl, a, b], i) => { const r = 4 + i, band = typeof a === 'string';
+  const vals = x => { const net = x.gross - x.disc, mg = net - x.cogs - x.ship; return [x.gross, x.disc, net, x.cogs, x.ship, mg, x.exp, x.camp, x.loss, mg - x.exp - x.camp - x.loss]; };
+  const VC = vals(cur), VP = vals(prev), F = {2: 'B5-B6', 5: 'B7-B8-B9', 9: 'B10-B11-B12-B13'};
+  const labels = [`${t('revenue')} (${t('gross_lbl')})`, `− ${t('discount')}`, t('revenue_net'), `− ${t('goods_cost')}`, `− ${t('shipping_cost')}`, t('gross_margin'), `− ${t('expenses')}`, `− ${t('campaigns')}`, `− ${t('defect_loss')}`, t('net_profit')];
+  labels.forEach((lbl, i) => { const r = 4 + i, band = !!F[i];
     sh.set(r, 0, lbl, band ? XS.band : XS.norm);
-    sh.set(r, 1, band ? {f: a} : a, band ? XS.bandEur : XS.eur);
-    sh.set(r, 2, noPrev ? null : band ? {f: a.replace(/B/g, 'C')} : b, band ? XS.bandEur : XS.eur);
-    sh.set(r, 3, {f: `IFERROR(B${r + 1}/B$7,"")`}, band ? XS.bandPct : XS.pct); });
+    sh.set(r, 1, band ? {f: F[i], v: VC[i]} : VC[i], band ? XS.bandEur : XS.eur);
+    sh.set(r, 2, noPrev ? null : band ? {f: F[i].replace(/B/g, 'C'), v: VP[i]} : VP[i], band ? XS.bandEur : XS.eur);
+    sh.set(r, 3, {f: `IFERROR(B${r + 1}/B$7,"")`, v: VC[2] ? VC[i] / VC[2] : ''}, band ? XS.bandPct : XS.pct); });
   sh.set(15, 0, t('goods_bought'), XS.norm); sh.set(15, 1, cur.bought, XS.eur); sh.set(15, 2, pv(prev.bought), XS.eur);
   sh.set(16, 0, `${t('orders')} · ${t('qty_pieces').toLowerCase()}`, XS.norm); sh.set(16, 1, `${cur.orders} · ${cur.pieces}`); sh.set(16, 2, noPrev ? '—' : `${prev.orders} · ${prev.pieces}`);
   sh.set(18, 0, t('pnl_hint'), XS.muted);
@@ -3038,14 +3043,14 @@ function exportReportXlsx(btn){ return xBusy(btn, async () => {
   const M = Object.keys(R.months).sort().map(k => ({k, ...R.months[k]}));
   xTable(book, t('by_month'), [{h: t('month'), k: 'k', w: 10}, {h: t('revenue_net'), k: 'net', t: 'eur', sum: true}, {h: t('goods_cost'), k: 'cogs', t: 'eur', sum: true}, {h: t('shipping_cost'), k: 'ship', t: 'eur', sum: true},
     {h: t('gross_margin'), k: 'margin', t: 'eur', sum: true}, {h: t('expenses'), k: 'exp', t: 'eur', sum: true}, {h: t('campaigns'), k: 'camp', t: 'eur', sum: true},
-    {h: t('net_profit'), k: 'p', t: 'eur', sum: true, f: r => `E${r}-F${r}-G${r}`}, {h: t('net_profit') + ' %', k: 'mp', t: 'pct', f: r => `IFERROR(H${r}/B${r},"")`}], M);
+    {h: t('net_profit'), k: 'p', t: 'eur', sum: true, f: r => `E${r}-F${r}-G${r}`, fv: o => o.margin - o.exp - o.camp}, {h: t('net_profit') + ' %', k: 'mp', t: 'pct', f: r => `IFERROR(H${r}/B${r},"")`, fv: o => o.net ? (o.margin - o.exp - o.camp) / o.net : ''}], M);
   const B = Object.entries(R.brands).map(([b, x]) => ({b, ...x})).sort((a, b) => b.margin - a.margin);
   xTable(book, t('by_brand'), [{h: t('brand'), k: 'b'}, {h: t('qty_pieces'), k: 'q', t: 'int', sum: true}, {h: t('revenue_net'), k: 'net', t: 'eur', sum: true}, {h: t('gross_margin'), k: 'margin', t: 'eur', sum: true},
-    {h: t('margin') + ' %', k: 'mp', t: 'pct', f: r => `IFERROR(D${r}/C${r},"")`}], B);
+    {h: t('margin') + ' %', k: 'mp', t: 'pct', f: r => `IFERROR(D${r}/C${r},"")`, fv: o => o.net ? o.margin / o.net : ''}], B);
   const V = [...cur.L].sort((a, b) => String(a.order_date).localeCompare(String(b.order_date))).map(l => ({date: l.order_date, no: l.order_no, customer: l.customer, item: l.item, qty: l.qty, gross: Number(l.gross), disc: Number(l.discount_share), cost: l.landed_cost == null ? null : l.qty * Number(l.landed_cost), ship: Number(l.shipping_share), margin: Number(l.margin)}));
   xTable(book, t('sold_items'), [{h: t('date'), k: 'date', t: 'date', w: 12}, {h: t('order'), k: 'no', w: 16}, {h: t('customer'), k: 'customer'}, {h: t('items'), k: 'item', w: 44}, {h: t('qty'), k: 'qty', t: 'int', w: 7, sum: true},
     {h: cap(t('gross_lbl')), k: 'gross', t: 'eur', sum: true}, {h: t('discount'), k: 'disc', t: 'eur', sum: true}, {h: t('goods_cost'), k: 'cost', t: 'eur', sum: true}, {h: t('shipping_cost'), k: 'ship', t: 'eur', sum: true},
-    {h: t('margin'), k: 'margin', t: 'eur', sum: true}, {h: t('margin') + ' %', k: 'mp', t: 'pct', f: r => `IFERROR(J${r}/(F${r}-G${r}),"")`}], V);
+    {h: t('margin'), k: 'margin', t: 'eur', sum: true}, {h: t('margin') + ' %', k: 'mp', t: 'pct', f: r => `IFERROR(J${r}/(F${r}-G${r}),"")`, fv: o => o.gross - o.disc ? o.margin / (o.gross - o.disc) : ''}], V);
   xTable(book, t('expenses'), [{h: t('date'), k: 'expense_date', t: 'date', w: 12}, {h: t('category'), k: 'cat', w: 18}, {h: t('description'), k: 'description', w: 40}, {h: t('amount'), k: 'amount', t: 'eur', sum: true}],
     cur.E.map(e => ({...e, cat: ev('expense_cat', e.category), amount: Number(e.amount)})).sort((a, b) => String(a.expense_date).localeCompare(String(b.expense_date))));
   const C = R.camps.map(c => { const d = (c.campaign_daily || []).filter(x => R.inR(x.day, R.cFrom, R.to)); const spend = c.campaign_daily?.length ? d.reduce((a, x) => a + Number(x.spend), 0) : (R.inR(c.start_date || c.end_date, R.cFrom, R.to) ? Number(c.spend) : 0);
