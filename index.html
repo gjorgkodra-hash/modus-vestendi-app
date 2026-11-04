@@ -199,6 +199,9 @@ const T = {
   yoy_vs:['Confronto con lo stesso periodo dell\'anno prima:','Compared with the same period last year:','Krahasuar me të njëjtën periudhë një vit më parë:'], prev_year:['anno prima','last year','viti i kaluar'],
   revenue_net:['Fatturato netto','Net revenue','Të ardhura neto'], gross_margin:['Margine lordo','Gross margin','Marzhi bruto'], net_profit:['Utile netto','Net profit','Fitimi neto'],
   pnl:['Conto economico','Profit and loss','Pasqyra e fitimit'], gross_lbl:['lordo','gross','bruto'], goods_bought:['Merce acquistata nel periodo (con costi d\'acquisto)','Goods bought in the period (with buying costs)','Malli i blerë në periudhë (me kostot e blerjes)'],
+  subtotal:['Subtotale','Subtotal','Nëntotali'], ship_fee_short:['Spedizione cliente','Customer shipping','Transporti i klientit'],
+  payment:['Pagamento','Payment','Pagesa'], shipped_on:['Spedito il','Shipped on','Dërguar më'], delivered_on:['Consegnato il','Delivered on','Dorëzuar më'],
+  unit_price_short:['Prezzo','Price','Çmimi'], month:['Mese','Month','Muaji'],
   same_cost_q:['Stesso prezzo d\'acquisto ({p}) anche per le altre taglie/colori di questo prodotto che non hanno ancora un costo?','Use the same purchase price ({p}) for the other sizes/colours of this product that have no cost yet?','I njëjti çmim blerjeje ({p}) edhe për masat/ngjyrat e tjera të këtij produkti që nuk kanë ende kosto?'],
   same_cost_done:['taglie aggiornate con lo stesso costo','sizes updated with the same cost','masa u përditësuan me të njëjtën kosto'], same_cost_btn:['Stesso costo delle altre taglie','Same cost as other sizes','Kosto si masat e tjera'],
   same_cost_none:['Nessuna taglia di questo prodotto ha già un costo: aggiungilo da Acquisti.','No size of this product has a cost yet: add it from Purchases.','Asnjë masë e këtij produkti nuk ka kosto: shtoje nga Blerjet.'],
@@ -1612,7 +1615,7 @@ async function viewOrders(main){
   const os = check(await sb.from('orders').select('id,order_no,order_date,status,currency,customers(full_name,country)').order('created_at', {ascending:false}).limit(300));
   const tots = check(await sb.from('v_order_totals').select('*').in('order_id', os.map(o => o.id).concat([0])));
   const T2 = Object.fromEntries(tots.map(x => [x.order_id, x]));
-  main.innerHTML = `<div class="row spread"><h1>${t('orders')}</h1><button class="primary" onclick="newOrder()">+ ${t('new_order')}</button></div>
+  main.innerHTML = `<div class="row spread"><h1>${t('orders')}</h1><div class="row"><button onclick="exportOrdersXlsx(this)">⬇ Excel</button><button class="primary" onclick="newOrder()">+ ${t('new_order')}</button></div></div>
   <div class="chips" style="margin-bottom:12px"><button class="${orderFilter ? '' : 'primary'}" onclick="orderFilter='';route()">${t('all')}</button>${opts('order_status').filter(([k]) => k !== 'bozza').map(([k, l]) => `<button class="${orderFilter === k ? 'primary' : ''}" onclick="orderFilter='${k}';route()">${l}</button>`).join('')}</div>
   <div class="card"><div class="table-wrap"><table><tr><th>${t('order')}</th><th>${t('date')}</th><th>${t('customer')}</th><th class="right">${t('total')}</th><th class="right">${t('to_collect')}</th><th>${t('status')}</th></tr>
   ${os.filter(o => orderFilter ? o.status === orderFilter : o.status !== 'annullato').map(o => `<tr class="click" onclick="location.hash='#/ordine/${o.id}'"><td>${esc(o.order_no)}</td><td>${fdate(o.order_date)}</td><td>${esc(o.customers?.full_name)} <span class="muted small">${esc(o.customers?.country || '')}</span></td><td class="right">${eur(T2[o.id]?.total)}</td><td class="right">${Number(T2[o.id]?.to_collect) ? eur(T2[o.id].to_collect) : ''}</td><td>${statusPill('order_status', o.status)}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">${t('no_data')}</td></tr>`}</table></div></div>`;
@@ -2899,6 +2902,160 @@ function repRange(){
   }
 }
 const prevYear = d => { const [a, b, c] = d.split('-'); return `${Number(a) - 1}-${b}-${c}`; };
+// ====== Excel export: small built-in .xlsx writer (no external library) ======
+const XS = {norm: 0, head: 1, eur: 2, date: 3, pct: 4, bold: 5, beur: 6, title: 7, muted: 8, int: 9, band: 10, bandEur: 11, bandPct: 12, totEur: 13, tot: 14, totInt: 15};
+const xEsc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+const xCol = n => { let s = ''; for (n++; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + (n - 1) % 26) + s; return s; };
+const xSerial = d => { const t0 = Date.UTC(1899, 11, 30), x = new Date(String(d).slice(0, 10) + 'T00:00:00Z').getTime(); return isNaN(x) ? null : (x - t0) / 864e5; };
+class XBook {
+  constructor(){ this.sheets = []; }
+  sheet(name){ const sh = {name: String(name).replace(/[\\\/\?\*\[\]:]/g, ' ').slice(0, 31), rows: {}, widths: [], freeze: 0, filter: null,
+    set(r, c, v, s = 0){ (this.rows[r] = this.rows[r] || {})[c] = {v, s}; }, width(c, w){ this.widths[c] = w; }}; this.sheets.push(sh); return sh; }
+  sheetXml(sh){
+    const rows = Object.keys(sh.rows).map(Number).sort((a, b) => a - b).map(r => {
+      const cells = Object.keys(sh.rows[r]).map(Number).sort((a, b) => a - b).map(c => {
+        const {v, s} = sh.rows[r][c], ref = xCol(c) + (r + 1);
+        if (v == null || v === '') return `<c r="${ref}" s="${s}"/>`;
+        if (typeof v === 'object' && v.f) return `<c r="${ref}" s="${s}"><f>${xEsc(v.f)}</f></c>`;
+        if (typeof v === 'number') return Number.isFinite(v) ? `<c r="${ref}" s="${s}"><v>${v}</v></c>` : `<c r="${ref}" s="${s}"/>`;
+        return `<c r="${ref}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${xEsc(v)}</t></is></c>`;
+      }).join('');
+      return `<row r="${r + 1}">${cells}</row>`;
+    }).join('');
+    const cols = sh.widths.length ? `<cols>${sh.widths.map((w, i) => w ? `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>` : '').join('')}</cols>` : '';
+    const pane = sh.freeze ? `<pane ySplit="${sh.freeze}" topLeftCell="A${sh.freeze + 1}" activePane="bottomLeft" state="frozen"/>` : '';
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0">${pane}</sheetView></sheetViews>${cols}<sheetData>${rows}</sheetData>${sh.filter ? `<autoFilter ref="${sh.filter}"/>` : ''}</worksheet>`;
+  }
+  files(){
+    const N = this.sheets.length, f = {};
+    f['[Content_Types].xml'] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${this.sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`;
+    f['_rels/.rels'] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+    f['xl/workbook.xml'] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${this.sheets.map((s, i) => `<sheet name="${xEsc(s.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets><definedNames>${this.sheets.map((s, i) => s.filter ? `<definedName name="_xlnm._FilterDatabase" localSheetId="${i}" hidden="1">'${xEsc(s.name).replace(/'/g, "''")}'!${s.filter.replace(/([A-Z]+)(\d+)/g, '$$$1$$$2')}</definedName>` : '').join('')}</definedNames><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`;
+    f['xl/_rels/workbook.xml.rels'] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${this.sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}<Relationship Id="rId${N + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+    // fonts: 0 normal, 1 bold white, 2 bold, 3 title, 4 muted italic | fills: 2 dark, 3 band | numFmts: 164 eur, 165 date, 166 pct
+    const xf = (num, font, fill, extra = '') => `<xf numFmtId="${num}" fontId="${font}" fillId="${fill}" borderId="${extra.includes('top') ? 1 : 0}" applyNumberFormat="1" applyFont="1" applyFill="1"${extra.includes('wrap') ? ' applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>' : '/>'}`;
+    f['xl/styles.xml'] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="3"><numFmt numFmtId="164" formatCode="#,##0.00\\ &quot;€&quot;;[Red]\\-#,##0.00\\ &quot;€&quot;"/><numFmt numFmtId="165" formatCode="dd/mm/yyyy"/><numFmt numFmtId="166" formatCode="0.0%"/></numFmts>
+<fonts count="5"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><color rgb="FF4A2C25"/><name val="Calibri"/></font><font><i/><sz val="10"/><color rgb="FF8A7A72"/><name val="Calibri"/></font></fonts>
+<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF4A2C25"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF1DFD2"/><bgColor indexed="64"/></patternFill></fill></fills>
+<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left/><right/><top style="thin"/><bottom/><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="16">${[xf(0, 0, 0), xf(0, 1, 2, 'wrap'), xf(164, 0, 0), xf(165, 0, 0), xf(166, 0, 0), xf(0, 2, 0), xf(164, 2, 0), xf(0, 3, 0), xf(0, 4, 0), xf(1, 0, 0), xf(0, 2, 3), xf(164, 2, 3), xf(166, 2, 3), xf(164, 2, 0, 'top'), xf(0, 2, 0, 'top'), xf(1, 2, 0, 'top')].join('')}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+    this.sheets.forEach((s, i) => { f[`xl/worksheets/sheet${i + 1}.xml`] = this.sheetXml(s); });
+    return f;
+  }
+  blob(){ return new Blob([xZip(this.files())], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}); }
+}
+// minimal ZIP (stored, no compression) — enough for .xlsx
+let _crcT;
+function xCrc(b){ if (!_crcT){ _crcT = new Uint32Array(256); for (let n = 0; n < 256; n++){ let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; _crcT[n] = c >>> 0; } }
+  let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = _crcT[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function xZip(files){
+  const enc = new TextEncoder(), parts = [], central = []; let off = 0;
+  const u16 = n => [n & 255, (n >>> 8) & 255], u32 = n => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  for (const [name, txt] of Object.entries(files)){
+    const nm = enc.encode(name), data = enc.encode(txt), crc = xCrc(data);
+    const head = [...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nm.length), ...u16(0)];
+    parts.push(new Uint8Array(head), nm, data);
+    central.push(new Uint8Array([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nm.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(off)]), nm);
+    off += head.length + nm.length + data.length;
+  }
+  const csize = central.reduce((a, x) => a + x.length, 0), n = Object.keys(files).length;
+  return new Blob([...parts, ...central, new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(n), ...u16(n), ...u32(csize), ...u32(off), ...u16(0)])]);
+}
+// a table sheet: cols [{h, k, w, t: 'eur'|'date'|'pct'|'int', sum, f(rowNumber1based)}]; header, frozen, filter and a totals row
+function xTable(book, name, cols, rows, title){
+  const sh = book.sheet(name); let r0 = 0;
+  if (title){ sh.set(0, 0, title, XS.title); r0 = 2; }
+  cols.forEach((c, j) => { sh.width(j, c.w || (['eur', 'date', 'pct', 'int'].includes(c.t) ? 14 : 22)); sh.set(r0, j, c.h, XS.head); });
+  const st = c => ({eur: XS.eur, date: XS.date, pct: XS.pct, int: XS.int}[c.t] ?? XS.norm);
+  rows.forEach((o, i) => { const r = r0 + 1 + i; cols.forEach((c, j) => {
+    const v = c.f ? {f: c.f(r + 1)} : c.t === 'date' ? (o[c.k] ? xSerial(o[c.k]) : null) : (o[c.k] ?? null);
+    sh.set(r, j, typeof v === 'string' && ['eur', 'int', 'pct'].includes(c.t) && v !== '' ? Number(v) : v, st(c)); }); });
+  sh.freeze = r0 + 1;
+  if (rows.length){
+    sh.filter = `A${r0 + 1}:${xCol(cols.length - 1)}${r0 + 1 + rows.length}`;
+    if (cols.some(c => c.sum)){ const tr = r0 + 1 + rows.length;
+      sh.set(tr, 0, t('total'), XS.tot);
+      cols.forEach((c, j) => { if (j && c.sum) sh.set(tr, j, {f: `SUBTOTAL(9,${xCol(j)}${r0 + 2}:${xCol(j)}${tr})`}, c.t === 'eur' ? XS.totEur : XS.totInt); else if (j) sh.set(tr, j, null, XS.tot); }); }
+  }
+  return sh;
+}
+function xDownload(book, fname){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(book.blob()); a.download = fname;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+async function xBusy(btn, fn){ const txt = btn.textContent; btn.disabled = true; btn.textContent = '⏳'; try { await fn(); } catch (e) { console.error(e); toast(e.message, true); } finally { btn.disabled = false; btn.textContent = txt; } }
+
+function exportOrdersXlsx(btn){ return xBusy(btn, async () => {
+  const os = check(await sb.from('orders').select('id,order_no,order_date,status,channel,delivery_mode,notes,shipped_at,delivered_at,customers(full_name,instagram,phone,country),addresses(line1,city,country)').neq('status', 'bozza').order('order_date', {ascending: false}).limit(5000));
+  const ids = os.map(o => o.id).concat([0]);
+  const [tots, pays, lines] = await Promise.all([sb.from('v_order_totals').select('*').in('order_id', ids).then(check), sb.from('payments').select('order_id,method,status,amount,paid_on').in('order_id', ids).then(check),
+    sb.from('v_line_margins').select('*').in('order_id', ids).then(check)]);
+  const T = Object.fromEntries(tots.map(x => [x.order_id, x]));
+  const P = {}; pays.forEach(p => (P[p.order_id] = P[p.order_id] || []).push(p));
+  const LN = {}; lines.forEach(l => (LN[l.order_id] = LN[l.order_id] || []).push(l));
+  const book = new XBook();
+  const rows = os.map(o => { const x = T[o.id] || {}, ls = LN[o.id] || [], pm = P[o.id] || [];
+    return {no: o.order_no, date: o.order_date, status: ev('order_status', o.status), customer: o.customers?.full_name, ig: o.customers?.instagram ? '@' + o.customers.instagram : '', phone: o.customers?.phone,
+      city: o.addresses?.city, country: o.addresses?.country || o.customers?.country, channel: o.channel, items: ls.map(l => `${l.qty}× ${l.item}`).join('; '), pieces: ls.reduce((a, l) => a + l.qty, 0),
+      subtotal: Number(x.subtotal ?? 0), discount: Number(x.discount ?? 0), ship: Number(x.shipping_fee ?? 0), total: Number(x.total ?? 0), paid: Number(x.paid ?? 0), to_collect: Number(x.to_collect ?? 0),
+      cost: ls.reduce((a, l) => a + l.qty * Number(l.landed_cost || 0), 0), margin: ls.reduce((a, l) => a + Number(l.margin || 0), 0),
+      pay: [...new Set(pm.map(p => ev('pay_method', p.method)))].join(', '), shipped: o.shipped_at, delivered: o.delivered_at, notes: o.notes}; });
+  xTable(book, t('orders'), [
+    {h: t('order'), k: 'no', w: 16}, {h: t('date'), k: 'date', t: 'date', w: 12}, {h: t('status'), k: 'status', w: 13}, {h: t('customer'), k: 'customer'}, {h: 'Instagram', k: 'ig', w: 18}, {h: t('phone'), k: 'phone', w: 16},
+    {h: t('city'), k: 'city', w: 14}, {h: t('country'), k: 'country', w: 9}, {h: t('channel'), k: 'channel', w: 11}, {h: t('items'), k: 'items', w: 50}, {h: t('qty_pieces'), k: 'pieces', t: 'int', w: 9, sum: true},
+    {h: t('subtotal'), k: 'subtotal', t: 'eur', sum: true}, {h: t('discount'), k: 'discount', t: 'eur', sum: true}, {h: t('ship_fee_short'), k: 'ship', t: 'eur', sum: true}, {h: t('total'), k: 'total', t: 'eur', sum: true},
+    {h: t('paid'), k: 'paid', t: 'eur', sum: true}, {h: t('to_collect'), k: 'to_collect', t: 'eur', sum: true}, {h: t('goods_cost'), k: 'cost', t: 'eur', sum: true}, {h: t('margin'), k: 'margin', t: 'eur', sum: true},
+    {h: t('payment'), k: 'pay', w: 18}, {h: t('shipped_on'), k: 'shipped', t: 'date', w: 12}, {h: t('delivered_on'), k: 'delivered', t: 'date', w: 12}, {h: t('notes'), k: 'notes', w: 30}], rows);
+  const lr = lines.filter(l => T[l.order_id] !== undefined || os.some(o => o.id === l.order_id)).sort((a, b) => String(b.order_date).localeCompare(String(a.order_date)))
+    .map(l => ({no: l.order_no, date: l.order_date, status: ev('order_status', l.status), customer: l.customer, item: l.item, qty: l.qty, price: Number(l.unit_price), gross: Number(l.gross), disc: Number(l.discount_share), cost: l.landed_cost == null ? null : l.qty * Number(l.landed_cost), ship: Number(l.shipping_share), margin: Number(l.margin)}));
+  xTable(book, t('items'), [
+    {h: t('order'), k: 'no', w: 16}, {h: t('date'), k: 'date', t: 'date', w: 12}, {h: t('status'), k: 'status', w: 13}, {h: t('customer'), k: 'customer'}, {h: t('items'), k: 'item', w: 44}, {h: t('qty'), k: 'qty', t: 'int', w: 7, sum: true},
+    {h: t('unit_price_short'), k: 'price', t: 'eur'}, {h: cap(t('gross_lbl')), k: 'gross', t: 'eur', sum: true}, {h: t('discount'), k: 'disc', t: 'eur', sum: true}, {h: t('goods_cost'), k: 'cost', t: 'eur', sum: true},
+    {h: t('shipping_cost'), k: 'ship', t: 'eur', sum: true}, {h: t('margin'), k: 'margin', t: 'eur', sum: true}, {h: t('margin') + ' %', k: 'mp', t: 'pct', f: r => `IFERROR(L${r}/(H${r}-I${r}),"")`}], lr);
+  xDownload(book, `ordini-modus-vestendi-${isoD(new Date())}.xlsx`);
+}); }
+
+function exportReportXlsx(btn){ return xBusy(btn, async () => {
+  const R = window._rep; if (!R) return;
+  const book = new XBook(), {cur, prev, noPrev} = R, pv = v => noPrev ? null : v;
+  const sh = book.sheet(t('pnl')); [44, 16, 16, 14].forEach((w, i) => sh.width(i, w));
+  sh.set(0, 0, `${t('pnl')} · Modus Vestendi`, XS.title);
+  sh.set(1, 0, `${t('period')}: ${fdate(R.from < S.dataStart ? S.dataStart : R.from)} – ${fdate(R.to)}  ·  ${t('prev_year')}: ${noPrev ? '—' : fdate(R.pf) + ' – ' + fdate(R.pt)}`, XS.muted);
+  ['', t('period'), t('prev_year'), '% ' + t('revenue_net').toLowerCase()].forEach((h, j) => sh.set(3, j, h, XS.head));
+  // rows start at Excel row 5: 5 gross, 6 discount, 7 net, 8 cogs, 9 ship, 10 margin, 11 exp, 12 camp, 13 loss, 14 profit
+  const L = [[`${t('revenue')} (${t('gross_lbl')})`, cur.gross, prev.gross], [`− ${t('discount')}`, cur.disc, prev.disc], [t('revenue_net'), 'B5-B6'],
+    [`− ${t('goods_cost')}`, cur.cogs, prev.cogs], [`− ${t('shipping_cost')}`, cur.ship, prev.ship], [t('gross_margin'), 'B7-B8-B9'],
+    [`− ${t('expenses')}`, cur.exp, prev.exp], [`− ${t('campaigns')}`, cur.camp, prev.camp], [`− ${t('defect_loss')}`, cur.loss, prev.loss], [t('net_profit'), 'B10-B11-B12-B13']];
+  L.forEach(([lbl, a, b], i) => { const r = 4 + i, band = typeof a === 'string';
+    sh.set(r, 0, lbl, band ? XS.band : XS.norm);
+    sh.set(r, 1, band ? {f: a} : a, band ? XS.bandEur : XS.eur);
+    sh.set(r, 2, noPrev ? null : band ? {f: a.replace(/B/g, 'C')} : b, band ? XS.bandEur : XS.eur);
+    sh.set(r, 3, {f: `IFERROR(B${r + 1}/B$7,"")`}, band ? XS.bandPct : XS.pct); });
+  sh.set(15, 0, t('goods_bought'), XS.norm); sh.set(15, 1, cur.bought, XS.eur); sh.set(15, 2, pv(prev.bought), XS.eur);
+  sh.set(16, 0, `${t('orders')} · ${t('qty_pieces').toLowerCase()}`, XS.norm); sh.set(16, 1, `${cur.orders} · ${cur.pieces}`); sh.set(16, 2, noPrev ? '—' : `${prev.orders} · ${prev.pieces}`);
+  sh.set(18, 0, t('pnl_hint'), XS.muted);
+  if (R.from < S.dataStart || noPrev) sh.set(19, 0, `${t('data_start_note')} ${fdate(S.dataStart)}`, XS.muted);
+  const M = Object.keys(R.months).sort().map(k => ({k, ...R.months[k]}));
+  xTable(book, t('by_month'), [{h: t('month'), k: 'k', w: 10}, {h: t('revenue_net'), k: 'net', t: 'eur', sum: true}, {h: t('goods_cost'), k: 'cogs', t: 'eur', sum: true}, {h: t('shipping_cost'), k: 'ship', t: 'eur', sum: true},
+    {h: t('gross_margin'), k: 'margin', t: 'eur', sum: true}, {h: t('expenses'), k: 'exp', t: 'eur', sum: true}, {h: t('campaigns'), k: 'camp', t: 'eur', sum: true},
+    {h: t('net_profit'), k: 'p', t: 'eur', sum: true, f: r => `E${r}-F${r}-G${r}`}, {h: t('net_profit') + ' %', k: 'mp', t: 'pct', f: r => `IFERROR(H${r}/B${r},"")`}], M);
+  const B = Object.entries(R.brands).map(([b, x]) => ({b, ...x})).sort((a, b) => b.margin - a.margin);
+  xTable(book, t('by_brand'), [{h: t('brand'), k: 'b'}, {h: t('qty_pieces'), k: 'q', t: 'int', sum: true}, {h: t('revenue_net'), k: 'net', t: 'eur', sum: true}, {h: t('gross_margin'), k: 'margin', t: 'eur', sum: true},
+    {h: t('margin') + ' %', k: 'mp', t: 'pct', f: r => `IFERROR(D${r}/C${r},"")`}], B);
+  const V = [...cur.L].sort((a, b) => String(a.order_date).localeCompare(String(b.order_date))).map(l => ({date: l.order_date, no: l.order_no, customer: l.customer, item: l.item, qty: l.qty, gross: Number(l.gross), disc: Number(l.discount_share), cost: l.landed_cost == null ? null : l.qty * Number(l.landed_cost), ship: Number(l.shipping_share), margin: Number(l.margin)}));
+  xTable(book, t('sold_items'), [{h: t('date'), k: 'date', t: 'date', w: 12}, {h: t('order'), k: 'no', w: 16}, {h: t('customer'), k: 'customer'}, {h: t('items'), k: 'item', w: 44}, {h: t('qty'), k: 'qty', t: 'int', w: 7, sum: true},
+    {h: cap(t('gross_lbl')), k: 'gross', t: 'eur', sum: true}, {h: t('discount'), k: 'disc', t: 'eur', sum: true}, {h: t('goods_cost'), k: 'cost', t: 'eur', sum: true}, {h: t('shipping_cost'), k: 'ship', t: 'eur', sum: true},
+    {h: t('margin'), k: 'margin', t: 'eur', sum: true}, {h: t('margin') + ' %', k: 'mp', t: 'pct', f: r => `IFERROR(J${r}/(F${r}-G${r}),"")`}], V);
+  xTable(book, t('expenses'), [{h: t('date'), k: 'expense_date', t: 'date', w: 12}, {h: t('category'), k: 'cat', w: 18}, {h: t('description'), k: 'description', w: 40}, {h: t('amount'), k: 'amount', t: 'eur', sum: true}],
+    cur.E.map(e => ({...e, cat: ev('expense_cat', e.category), amount: Number(e.amount)})).sort((a, b) => String(a.expense_date).localeCompare(String(b.expense_date))));
+  const C = R.camps.map(c => { const d = (c.campaign_daily || []).filter(x => R.inR(x.day, R.cFrom, R.to)); const spend = c.campaign_daily?.length ? d.reduce((a, x) => a + Number(x.spend), 0) : (R.inR(c.start_date || c.end_date, R.cFrom, R.to) ? Number(c.spend) : 0);
+    return {name: c.name.replace(/^Instagram post: /, ''), start: c.start_date, end: c.end_date, status: ev('camp_status', c.status), spend, reach: c.reach, clicks: c.clicks}; }).filter(c => c.spend > 0)
+    .sort((a, b) => String(a.start).localeCompare(String(b.start)));
+  xTable(book, t('campaigns'), [{h: t('campaign'), k: 'name', w: 40}, {h: t('start'), k: 'start', t: 'date', w: 12}, {h: t('end'), k: 'end', t: 'date', w: 12}, {h: t('status'), k: 'status', w: 12},
+    {h: `${t('spent')} (${t('period').toLowerCase()})`, k: 'spend', t: 'eur', sum: true}, {h: t('reach'), k: 'reach', t: 'int', w: 11, sum: true}, {h: cap(t('ig_clicks')), k: 'clicks', t: 'int', w: 10, sum: true}], C);
+  xDownload(book, `conto-economico-${R.from < S.dataStart ? S.dataStart : R.from}_${R.to}.xlsx`);
+}); }
+
 async function viewReports(main){
   const [from, to] = repRange();
   const pf = prevYear(from), pt = prevYear(to);
@@ -2946,7 +3103,8 @@ async function viewReports(main){
   const expCat = {};
   cur.E.forEach(e => { expCat[e.category] = (expCat[e.category] || 0) + Number(e.amount); });
   const presets = [['month', t('p_month')], ['last_month', t('p_last_month')], ['ytd', 'YTD'], ['last12', t('p_last12')], ['all', t('all')], ['custom', t('p_custom')]];
-  main.innerHTML = `<h1>${t('reports')}</h1>
+  window._rep = {from, to, pf, pt, cur, prev, noPrev, months, brands, expCat, camps, cFrom, inR};
+  main.innerHTML = `<div class="row spread"><h1>${t('reports')}</h1><button onclick="exportReportXlsx(this)">⬇ Excel</button></div>
   <div class="chips" style="margin-bottom:10px">${presets.map(([k, l]) => `<button class="${repF.preset === k ? 'primary' : ''}" onclick="repF.preset='${k}';route()">${l}</button>`).join('')}</div>
   <div class="row" style="margin-bottom:6px;flex-wrap:nowrap"><input type="date" id="rf" value="${from}"><span>→</span><input type="date" id="rt" value="${to}"></div>
   <p class="small muted" style="margin:0 0 14px">${t('yoy_vs')} ${fdate(pf)} – ${fdate(pt)}${from < S.dataStart || noPrev ? `<br>ℹ ${t('data_start_note')} <b>${fdate(S.dataStart)}</b>` : ''}</p>
