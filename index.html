@@ -680,8 +680,8 @@ async function viewDashboard(main){
     });
     const recentDel = check(await sb.from('orders').select('id,order_no,delivered_at,customers(full_name),order_feedback(order_id)').eq('status', 'consegnato').gte('delivered_at', new Date(Date.now() - 14 * 864e5).toISOString()));
     recentDel.filter(o => !o.order_feedback).forEach(o => items.push(['warn', o, `📝 ${t('fb_todo')}: ${esc(o.customers?.full_name || '')}`]));
-    const rs = check(await sb.from('restock_requests').select('id,name,email,phone,variants(size,color),models(name,brand_id)').eq('status', 'disponibile').order('available_at'));
-    rs.forEach(r => items.push(['bad', {order_no: '🔔 ' + t('rs_pill'), _click: `restockOpen(${r.id})`}, `${t('rs_back')}: ${esc(brandName(r.models?.brand_id))} ${esc(r.models?.name || '')} · ${esc([r.variants?.size, r.variants?.color].filter(Boolean).join(' · '))} — ${esc(r.name || r.email || r.phone || '')}`]));
+    const rs = check(await sb.from('restock_requests').select('id,name,email,phone,size,color,height_cm,weight_kg,variants(size,color),models(name,brand_id)').eq('status', 'disponibile').order('available_at'));
+    rs.forEach(r => items.push(['bad', {order_no: '🔔 ' + t('rs_pill'), _click: `restockOpen(${r.id})`}, `${t('rs_back')}: ${esc(brandName(r.models?.brand_id))} ${esc(r.models?.name || '')} · ${esc(rsSz(r))} — ${esc(r.name || r.email || r.phone || '')}`]));
     const newAcc = check(await sb.from('shop_accounts').select('id').is('seen_at', null));
     if (newAcc.length) items.push(['warn', {order_no: t('sa_new_pill'), _href: '#/clienti?acc'}, `👤 ${t('sa_new')}: ${newAcc.length}`]);
     const reqs = check(await sb.from('wishlist').select('status,expected_on').in('status', ['attesa','chiesto','confermato','contattato','non_disponibile']).not('order_line_id', 'is', null));
@@ -2264,9 +2264,13 @@ async function campDetail(id, f){
 }
 // ====== "Notify me when back" requests from the online shop ======
 const RS_ST = {attesa: ['In attesa', 'Waiting', 'Në pritje'], disponibile: ['Tornata: da contattare', 'Back: to contact', 'U kthye: për t’u kontaktuar'], contattato: ['Contattato', 'Contacted', 'Kontaktuar'], chiusa: ['Chiusa', 'Closed', 'Mbyllur']};
+const rsSz = (r, short) => [r.size || (r.height_cm ? (short ? '?' : '') : r.variants?.size), r.color || r.variants?.color, short ? '' : r.height_cm ? r.height_cm + ' cm' : '', short ? '' : r.weight_kg ? r.weight_kg + ' kg' : '', !short && !r.size && r.height_cm ? '(taglia da consigliare)' : ''].filter(Boolean).join(' · ') || '—';
 const rsSt = k => (RS_ST[k] || [k, k, k])[LANGS[LANG]];
 function rsMsg(r){
-  const item = `${brandName(r.models?.brand_id).trim()} ${r.models?.name || ''}`.trim(), sz = [r.variants?.size, r.variants?.color].filter(Boolean).join(' · '), url = SHOP_URL + 'p/' + r.model_id + '/', n = (r.name || '').split(/\s+/)[0];
+  const item = `${brandName(r.models?.brand_id).trim()} ${r.models?.name || ''}`.trim(), sz = rsSz(r, true), url = SHOP_URL + 'p/' + r.model_id + '/', n = (r.name || '').split(/\s+/)[0];
+  if (!r.size && r.height_cm) return r.lang === 'it' ? `Ciao ${n}! ${item} che ti interessava è di nuovo disponibile da Modus Vestendi. Con ${r.height_cm || '?'} cm e ${r.weight_kg || '?'} kg ti consigliamo la taglia …. Vuoi che te la teniamo da parte? ${url}`
+    : r.lang === 'en' ? `Hi ${n}! The ${item} you liked is back at Modus Vestendi. For ${r.height_cm || '?'} cm and ${r.weight_kg || '?'} kg we suggest size …. Shall we keep it for you? ${url}`
+    : `Përshëndetje ${n}! ${item} që ju interesonte është sërish në dispozicion te Modus Vestendi. Për ${r.height_cm || '?'} cm dhe ${r.weight_kg || '?'} kg ju këshillojmë masën …. Doni t’jua mbajmë? ${url}`;
   return r.lang === 'it' ? `Ciao ${n}! La taglia ${sz} di ${item} che cercavi è tornata disponibile da Modus Vestendi. Vuoi che te la teniamo da parte? ${url}`
     : r.lang === 'en' ? `Hi ${n}! The ${sz} of ${item} you were looking for is back at Modus Vestendi. Shall we keep it for you? ${url}`
     : `Përshëndetje ${n}! Masa ${sz} e ${item} që kërkonit është sërish në dispozicion te Modus Vestendi. Doni t’jua mbajmë? ${url}`;
@@ -2275,11 +2279,11 @@ function rsContact(r){
   const msg = encodeURIComponent(rsMsg(r)), ph = (r.phone || '').replace(/\D/g, '');
   return `<div class="row" style="gap:6px;margin-top:6px">${ph ? `<a class="btn small" href="https://wa.me/${ph}?text=${msg}" target="_blank" rel="noopener">WhatsApp</a><a class="btn small" href="tel:${esc(r.phone)}">📞 ${esc(r.phone)}</a>` : ''}${r.email ? `<a class="btn small" href="mailto:${esc(r.email)}?subject=Modus%20Vestendi&body=${msg}">✉ ${esc(r.email)}</a>` : ''}${r.customers?.instagram ? `<a class="btn small" href="https://ig.me/m/${encodeURIComponent(r.customers.instagram)}" target="_blank" rel="noopener">@${esc(r.customers.instagram)}</a>` : ''}${r.customer_id ? `<a class="btn small" href="#/cliente/${r.customer_id}" onclick="document.querySelectorAll('.modal-bg').forEach(x=>x.remove())">👤</a>` : ''}</div>`;
 }
-const RS_SEL = 'id,model_id,variant_id,name,email,phone,lang,status,created_at,available_at,emailed_at,handled_at,customer_id,customers(instagram),variants(size,color),models(name,brand_id)';
+const RS_SEL = 'id,model_id,variant_id,size,color,height_cm,weight_kg,name,email,phone,lang,status,created_at,available_at,emailed_at,handled_at,customer_id,customers(instagram),variants(size,color),models(name,brand_id)';
 async function restockOpen(id){
   const r = check(await sb.from('restock_requests').select(RS_SEL).eq('id', id).single());
   modal(`<div class="row spread" style="flex-wrap:nowrap"><h3 style="margin:0">🔔 ${t('rs_title')}</h3><button class="small" onclick="this.closest('.modal-bg').remove()">✕</button></div>
-    <p style="margin:10px 0 4px"><b>${esc(brandName(r.models?.brand_id))} ${esc(r.models?.name || '')}</b> · ${esc([r.variants?.size, r.variants?.color].filter(Boolean).join(' · '))} <a class="small" href="#/articolo/${r.model_id}" onclick="this.closest('.modal-bg').remove()">→</a></p>
+    <p style="margin:10px 0 4px"><b>${esc(brandName(r.models?.brand_id))} ${esc(r.models?.name || '')}</b> · ${esc(rsSz(r))} <a class="small" href="#/articolo/${r.model_id}" onclick="this.closest('.modal-bg').remove()">→</a></p>
     <p class="small muted" style="margin:0">${t('rs_asked_by')} <b style="color:var(--ink)">${esc(r.name || '—')}</b> · ${fdate(r.created_at)}${r.available_at ? ` · ${t('rs_back_on')} ${fdate(r.available_at)}` : ''}<br>${r.emailed_at ? `✉ ${t('rs_emailed')}` : r.email ? '' : `⚠ ${t('rs_no_email')}`}</p>
     ${rsContact(r)}
     <p class="small muted" style="margin:10px 0 4px">${t('rs_msg_hint')}</p><div class="small" style="background:var(--accent-soft);padding:8px 10px;border-radius:8px">${esc(rsMsg(r))}</div>
@@ -2292,19 +2296,19 @@ async function restockSet(id, st){
 async function restockCard(m){
   const R = check(await sb.from('restock_requests').select(RS_SEL).eq('model_id', m.id).in('status', ['attesa', 'disponibile']).order('created_at', {ascending: false}));
   if (!R.length) return '';
-  const by = {}; R.forEach(r => { const k = [r.variants?.size, r.variants?.color].filter(Boolean).join(' · '); by[k] = (by[k] || 0) + 1; });
+  const by = {}; R.forEach(r => { const k = rsSz(r); by[k] = (by[k] || 0) + 1; });
   return `<details class="card fold"><summary><h3 style="display:inline">🔔 ${t('rs_card')}</h3> <span class="pill warn">${R.length}</span> <span class="small muted">${Object.entries(by).map(([k, n]) => `${esc(k)} ×${n}`).join(' · ')}</span></summary>
-    ${R.map(r => `<div style="padding:8px 0;border-top:1px solid var(--line)"><div class="row spread" style="flex-wrap:nowrap"><span><b>${esc(r.name || '—')}</b> · ${esc([r.variants?.size, r.variants?.color].filter(Boolean).join(' · '))}</span><span class="pill ${r.status === 'disponibile' ? 'bad' : ''}">${esc(rsSt(r.status))}</span></div>
+    ${R.map(r => `<div style="padding:8px 0;border-top:1px solid var(--line)"><div class="row spread" style="flex-wrap:nowrap"><span><b>${esc(r.name || '—')}</b> · ${esc(rsSz(r))}</span><span class="pill ${r.status === 'disponibile' ? 'bad' : ''}">${esc(rsSt(r.status))}</span></div>
       <div class="small muted">${fdate(r.created_at)}${r.emailed_at ? ' · ✉ ' + t('rs_emailed') : ''}</div>${rsContact(r)}
       <div class="row" style="justify-content:flex-end;gap:6px;margin-top:4px"><button class="small" onclick="restockSet(${r.id},'chiusa')">${t('rs_close')}</button>${r.status === 'disponibile' ? `<button class="small primary" onclick="restockSet(${r.id},'contattato')">✓ ${t('rs_done')}</button>` : ''}</div></div>`).join('')}</details>`;
 }
 async function restockTrends(){
-  const R = check(await sb.from('restock_requests').select('model_id,status,variants(size,color),models(name,brand_id)').in('status', ['attesa', 'disponibile']));
+  const R = check(await sb.from('restock_requests').select('model_id,status,size,color,variants(size,color),models(name,brand_id)').in('status', ['attesa', 'disponibile']));
   if (!R.length) return '';
-  const g = {}; R.forEach(r => { const k = r.model_id + '|' + (r.variants?.size || '') + '|' + (r.variants?.color || ''); (g[k] = g[k] || {r, n: 0}).n++; });
+  const g = {}; R.forEach(r => { const k = r.model_id + '|' + rsSz(r, true); (g[k] = g[k] || {r, n: 0}).n++; });
   const rows = Object.values(g).sort((a, b) => b.n - a.n).slice(0, 15);
   return `<div class="card" style="margin-top:12px"><h3>🔔 ${t('rs_trends')} (${R.length})</h3><p class="small muted">${t('rs_trends_hint')}</p>
-    ${rows.map(({r, n}) => `<div class="row spread" style="flex-wrap:nowrap;padding:6px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='#/articolo/${r.model_id}'"><span class="small">${esc(brandName(r.models?.brand_id))} ${esc(r.models?.name || '')} · <b>${esc([r.variants?.size, r.variants?.color].filter(Boolean).join(' · '))}</b></span><span class="pill warn">${n}</span></div>`).join('')}</div>`;
+    ${rows.map(({r, n}) => `<div class="row spread" style="flex-wrap:nowrap;padding:6px 0;border-top:1px solid var(--line);cursor:pointer" onclick="location.hash='#/articolo/${r.model_id}'"><span class="small">${esc(brandName(r.models?.brand_id))} ${esc(r.models?.name || '')} · <b>${esc(rsSz(r))}</b></span><span class="pill warn">${n}</span></div>`).join('')}</div>`;
 }
 
 // ====== Trends, customer groups, product matching ======

@@ -39,10 +39,10 @@ async function gather() {
     admin.from("campaign_daily").select("campaign_id,day,spend,reach").eq("day", yday),
     admin.from("models").select("id,name,kind,created_at,brands(name)").gte("created_at", from).lt("created_at", to),
     admin.from("stock_movements").select("kind,qty").gte("created_at", from).lt("created_at", to),
-    admin.from("restock_requests").select("id,model_id,name,email,phone,emailed_at,variants(size,color),models(name,brands(name))").eq("status", "disponibile").order("available_at"),
-    admin.from("restock_requests").select("model_id,variants(size,color),models(name,brands(name))").gte("created_at", from).lt("created_at", to),
+    admin.from("restock_requests").select("id,model_id,name,email,phone,emailed_at,size,color,height_cm,weight_kg,variants(size,color),models(name,brands(name))").eq("status", "disponibile").order("available_at"),
+    admin.from("restock_requests").select("model_id,size,color,height_cm,weight_kg,variants(size,color),models(name,brands(name))").gte("created_at", from).lt("created_at", to),
   ]);
-  const rsLabel = (r: any) => [r.models?.brands?.name?.trim(), r.models?.name].filter(Boolean).join(" ") + " · " + [r.variants?.size, r.variants?.color].filter(Boolean).join(" · ");
+  const rsLabel = (r: any) => [r.models?.brands?.name?.trim(), r.models?.name].filter(Boolean).join(" ") + " · " + [r.size || (r.height_cm ? `taglia da consigliare (${r.height_cm} cm, ${r.weight_kg ?? "?"} kg)` : r.variants?.size), r.color || r.variants?.color].filter(Boolean).join(" · ");
   const restockBack = (rsBack.data ?? []).map((r: any) => ({ model_id: r.model_id, item: rsLabel(r), who: r.name || r.email || r.phone, phone: r.phone, emailed: !!r.emailed_at }));
   const rn: Record<string, any> = {}; (rsNew.data ?? []).forEach((r: any) => { const k = rsLabel(r); rn[k] = rn[k] || { item: k, model_id: r.model_id, n: 0 }; rn[k].n++; });
   const restockNew = Object.values(rn).sort((a: any, b: any) => b.n - a.n);
