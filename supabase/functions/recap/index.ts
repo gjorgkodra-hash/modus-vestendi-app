@@ -27,7 +27,7 @@ const romeStart = (day: string) => { const probe = new Date(day + "T12:00:00Z");
 async function gather() {
   const today = romeDay(), yday = shift(today, -1);
   const from = romeStart(yday), to = romeStart(today);
-  const [th, ii, ords, tots, res, wl, newCust, camps, cd, newModels, mov] = await Promise.all([
+  const [th, ii, ords, tots, res, wl, newCust, camps, cd, newModels, mov, rsBack, rsNew] = await Promise.all([
     admin.from("ig_threads").select("id,username,customer_id,updated_at,last_text,last_from_me").order("updated_at", { ascending: false }).limit(200),
     admin.from("ig_interest").select("thread_id,customer_id,username,data,last_msg_at"),
     admin.from("orders").select("id,order_no,order_date,status,reserved_until,created_at,customers(id,full_name,instagram)").neq("status", "annullato").order("id", { ascending: false }).limit(300),
@@ -39,7 +39,13 @@ async function gather() {
     admin.from("campaign_daily").select("campaign_id,day,spend,reach").eq("day", yday),
     admin.from("models").select("id,name,kind,created_at,brands(name)").gte("created_at", from).lt("created_at", to),
     admin.from("stock_movements").select("kind,qty").gte("created_at", from).lt("created_at", to),
+    admin.from("restock_requests").select("id,model_id,name,email,phone,emailed_at,variants(size,color),models(name,brands(name))").eq("status", "disponibile").order("available_at"),
+    admin.from("restock_requests").select("model_id,variants(size,color),models(name,brands(name))").gte("created_at", from).lt("created_at", to),
   ]);
+  const rsLabel = (r: any) => [r.models?.brands?.name?.trim(), r.models?.name].filter(Boolean).join(" ") + " · " + [r.variants?.size, r.variants?.color].filter(Boolean).join(" · ");
+  const restockBack = (rsBack.data ?? []).map((r: any) => ({ model_id: r.model_id, item: rsLabel(r), who: r.name || r.email || r.phone, phone: r.phone, emailed: !!r.emailed_at }));
+  const rn: Record<string, any> = {}; (rsNew.data ?? []).forEach((r: any) => { const k = rsLabel(r); rn[k] = rn[k] || { item: k, model_id: r.model_id, n: 0 }; rn[k].n++; });
+  const restockNew = Object.values(rn).sort((a: any, b: any) => b.n - a.n);
   const I = new Map((ii.data ?? []).map((r: any) => [r.thread_id, r]));
   const T = new Map((tots.data ?? []).map((r: any) => [r.order_id, r]));
   const O = (ords.data ?? []).map((o: any) => ({ ...o, ...(T.get(o.id) ?? {}) }));
@@ -72,7 +78,7 @@ async function gather() {
   const ordY = O.filter((o: any) => o.created_at >= from && o.created_at < to);
   const mv: Record<string, number> = {}; (mov.data ?? []).forEach((m: any) => { mv[m.kind] = (mv[m.kind] ?? 0) + Math.abs(Number(m.qty)); });
   return {
-    today, yday, unanswered, followUp, toShip, toCollect, expiring, reservedOpen: (res.data ?? []).length,
+    today, yday, restockBack, restockNew, unanswered, followUp, toShip, toCollect, expiring, reservedOpen: (res.data ?? []).length,
     requests: reqs.filter((r: any) => !r.contacted).slice(0, 12), requestsTotal: reqs.length,
     newCustomers: (newCust.data ?? []).map((c: any) => ({ id: c.id, name: c.full_name, instagram: c.instagram, phone: c.phone, ai: !!c.ai_filled })),
     lost, adsYday, adsSpend: adsYday.reduce((a: number, x: any) => a + x.spend, 0), ending, chatsYday: newConv,
@@ -81,7 +87,7 @@ async function gather() {
 }
 
 async function priorities(key: string, d: any) {
-  const slim = { unanswered: d.unanswered.slice(0, 8), followUp: d.followUp.slice(0, 6), toShip: d.toShip, toCollect: d.toCollect, expiring: d.expiring, requests: d.requests.slice(0, 6), lost: d.lost.slice(0, 6), ending: d.ending, adsSpend: d.adsSpend, activity: d.activity };
+  const slim = { restockBack: d.restockBack.slice(0, 6), unanswered: d.unanswered.slice(0, 8), followUp: d.followUp.slice(0, 6), toShip: d.toShip, toCollect: d.toCollect, expiring: d.expiring, requests: d.requests.slice(0, 6), lost: d.lost.slice(0, 6), ending: d.ending, adsSpend: d.adsSpend, activity: d.activity };
   const prompt = `Sei l'assistente di Modus Vestendi, piccolo negozio online di moda italiana che vende via Instagram in Albania, Kosovo e Macedonia del Nord.
 Dati di ieri e cose aperte (JSON): ${JSON.stringify(slim).slice(0, 12000)}
 Scrivi in italiano, tono diretto e cordiale, le PRIORITÀ DI OGGI: massimo 5 punti, ognuno una riga breve con nomi concreti (cliente, prodotto, numero ordine). Metti prima quello che porta vendite o evita di perderle. Se non c'è niente di urgente dillo in una riga. Rispondi SOLO con un array JSON di stringhe.`;
@@ -105,6 +111,8 @@ function html(d: any, pr: string[]) {
 <tr><td style="font:700 20px Arial,sans-serif;color:#2b1d19">☀️ Buongiorno! Recap di ${fdate(d.today)}</td></tr>
 <tr><td style="font:13px Arial,sans-serif;color:#8a7a72;padding-top:2px">Cosa è successo ieri (${fdate(d.yday)}) e cosa fare oggi · Modus Vestendi</td></tr>
 ${pr.length ? `<tr><td style="padding-top:14px"><div style="background:#f1dfd2;border-radius:10px;padding:12px 14px"><div style="font:600 15px Arial,sans-serif;color:#2b1d19;margin-bottom:4px">🎯 Priorità di oggi</div><ol style="margin:4px 0 0;padding-left:18px;font:14px/1.55 Arial,sans-serif;color:#2b1d19">${pr.map((p) => `<li>${esc(p)}</li>`).join("")}</ol></div></td></tr>` : ""}
+${sec("🔔", "Taglie tornate disponibili: contatta chi le aspettava", d.restockBack.map((r: any) => `${link("articolo/" + r.model_id, esc(r.item))} — ${esc(r.who)}${r.phone ? ` ${muted("· " + esc(r.phone))}` : ""} ${muted(r.emailed ? "· email automatica inviata" : "· solo telefono: chiamala/scrivile tu")}`))}
+${sec("📝", "Nuove richieste di avviso dal sito (ieri)", d.restockNew.map((r: any) => `${link("articolo/" + r.model_id, esc(r.item))} ${muted("× " + r.n)}`))}
 ${sec("💬", "Da rispondere", d.unanswered.map((u: any) => `${ig(u.username)} ${muted(`· aspetta da ${u.waiting_days ? u.waiting_days + " g" : "oggi"}`)}<br>${esc(u.summary || u.last)}`), "Nessun cliente in attesa di risposta 👍")}
 ${sec("🔁", "Da ricontattare (interessati, poi spariti)", d.followUp.map((u: any) => `${ig(u.username)} ${muted(`· ultimo messaggio ${fdate(u.last_msg)}`)}<br>${esc(u.summary)}`))}
 ${sec("📦", "Da spedire", d.toShip.map((o: any) => `${link("ordine/" + o.id, esc(o.no))} · ${esc(o.customer)} · ${eur(o.total)}${Number(o.to_collect) > 0 ? ` ${muted("· da incassare " + eur(o.to_collect))}` : ""}`))}
