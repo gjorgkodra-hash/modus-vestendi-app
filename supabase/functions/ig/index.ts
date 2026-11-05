@@ -278,13 +278,16 @@ async function syncThread(conv: any, msgs?: any[]) {
 async function syncDMs(full: boolean) {
   const { data: known } = await admin.from("ig_threads").select("id,updated_at");
   const k = new Map((known ?? []).map((t: any) => [t.id, t.updated_at ? new Date(t.updated_at).getTime() : 0]));
-  const convs = await gAll(`/${IG}/conversations`, { fields: "id,updated_time,participants", limit: 50 }, full ? 6 : 1);
-  let n = 0;
+  // full = walk back through all pages; either way only new/changed conversations are downloaded,
+  // and we stop before the function time limit (the next run continues where this one stopped)
+  const convs = await gAll(`/${IG}/conversations`, { fields: "id,updated_time,participants", limit: 50 }, full ? 30 : 1);
+  let n = 0, left = 0; const t0 = Date.now();
   for (const c of convs) {
-    if (!full && k.get(c.id) && k.get(c.id)! >= new Date(c.updated_time).getTime()) continue;
+    if (k.get(c.id) && k.get(c.id)! >= new Date(c.updated_time).getTime()) continue;
+    if (Date.now() - t0 > 100000) { left++; continue; }
     await syncThread(c); n++;
   }
-  return { threads: convs.length, updated: n };
+  return { threads: convs.length, updated: n, left };
 }
 
 // ---------- stories ----------
