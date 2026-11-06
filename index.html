@@ -332,6 +332,7 @@ const T = {
   fb_saved:['Esito registrato','Outcome recorded','Rezultati u regjistrua'], fb_todo:['Esito consegna da registrare','Delivery outcome to record','Rezultati i dorëzimit për t\'u regjistruar'], fb_later:['Più tardi','Later','Më vonë'],
   waitlist:['Clienti in attesa','Waiting list','Lista e pritjes'], wl_notified:['Avvisata','Notified','Njoftuar'], wl_close:['Chiudi','Close','Mbyll'], wl_hint:['Clienti che vogliono una taglia/colore non disponibile: scrivi loro quando arriva.','Customers waiting for a size/colour: message them when it arrives.','Klientë që presin një masë: shkruajuni kur të vijë.'],
   web_order:['🛍 Nuovo ordine dal sito','🛍 New website order','🛍 Porosi e re nga faqja'], show_on_site:['Mostra nel negozio online','Show in the online shop','Shfaq në dyqanin online'], share_link:['Condividi link','Share link','Ndaj linkun'], online_shop:['Negozio online','Online shop','Dyqani online'], link_copied:['Link copiato','Link copied','Linku u kopjua'], site_hint:['Visibili sul sito solo le taglie disponibili. Gli ordini arrivano come prenotazioni di 48 ore.','Only available sizes are shown. Orders arrive as 48-hour reservations.','Shfaqen vetëm masat në dispozicion. Porositë vijnë si rezervime 48 orë.'], sold_no_cost:['venduto senza costo','sold without cost','shitur pa kosto'], edit_line:['Correggi pezzo o prezzo','Fix item or price','Korrigjo copën ose çmimin'],
+  order_part_cost:['{n} pezzi senza costo d\'acquisto','{n} item(s) without purchase cost','{n} copë pa kosto blerjeje'],
   order_no_cost:['Manca il costo d\'acquisto: il margine non è reale. Aggiungi il pezzo a un acquisto (con "Già nel catalogo", stessa taglia e colore).','Purchase cost missing: the margin is not real. Add the item to a purchase ("Already in catalogue", same size and colour).','Mungon kostoja e blerjes: marzhi nuk është real. Shtoje copën në një blerje ("Tashmë në katalog", e njëjta masë dhe ngjyrë).'],
   defect:['Difetto','Defect','Defekt'], defects:['Difetti e resi al fornitore','Defects and returns to supplier','Defektet dhe kthimet te furnitori'], defect_save:['Togli dalla vendita','Take off sale','Hiqe nga shitja'],
   defect_desc:['Che difetto ha?','What is the defect?','Çfarë defekti ka?'], defect_hint:['Il pezzo esce dal magazzino vendibile e resta in "Difetti" finché non lo restituisci al negozio o decidi cosa farne.','The item leaves sellable stock and stays in "Defects" until you return it to the store or decide what to do.','Copa del nga magazina e shitshme dhe mbetet te "Defektet" derisa ta kthesh në dyqan ose të vendosësh çfarë të bësh.'],
@@ -1796,6 +1797,8 @@ async function viewOrder(main, id){
   await signedUrls(od.order_lines.map(mainPhoto));
   let marg = null;
   if (can.admin()){ const r = await sb.from('v_order_margins').select('*').eq('order_id', id).maybeSingle(); marg = r.data; }
+  let noCost = [];
+  if (can.admin()){ const vc = check(await sb.from('variant_costs').select('variant_id,purchase_price').in('variant_id', od.order_lines.map(l => l.variants.id).concat([0]))); const ok = new Set(vc.filter(x => x.purchase_price != null).map(x => x.variant_id)); noCost = od.order_lines.filter(l => !ok.has(l.variants.id)); }
   const cu = od.customers;
   const [fbk, wl] = await Promise.all([sb.from('order_feedback').select('*').eq('order_id', id).maybeSingle().then(r => r.data), sb.from('wishlist').select('*').eq('order_id', id).then(check)]);
   main.innerHTML = `<p><a href="#/ordini">← ${t('orders')}</a></p>
@@ -1821,7 +1824,7 @@ async function viewOrder(main, id){
   ${od.shipping_fee != null ? `<div class="row spread small" style="padding-top:8px"><span>${t('ship_fee')}</span><span>${Number(od.shipping_fee) ? eur(od.shipping_fee) : t('ship_free')}</span></div>` : ''}
   <div class="row spread" style="padding-top:8px"><b>${t('total')}</b><b style="font-size:20px">${eur(tt.total)}</b></div>
   ${marg ? `<p class="small muted">${t('goods_cost')} ${eur(marg.goods_cost)} · ${t('shipping_cost')} ${eur(marg.shipping_cost)} · <b>${t('margin')} ${eur(marg.margin)}</b></p>` : ''}
-  ${marg && !['riservato','bozza','annullato'].includes(od.status) && Number(marg.goods_cost) === 0 ? `<p class="small" style="color:var(--warn)">⚠ ${t('order_no_cost')} <a href="#/acquisti">${t('purchases')} →</a></p>` : ''}</div>
+  ${marg && !['riservato','bozza','annullato'].includes(od.status) && noCost.length ? `<p class="small" style="color:var(--warn)">⚠ ${t('order_part_cost').replace('{n}', noCost.length)}: <b>${noCost.map(l => esc([l.variants.size, l.variants.color].filter(Boolean).join(' · '))).join(', ')}</b>. ${t('order_no_cost')}</p><div class="row" style="gap:6px">${[...new Set(noCost.map(l => l.variants.models.id))].map(mid => `<button class="small" onclick="applySiblingCost(${mid})">💶 ${t('same_cost_btn')}</button>`).join('')}<a class="btn small" href="#/acquisti">${t('purchases')} →</a></div>` : ''}</div>
   <div class="grid g2">
   <div class="card"><div class="row spread"><h3>${t('payments')}</h3><button onclick="addPayment(${id})">+ ${t('add')}</button></div>
   <p class="small">${t('paid')}: <b>${eur(tt.paid)}</b> · ${t('to_collect')}: <b>${eur(tt.to_collect)}</b></p>
