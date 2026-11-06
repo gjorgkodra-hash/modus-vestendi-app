@@ -730,7 +730,8 @@ async function viewCatalog(main){
       (!q || (m.name + ' ' + brandName(m.brand_id) + ' ' + (m.season || '')).toLowerCase().includes(q)));
     $('#ml').innerHTML = list.length ? list.map(({m, ph}) => {
       const qty = (m.variants || []).reduce((a, v) => a + v.qty, 0);
-      const price = (m.variants || []).map(v => v.sale_price).filter(Boolean)[0];
+      const ps = vs => vs.map(v => Number(v.sale_price)).filter(Boolean), inStock = ps((m.variants || []).filter(v => v.qty > 0)), all = ps(m.variants || []);
+      const price = inStock.length ? Math.min(...inStock) : all.length ? Math.min(...all) : null; // the price customers pay now: cheapest piece in stock
       return `<div class="model" onclick="location.hash='#/articolo/${m.id}'"><div class="ph" style="${ph && urlCache[ph] ? `background-image:url('${urlCache[ph]}')` : ''}">${ph ? '' : t('photos')}</div>
       <div class="b"><div class="small muted">${esc(brandName(m.brand_id))}</div><div class="n">${esc(m.name)}</div><div class="row spread small"><span>${price ? eur(price) : ''}</span><span class="pill ${qty > 0 ? 'good' : 'grey'}">${qty} pz</span></div></div></div>`;
     }).join('') : `<div class="empty">${t('no_data')}</div>`;
