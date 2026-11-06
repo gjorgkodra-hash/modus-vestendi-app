@@ -21,6 +21,7 @@ const ENUMS: Record<string, string[]> = {
   closure: ["zip", "bottoni", "lacci", "velcro", "fibbia", "senza"],
 };
 const TR = ["composition", "lining", "padding", "details", "measures", "upper", "sole"];
+const TR_OK = [...TR, "description"]; // fields the translate mode accepts
 const FREE = [...TR, ...TR.map((k) => k + "_sq"), ...TR.map((k) => k + "_en"), "style_code", "heel"];
 
 async function translate(key: string, texts: Record<string, string>) {
@@ -57,7 +58,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     if (body.mode === "translate") {
       const texts: Record<string, string> = {};
-      for (const [k, v] of Object.entries(body.texts ?? {})) if (TR.includes(k) && v) texts[k] = String(v).slice(0, 400);
+      for (const [k, v] of Object.entries(body.texts ?? {})) if (TR_OK.includes(k) && v) texts[k] = String(v).slice(0, k === "description" ? 2500 : 400);
       if (!Object.keys(texts).length) return json({ sq: {}, en: {} });
       return json(await translate(key, texts));
     }
