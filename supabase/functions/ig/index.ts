@@ -162,9 +162,14 @@ async function syncAdsInner(full: boolean) {
   catch (e) { return { ad_accounts: 0, error: (e as GErr).message }; }
   let camps = 0;
   const since = addDays(day(new Date()), full ? -180 : -10), until = day(new Date());
+  const errors: string[] = [];
   for (const acc of accounts) {
+   try { // one broken/empty ad account must not stop the others
     const list = await gAll(`/${acc.id}/campaigns`, { fields: "id,name,status,effective_status,start_time,stop_time,daily_budget,lifetime_budget,created_time", limit: 100 });
-    const tot = await gAll(`/${acc.id}/insights`, { level: "campaign", fields: "campaign_id,spend,impressions,reach,frequency,clicks,inline_link_clicks,ctr,cpm,cpc,actions", date_preset: "maximum", limit: 500 });
+    if (!list.length) continue;
+    let tot: any[] = [];
+    try { tot = await gAll(`/${acc.id}/insights`, { level: "campaign", fields: "campaign_id,spend,impressions,reach,frequency,clicks,inline_link_clicks,ctr,cpm,cpc,actions", date_preset: "maximum", limit: 200 }); }
+    catch (_) { tot = await gAll(`/${acc.id}/insights`, { level: "campaign", fields: "campaign_id,spend,impressions,reach,frequency,clicks,inline_link_clicks,ctr,cpm,cpc,actions", time_range: { since: addDays(day(new Date()), -365), until: day(new Date()) }, limit: 200 }); }
     const totals = new Map(tot.map((x: any) => [x.campaign_id, x]));
     const ids = new Map<string, number>();
     for (const c of list) {
@@ -213,8 +218,9 @@ async function syncAdsInner(full: boolean) {
       const cid = ids.get(d.campaign_id); if (!cid) continue;
       await admin.from("campaign_daily").upsert({ campaign_id: cid, day: d.date_start, spend: Number(d.spend ?? 0), impressions: d.impressions ? Number(d.impressions) : null, reach: d.reach ? Number(d.reach) : null, clicks: d.clicks ? Number(d.clicks) : null, messages: msgs(d.actions), link_clicks: d.inline_link_clicks ? Number(d.inline_link_clicks) : null, engagement: act(d.actions, /^post_engagement$/) }, { onConflict: "campaign_id,day" });
     }
+   } catch (e) { errors.push(`${acc.id}: ${(e as Error).message}`); }
   }
-  return { ad_accounts: accounts.length, campaigns: camps };
+  return { ad_accounts: accounts.length, campaigns: camps, ...(errors.length ? { errors } : {}) };
 }
 
 // ---------- publish ----------
