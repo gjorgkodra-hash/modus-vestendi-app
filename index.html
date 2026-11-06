@@ -382,6 +382,7 @@ const T = {
   new_customer:['Nuovo cliente','New customer','Klient i ri'], history:['Storico acquisti','Purchase history','Historiku i blerjeve'], requests:['Richieste "cerco per te"','"Find it for me" requests','Kërkesa "ma gjej"'],
   paste_dm:['Incolla la conversazione dal DM','Paste the DM conversation','Ngjit bisedën nga DM'], analyze:['Analizza e salva','Analyse and save','Analizo dhe ruaj'],
   extracted:['Dati trovati','Data found','Të dhëna të gjetura'], apply:['Applica al profilo','Apply to profile','Apliko në profil'],
+  undo_deliv:['↩ Riporta a «Spedito»','↩ Back to «Shipped»','↩ Ktheje te «Dërguar»'], undo_deliv_q:['Riportare l\'ordine a «Spedito»? La consegna e l\'esito vengono annullati e il contrassegno torna «da incassare».','Set the order back to «Shipped»? Delivery and outcome are cleared and cash on delivery goes back to «to collect».','Ta kthejmë porosinë te «Dërguar»? Dorëzimi dhe rezultati anulohen dhe pagesa në dorëzim kthehet «për t\'u arkëtuar».'],
   cancel_order:['Annulla ordine','Cancel order','Anulo porosinë'], return_item:['Reso / cambio','Return / exchange','Kthim / ndërrim'], reason:['Motivo','Reason','Arsyeja'],
   back_to_stock:['Rientra in magazzino','Back to stock','Kthehet në magazinë'], users:['Utenti','Users','Përdoruesit'], role:['Ruolo','Role','Roli'], language:['Lingua','Language','Gjuha'],
   carriers:['Corrieri','Couriers','Korrierët'], tracking_template:['Link tracking (usa {n} per il numero)','Tracking link (use {n} for the number)','Lidhja e gjurmimit (përdor {n} për numrin)'],
@@ -1834,7 +1835,7 @@ async function viewOrder(main, id){
     <div class="row" style="margin-top:6px">${u ? `<a class="btn" href="${esc(u)}" target="_blank" rel="noopener">${t('track')} ↗</a>` : ''}<button onclick="editShipment(${s.id},${id})">${t('edit')}</button></div></div>`; }).join('') || (od.delivery_mode ? '' : `<div class="empty">${t('no_data')}</div>`)}</div></div>
   ${check(rets).length ? `<div class="card"><h3>${t('return_item')}</h3>${check(rets).map(r => `<div>${esc(ev('return_reason', r.reason))} · ${esc(ev('return_outcome', r.outcome))} ${r.back_to_stock ? '· ' + t('back_to_stock') : ''} ${r.notes ? '· ' + esc(r.notes) : ''}</div>`).join('')}</div>` : ''}
   ${od.notes ? `<div class="card">${esc(od.notes)}</div>` : ''}
-  <p class="row" style="justify-content:center">${!['annullato', 'consegnato', 'reso', 'riservato', 'bozza'].includes(od.status) ? `<button class="link" style="color:var(--bad)" onclick="cancelOrder(${id})">${t('cancel_order')}</button>` : ''}${['confermato','spedito','riservato'].includes(od.status) ? `<button class="link" style="color:var(--warn)" onclick="cancelForDefect(${id})">${t('cancel_defect')}</button>` : ''}<button class="link" style="color:var(--bad)" onclick="deleteOrder(${id})">${t('delete_order')}</button></p>`;
+  <p class="row" style="justify-content:center">${od.status === 'consegnato' && !check(rets).length ? `<button class="link" onclick="undoDelivery(${id})">${t('undo_deliv')}</button>` : ''}${!['annullato', 'consegnato', 'reso', 'riservato', 'bozza'].includes(od.status) ? `<button class="link" style="color:var(--bad)" onclick="cancelOrder(${id})">${t('cancel_order')}</button>` : ''}${['confermato','spedito','riservato'].includes(od.status) ? `<button class="link" style="color:var(--warn)" onclick="cancelForDefect(${id})">${t('cancel_defect')}</button>` : ''}<button class="link" style="color:var(--bad)" onclick="deleteOrder(${id})">${t('delete_order')}</button></p>`;
 }
 function confirmReservation(id){
   form({title:t('confirm_order'), submitLabel:t('confirm_order'), fields:[
@@ -2020,6 +2021,7 @@ async function editOrder(id){
     if (v.discount_pct) v.discount = Math.round(sub * Math.min(v.discount_pct, 100)) / 100;
     delete v.discount_pct; v.discount = v.discount || 0; if (v.shipping_fee === '' || v.shipping_fee === undefined) v.shipping_fee = null; v.fx_rate = v.fx_rate || 1; check(await sb.from('orders').update(v).eq('id', id)); route(); }});
 }
+async function undoDelivery(id){ if (!confirmBox(t('undo_deliv_q'))) return; check(await sb.rpc('annulla_consegna', {p_order_id: id})); toast(t('saved')); route(); }
 async function cancelOrder(id){ if (!confirmBox()) return; check(await sb.rpc('annulla_ordine', {p_order_id: id})); route(); }
 function addPayment(oid){
   form({title:t('payments'), fields:[
