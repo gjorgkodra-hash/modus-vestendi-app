@@ -359,7 +359,7 @@ const T = {
   bl_delete_q:['Eliminare questo articolo?','Delete this article?','Ta fshij artikullin?'],
   bl_slides_hint:['Tocca un\'immagine per scaricarla. Dal telefono «Condividi» apre direttamente Instagram (la didascalia viene copiata, incollala).','Tap an image to download it. On the phone «Share» opens Instagram directly (the caption is copied: paste it).','Prekni për ta shkarkuar.'],
   bl_share:['Condividi su Instagram','Share to Instagram','Shpërnda'], bl_download_all:['Scarica tutte','Download all','Shkarko të gjitha'], bl_img_err:['Immagine non disponibile','Image unavailable','Imazhi mungon'],
-  bl_caption_copied:['Didascalia copiata: incollala su Instagram','Caption copied: paste it in Instagram','Përshkrimi u kopjua'],
+  bl_link:['Link dell\'articolo sul sito','Article link on the website','Linku i artikullit'], bl_caption_copied:['Didascalia copiata: incollala su Instagram','Caption copied: paste it in Instagram','Përshkrimi u kopjua'],
   web_order:['🛍 Nuovo ordine dal sito','🛍 New website order','🛍 Porosi e re nga faqja'], show_on_site:['Mostra nel negozio online','Show in the online shop','Shfaq në dyqanin online'], share_link:['Condividi link','Share link','Ndaj linkun'], online_shop:['Negozio online','Online shop','Dyqani online'], link_copied:['Link copiato','Link copied','Linku u kopjua'], site_hint:['Visibili sul sito solo le taglie disponibili. Gli ordini arrivano come prenotazioni di 48 ore.','Only available sizes are shown. Orders arrive as 48-hour reservations.','Shfaqen vetëm masat në dispozicion. Porositë vijnë si rezervime 48 orë.'], sold_no_cost:['venduto senza costo','sold without cost','shitur pa kosto'], edit_line:['Correggi pezzo o prezzo','Fix item or price','Korrigjo copën ose çmimin'],
   order_part_cost:['{n} pezzi senza costo d\'acquisto','{n} item(s) without purchase cost','{n} copë pa kosto blerjeje'],
   order_no_cost:['Manca il costo d\'acquisto: il margine non è reale. Aggiungi il pezzo a un acquisto (con "Già nel catalogo", stessa taglia e colore).','Purchase cost missing: the margin is not real. Add the item to a purchase ("Already in catalogue", same size and colour).','Mungon kostoja e blerjes: marzhi nuk është real. Shtoje copën në një blerje ("Tashmë në katalog", e njëjta masë dhe ngjyrë).'],
@@ -2487,9 +2487,18 @@ function blNew(){
 
 // ---- editor ----
 let BLX = null; // post being edited
+const blSlug = s => String(s || '').toLowerCase().replace(/[ëè]/g, 'e').replace(/ç/g, 'c').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70).replace(/-+$/, '');
+const blUrl = r => `${SHOP_URL}blog/${r.slug || blSlug(r.title) || r.id}/`;
+const BL_READ = '📖 Lexoni artikullin e plotë:';
+// the caption always ends with the link to the full article on the website
+function blCaptionLink(c, r){ const u = blUrl(r); c = String(c || '').replace(new RegExp('\\n*' + BL_READ.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '.*$', 'm'), '').trimEnd();
+  const tags = c.match(/\n((?:#\S+\s*)+)$/); const body = (tags ? c.slice(0, tags.index) : c).trimEnd();
+  return `${body}\n\n${BL_READ} ${u}${tags ? '\n\n' + tags[1].trim() : ''}`; }
 async function viewPost(main, id){
   const [r] = await Promise.all([sb.from('blog_posts').select('*').eq('id', id).single().then(check), blCatalog()]);
   BLX = r; BLX.body = BLX.body || []; BLX.ig_slides = BLX.ig_slides || []; BLX.product_ids = (BLX.product_ids || []).map(Number);
+  if (!BLX.slug) BLX.slug = blSlug(BLX.title) || String(BLX.id);
+  BLX.ig_caption = blCaptionLink(BLX.ig_caption, BLX);
   await signedUrls([r.cover_path, ...BLP.filter(p => BLX.product_ids.includes(p.id) || blUsedIds().includes(p.id)).flatMap(p => p.photos.slice(0, 3))].filter(Boolean));
   blRender(main);
 }
@@ -2523,6 +2532,7 @@ function blRender(main = $('#main')){
     <button class="small" onclick="blPickProducts(ids => { BLX.product_ids = ids; blRender(); }, BLX.product_ids)">+ ${t('bl_choose')}</button></div></div>
   <div class="card"><h3 style="margin-top:0">📱 Instagram</h3><p class="small muted">${t('bl_ig_hint')}</p>
     <div class="field"><label>${t('bl_caption')} <span class="small muted" id="b_capn">${(r.ig_caption || '').length}/2200</span></label><textarea id="b_caption" rows="7" oninput="$('#b_capn').textContent=this.value.length+'/2200'">${esc(r.ig_caption || '')}</textarea></div>
+    <p class="small" style="margin:0 0 6px">🔗 ${t('bl_link')}: <a href="${esc(blUrl(r))}" target="_blank" rel="noopener">${esc(blUrl(r).replace('https://', ''))}</a></p>
     <button class="small" onclick="navigator.clipboard.writeText($('#b_caption').value).then(()=>toast(t('copied')))">📋 ${t('bl_copy_caption')}</button>
     <h4>${t('bl_slides')} (${r.ig_slides.length})</h4><div id="b_slides">${r.ig_slides.map((s, i) => blSlideRow(s, i)).join('')}</div>
     <div class="row" style="gap:6px;margin-top:8px"><button class="small" onclick="blAddSlide('text')">+ ${t('bl_s_text')}</button><button class="small" onclick="blAddSlide('product')">+ ${t('bl_s_product')}</button></div></div>
@@ -2565,8 +2575,12 @@ function blRead(){
 async function blSave(quiet){
   blRead();
   const r = BLX;
+  if (!r.slug || r.status !== 'pubblicato') r.slug = blSlug(r.title) || String(r.id); // the address follows the title until it is published
+  r.ig_caption = blCaptionLink(r.ig_caption, r); if ($('#b_caption')) $('#b_caption').value = r.ig_caption;
+  const {data: dup} = await sb.from('blog_posts').select('id').eq('slug', r.slug).neq('id', r.id).limit(1);
+  if ((dup || []).length) r.slug = r.slug + '-' + r.id;
   check(await sb.from('blog_posts').update({title: r.title, excerpt: r.excerpt, category: r.category, seo_title: r.seo_title, seo_desc: r.seo_desc, body: r.body, cover_path: r.cover_path,
-    product_ids: r.product_ids, source: r.source, ig_caption: r.ig_caption, ig_slides: r.ig_slides, reviewed: r.reviewed, reading_min: r.reading_min}).eq('id', r.id));
+    product_ids: r.product_ids, source: r.source, ig_caption: r.ig_caption, ig_slides: r.ig_slides, reviewed: r.reviewed, reading_min: r.reading_min, slug: r.slug}).eq('id', r.id));
   if (!quiet){ toast(t('saved')); blRender(); }
 }
 async function blDelete(){ if (!confirmBox(t('bl_delete_q'))) return; check(await sb.from('blog_posts').delete().eq('id', BLX.id)); location.hash = '#/blog'; }
@@ -2649,7 +2663,8 @@ async function blDrawSlide(s, i, n){
     x.fillStyle = SL.acc; x.fillRect(0, 0, SL.w, SL.h); brand(true);
     x.fillStyle = '#fff'; x.font = '500 80px Jost, sans-serif'; let y = blWrap(x, s.title, 80, 520, SL.w - 160, 90, 3);
     x.font = '400 40px Inter, sans-serif'; x.fillStyle = 'rgba(255,255,255,.88)'; y = blWrap(x, s.text, 80, y + 30, SL.w - 160, 54, 4);
-    x.fillStyle = SL.tan; x.font = '600 38px Inter, sans-serif'; x.fillText('shop.modusvestendi.com', 80, Math.max(y + 70, 1060));
+    x.fillStyle = 'rgba(255,255,255,.75)'; x.font = '400 30px Inter, sans-serif'; const ly = Math.max(y + 60, 1000); x.fillText(BL_READ.replace('📖 ', ''), 80, ly);
+    x.fillStyle = SL.tan; let fs = 40; const ad = blUrl(BLX).replace('https://', '').replace(/\/$/, ''); do { x.font = `600 ${fs}px Inter, sans-serif`; fs -= 2; } while (x.measureText(ad).width > SL.w - 160 && fs > 22); x.fillText(ad, 80, ly + 52);
     if (BLX.source?.name){ x.fillStyle = 'rgba(255,255,255,.7)'; x.font = '400 28px Inter, sans-serif'; blWrap(x, `Frymëzuar nga: ${BLX.source.name}${BLX.source.title ? ' — “' + BLX.source.title + '”' : ''}`, 80, SL.h - 110, SL.w - 160, 36, 2); }
   } else {
     x.fillStyle = SL.bg; x.fillRect(0, 0, SL.w, SL.h); brand(false);
