@@ -331,6 +331,35 @@ const T = {
   fb_avail:['disp.','avail.','disp.'], fb_none:['non disp.','not avail.','s\'ka'], fb_already:['reso già registrato','return already recorded','kthimi i regjistruar'], fb_exchange_note:['Il nuovo capo va consegnato: l\'ordine torna tra quelli da spedire.','The new item must be delivered: the order goes back to "to ship".','Artikulli i ri duhet dorëzuar: porosia kthehet te "për t\'u dërguar".'],
   fb_saved:['Esito registrato','Outcome recorded','Rezultati u regjistrua'], fb_todo:['Esito consegna da registrare','Delivery outcome to record','Rezultati i dorëzimit për t\'u regjistruar'], fb_later:['Più tardi','Later','Më vonë'],
   waitlist:['Clienti in attesa','Waiting list','Lista e pritjes'], wl_notified:['Avvisata','Notified','Njoftuar'], wl_close:['Chiudi','Close','Mbyll'], wl_hint:['Clienti che vogliono una taglia/colore non disponibile: scrivi loro quando arriva.','Customers waiting for a size/colour: message them when it arrives.','Klientë që presin një masë: shkruajuni kur të vijë.'],
+  blog:['Blog','Blog','Blog'], copied:['Copiato','Copied','U kopjua'], sold_out:['esaurito','sold out','e shitur'],
+  bl_new:['Nuovo articolo','New article','Artikull i ri'], bl_hint:['Articoli in albanese per il sito e per Instagram. L\'AI prepara la bozza, voi la controllate: niente viene pubblicato da solo.','Albanian articles for the website and Instagram. The AI drafts, you review: nothing is published by itself.','Artikuj në shqip për faqen dhe Instagram. AI përgatit draftin, ju e kontrolloni: asgjë nuk publikohet vetë.'],
+  bl_empty:['Nessun articolo. Crea il primo con «Nuovo articolo».','No articles yet.','Asnjë artikull.'], bl_write:['Scrivi la bozza','Write the draft','Shkruaj draftin'], bl_kind:['Tipo di articolo','Article type','Lloji'],
+  bl_k_trend:['Trend da un articolo (link)','Trend from an article (link)','Trend nga një artikull (link)'], bl_k_guida_taglie:['Guida taglie di un brand','Brand size guide','Udhëzues masash'], bl_k_stile:['Come abbinare','How to style','Si ta vishni'],
+  bl_k_brand:['Storia del brand','Brand story','Historia e markës'], bl_k_cura:['Cura dei capi','Garment care','Kujdesi për veshjet'], bl_k_novita:['Novità in negozio','New arrivals','Të reja'],
+  bl_url:['Link dell\'articolo (Vogue, Elle, Grazia…)','Article link','Linku i artikullit'], bl_notes:['Note per l\'AI (facoltative)','Notes for the AI (optional)','Shënime për AI'],
+  bl_new_hint:['Per i trend l\'AI scrive un testo NOSTRO ispirato all\'articolo (non una traduzione), cita la fonte e usa solo le foto dei nostri prodotti. Ci vogliono 1-2 minuti.','For trends the AI writes OUR OWN text inspired by the article (not a translation), credits the source and uses only our product photos. It takes 1-2 minutes.','AI shkruan tekstin tonë, jo përkthim, dhe citon burimin.'],
+  bl_need_url:['Incolla il link dell\'articolo','Paste the article link','Ngjisni linkun'], bl_writing:['L\'AI sta scrivendo la bozza… (1-2 minuti)','The AI is writing the draft… (1-2 minutes)','AI po shkruan… (1-2 minuta)'],
+  bl_unreadable:['Non riesco a leggere l\'articolo (abbonamento o sito bloccato). Prova un altro link.','Cannot read the article (paywall or blocked).','Artikulli nuk lexohet.'],
+  bl_published:['Pubblicato','Published','Publikuar'], bl_draft:['Bozza','Draft','Draft'], bl_reviewed:['controllato','reviewed','kontrolluar'], bl_orig:['Originalità','Originality','Origjinaliteti'],
+  bl_preview:['Anteprima sito','Website preview','Parapamje'], bl_slides:['Slide Instagram','Instagram slides','Slajdet Instagram'], bl_check:['Da controllare','To check','Për t\'u kontrolluar'],
+  bl_too_close:['troppo vicino all\'originale: riscrivi i passaggi qui sotto','too close to the original: rewrite the passages below','shumë afër origjinalit'], bl_orig_ok:['testo nostro, non una traduzione','our own text, not a translation','tekst yni'],
+  bl_passages:['Frasi troppo simili alla fonte','Sentences too close to the source','Fjali shumë të ngjashme'], bl_source:['Fonte','Source','Burimi'],
+  bl_source_hint:['Sul sito e nell\'ultima slide compare «Burimi: …» con il link all\'articolo originale.','The site and the last slide show the credit with the link.','Shfaqet «Burimi» me linkun.'],
+  bl_src_name:['Testata','Outlet','Media'], bl_src_author:['Autore','Author','Autori'], bl_src_title:['Titolo originale','Original title','Titulli origjinal'],
+  bl_article:['Articolo','Article','Artikulli'], bl_title:['Titolo','Title','Titulli'], bl_excerpt:['Sommario (1-2 frasi)','Summary (1-2 sentences)','Përmbledhje'], bl_cover:['Foto di copertina (solo foto nostre)','Cover photo (our photos only)','Foto kryesore'],
+  bl_no_photos:['Aggiungi prodotti per scegliere la foto','Add products to pick a photo','Shtoni produkte'], bl_seo_title:['Titolo per Google','Google title','Titulli për Google'], bl_seo_desc:['Descrizione per Google','Google description','Përshkrimi për Google'],
+  bl_body:['Testo','Text','Teksti'], bl_add_block:['Aggiungi','Add','Shto'], bl_b_p:['Paragrafo','Paragraph','Paragraf'], bl_b_h:['Sottotitolo','Sub-heading','Nëntitull'], bl_b_list:['Elenco','List','Listë'], bl_b_tip:['Consiglio','Tip','Këshillë'],
+  bl_b_quote:['Citazione (max 25 parole)','Quote (max 25 words)','Citim'], bl_b_table:['Tabella','Table','Tabelë'], bl_b_products:['Prodotti («Bli trendin»)','Products','Produkte'],
+  bl_one_per_line:['una voce per riga','one item per line','një për rresht'], bl_table_hint:['una riga per riga di tabella, celle separate da |','one line per row, cells separated by |','qelizat me |'],
+  bl_products:['Prodotti collegati','Linked products','Produktet'], bl_products_hint:['Compaiono in fondo all\'articolo e nelle slide. Solo prodotti del negozio.','Shown at the end of the article and in the slides.','Shfaqen në fund.'], bl_choose:['Scegli prodotti','Choose products','Zgjidh produkte'],
+  bl_ig_hint:['Niente viene pubblicato su Instagram in automatico: generi le immagini e la didascalia e le pubblichi tu dal telefono.','Nothing is posted automatically: you generate images and caption and post them yourself.','Asgjë nuk publikohet automatikisht.'],
+  bl_caption:['Didascalia','Caption','Përshkrimi'], bl_copy_caption:['Copia didascalia','Copy caption','Kopjo'], bl_s_cover:['Copertina','Cover','Kopertina'], bl_s_text:['Testo','Text','Tekst'], bl_s_product:['Prodotto','Product','Produkt'], bl_s_end:['Chiusura','Closing','Mbyllja'],
+  bl_reviewed_box:['Ho riletto l\'articolo: il testo è nostro, i dati sono corretti, la fonte è citata.','I reviewed it: our own text, correct data, source credited.','E kam rilexuar.'],
+  bl_publish_later:['La pubblicazione sul sito si attiva dopo la vostra revisione della prima bozza.','Publishing on the website is enabled after you review the first draft.','Publikimi aktivizohet pas rishikimit.'],
+  bl_delete_q:['Eliminare questo articolo?','Delete this article?','Ta fshij artikullin?'],
+  bl_slides_hint:['Tocca un\'immagine per scaricarla. Dal telefono «Condividi» apre direttamente Instagram (la didascalia viene copiata, incollala).','Tap an image to download it. On the phone «Share» opens Instagram directly (the caption is copied: paste it).','Prekni për ta shkarkuar.'],
+  bl_share:['Condividi su Instagram','Share to Instagram','Shpërnda'], bl_download_all:['Scarica tutte','Download all','Shkarko të gjitha'], bl_img_err:['Immagine non disponibile','Image unavailable','Imazhi mungon'],
+  bl_caption_copied:['Didascalia copiata: incollala su Instagram','Caption copied: paste it in Instagram','Përshkrimi u kopjua'],
   web_order:['🛍 Nuovo ordine dal sito','🛍 New website order','🛍 Porosi e re nga faqja'], show_on_site:['Mostra nel negozio online','Show in the online shop','Shfaq në dyqanin online'], share_link:['Condividi link','Share link','Ndaj linkun'], online_shop:['Negozio online','Online shop','Dyqani online'], link_copied:['Link copiato','Link copied','Linku u kopjua'], site_hint:['Visibili sul sito solo le taglie disponibili. Gli ordini arrivano come prenotazioni di 48 ore.','Only available sizes are shown. Orders arrive as 48-hour reservations.','Shfaqen vetëm masat në dispozicion. Porositë vijnë si rezervime 48 orë.'], sold_no_cost:['venduto senza costo','sold without cost','shitur pa kosto'], edit_line:['Correggi pezzo o prezzo','Fix item or price','Korrigjo copën ose çmimin'],
   order_part_cost:['{n} pezzi senza costo d\'acquisto','{n} item(s) without purchase cost','{n} copë pa kosto blerjeje'],
   order_no_cost:['Manca il costo d\'acquisto: il margine non è reale. Aggiungi il pezzo a un acquisto (con "Già nel catalogo", stessa taglia e colore).','Purchase cost missing: the margin is not real. Add the item to a purchase ("Already in catalogue", same size and colour).','Mungon kostoja e blerjes: marzhi nuk është real. Shtoje copën në një blerje ("Tashmë në katalog", e njëjta masë dhe ngjyrë).'],
@@ -607,8 +636,8 @@ async function shareShop(id){
 }
 function navItems(){
   const r = S.profile.role;
-  const all = [['dashboard','#/'],['catalog','#/catalogo'],['purchases','#/acquisti'],['customers','#/clienti'],['instagram','#/instagram'],['camp_eff','#/fushata'],['trends','#/tendenca'],['ig_dms','#/dm'],['orders','#/ordini'],['xrequests','#/richieste'],['expenses','#/spese'],['reports','#/report'],['settings','#/impostazioni']];
-  const allowed = {admin: all.map(a => a[0]), vendite:['dashboard','catalog','customers','instagram','trends','ig_dms','orders','xrequests','settings'], magazzino:['dashboard','catalog','purchases','settings']}[r];
+  const all = [['dashboard','#/'],['catalog','#/catalogo'],['purchases','#/acquisti'],['customers','#/clienti'],['instagram','#/instagram'],['camp_eff','#/fushata'],['trends','#/tendenca'],['ig_dms','#/dm'],['blog','#/blog'],['orders','#/ordini'],['xrequests','#/richieste'],['expenses','#/spese'],['reports','#/report'],['settings','#/impostazioni']];
+  const allowed = {admin: all.map(a => a[0]), vendite:['dashboard','catalog','customers','instagram','trends','ig_dms','blog','orders','xrequests','settings'], magazzino:['dashboard','catalog','purchases','settings']}[r];
   return all.filter(a => allowed.includes(a[0]));
 }
 function renderShell(){
@@ -636,7 +665,7 @@ async function route(){
   const h = location.hash.replace(/^#\/?/, '');
   const [p, id] = h.split('?')[0].split('/');
   const map = {'':['dashboard', viewDashboard], catalogo:['catalog', viewCatalog], articolo:['catalog', viewModel], acquisti:['purchases', viewPurchases], acquisto:['purchases', viewPurchase],
-    clienti:['customers', viewCustomers], cliente:['customers', viewCustomer], ordini:['orders', viewOrders], ordine:['orders', viewOrder], richieste:['xrequests', viewRequests], spese:['expenses', viewExpenses], instagram:['instagram', viewInstagram], dm:['ig_dms', viewDMs], fushata:['camp_eff', viewCampEff], tendenca:['trends', viewTrends], report:['reports', viewReports], impostazioni:['settings', viewSettings]};
+    clienti:['customers', viewCustomers], cliente:['customers', viewCustomer], ordini:['orders', viewOrders], ordine:['orders', viewOrder], richieste:['xrequests', viewRequests], spese:['expenses', viewExpenses], instagram:['instagram', viewInstagram], dm:['ig_dms', viewDMs], fushata:['camp_eff', viewCampEff], tendenca:['trends', viewTrends], blog:['blog', viewBlog], post:['blog', viewPost], report:['reports', viewReports], impostazioni:['settings', viewSettings]};
   const [k, fn] = map[p] || map[''];
   document.querySelectorAll('nav.tabs a, .drop a').forEach(a => a.classList.toggle('on', a.dataset.k === k));
   $('#mb')?.classList.toggle('on', !MAIN_TABS[S.profile.role].includes(k));
@@ -2415,6 +2444,243 @@ function barList(rows, total){
   return rows.length ? rows.map(([l, v, sub]) => `<div style="margin:5px 0"><div class="row spread small" style="flex-wrap:nowrap"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(l)}</span><span><b>${v}</b>${sub ? ` <span class="muted">${sub}</span>` : ''}</span></div>
     <div style="height:8px;background:var(--line);border-radius:4px"><div style="height:100%;width:${v / mx * 100}%;background:var(--accent);border-radius:4px"></div></div></div>`).join('') : `<p class="small muted">${t('no_data')}</p>`;
 }
+// ====== Blog: articles in Albanian for the website and Instagram (drafts reviewed by staff) ======
+const BL_KINDS = ['trend','guida_taglie','stile','brand','cura','novita'];
+const BL_SQ = {trend:'Trendet', guida_taglie:'Udhëzues masash', stile:'Si ta vishni', brand:'Historia e markës', cura:'Kujdesi për veshjet', novita:'Të reja'};
+let BLP = null; // catalogue as the shop sees it (photos, prices, sizes)
+async function blCatalog(force){ if (!BLP || force){ const {data} = await sb.rpc('shop_catalog'); BLP = data || []; } return BLP; }
+const blProd = id => (BLP || []).find(p => p.id === Number(id));
+const blPrice = p => { const av = p.variants.filter(v => v.available > 0); return Math.min(...(av.length ? av : p.variants).map(v => Number(v.price))); };
+
+async function viewBlog(main){
+  const rows = check(await sb.from('blog_posts').select('id,status,category,title,excerpt,cover_path,similarity,ai,updated_at,published_at,reviewed').order('updated_at', {ascending:false}));
+  const U = await signedUrls(rows.map(r => r.cover_path).filter(Boolean));
+  main.innerHTML = `<div class="row spread"><h1>✍️ ${t('blog')}</h1><button class="primary" onclick="blNew()">+ ${t('bl_new')}</button></div>
+  <p class="small muted" style="margin-top:-6px">${t('bl_hint')}</p>
+  ${rows.length ? rows.map(r => `<a class="card row" href="#/post/${r.id}" style="flex-wrap:nowrap;gap:12px;text-decoration:none;color:inherit;padding:10px">
+    ${r.cover_path && U[r.cover_path] ? `<img src="${esc(U[r.cover_path])}" alt="" style="width:64px;height:80px;object-fit:cover;border-radius:8px;flex:none">` : `<div style="width:64px;height:80px;border-radius:8px;background:var(--accent-soft);flex:none"></div>`}
+    <div style="flex:1;min-width:0"><div class="small muted">${esc(t('bl_k_' + r.category))} · ${fdate(r.updated_at)}</div><b>${esc(r.title || '—')}</b>
+      <div class="small muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.excerpt || '')}</div>
+      <div class="row" style="gap:6px;margin-top:4px">${blStatus(r)}${(r.ai?.warnings || []).length ? `<span class="pill warn">⚠ ${r.ai.warnings.length}</span>` : ''}${r.similarity != null ? `<span class="pill ${r.similarity > .35 ? 'bad' : ''}">${t('bl_orig')} ${Math.round((1 - r.similarity) * 100)}%</span>` : ''}</div></div></a>`).join('')
+  : `<div class="card"><p class="muted">${t('bl_empty')}</p></div>`}`;
+}
+const blStatus = r => r.status === 'pubblicato' ? `<span class="pill good">${t('bl_published')}</span>` : `<span class="pill">${t('bl_draft')}${r.reviewed ? ' · ✓ ' + t('bl_reviewed') : ''}</span>`;
+
+function blNew(){
+  const f = form({title: t('bl_new'), submitLabel: '✨ ' + t('bl_write'), fields: [
+    {name:'kind', label:t('bl_kind'), type:'select', empty:false, options: BL_KINDS.map(k => [k, t('bl_k_' + k)]), value:'trend'},
+    {name:'url', label:t('bl_url'), type:'url'},
+    {name:'brand', label:t('brand'), type:'select', options: S.brands.map(b => [b.name.trim(), b.name.trim()])},
+    {name:'notes', label:t('bl_notes'), type:'textarea'}],
+    extra:`<p class="small muted">${t('bl_new_hint')}</p>`,
+    onSubmit: async v => {
+      if (v.kind === 'trend' && !v.url){ toast(t('bl_need_url'), true); throw new Error('url'); }
+      toast(t('bl_writing'));
+      const {data, error} = await sb.functions.invoke('blog-ai', {body:{kind: v.kind, url: v.url, brand: v.brand, notes: v.notes, save: true}});
+      let d = data; if (error){ try { d = await error.context.json(); } catch (e) {} }
+      if (!d?.id){ toast(d?.error === 'source_unreadable' ? t('bl_unreadable') : (d?.detail || d?.error || 'error'), true); throw new Error('ai'); }
+      location.hash = '#/post/' + d.id;
+    }});
+  const sync = () => { const k = f.querySelector('[name=kind]').value; f.querySelector('[name=url]').closest('.field').style.display = k === 'trend' ? '' : 'none'; f.querySelector('[name=brand]').closest('.field').style.display = ['guida_taglie','brand'].includes(k) ? '' : 'none'; };
+  f.querySelector('[name=kind]').onchange = sync; sync();
+}
+
+// ---- editor ----
+let BLX = null; // post being edited
+async function viewPost(main, id){
+  const [r] = await Promise.all([sb.from('blog_posts').select('*').eq('id', id).single().then(check), blCatalog()]);
+  BLX = r; BLX.body = BLX.body || []; BLX.ig_slides = BLX.ig_slides || []; BLX.product_ids = (BLX.product_ids || []).map(Number);
+  await signedUrls([r.cover_path, ...BLP.filter(p => BLX.product_ids.includes(p.id) || blUsedIds().includes(p.id)).flatMap(p => p.photos.slice(0, 3))].filter(Boolean));
+  blRender(main);
+}
+const blUsedIds = () => [...new Set([...BLX.product_ids, ...BLX.body.filter(b => b.t === 'products').flatMap(b => (b.ids || []).map(Number)), ...BLX.ig_slides.filter(s => s.kind === 'product').map(s => Number(s.product_id))])];
+function blRender(main = $('#main')){
+  const r = BLX, w = r.ai?.warnings || [], sim = r.similarity;
+  const photos = [...new Set([r.cover_path, ...blUsedIds().map(blProd).filter(Boolean).flatMap(p => p.photos.slice(0, 3))].filter(Boolean))];
+  main.innerHTML = `<p><a href="#/blog">← ${t('blog')}</a></p>
+  <div class="row spread"><h1 style="margin:0">${esc(r.title || '—')}</h1>${blStatus(r)}</div>
+  <div class="row" style="gap:6px;margin:10px 0"><button onclick="blSave()">💾 ${t('save')}</button><button onclick="blSave(true).then(blPreview)">👁 ${t('bl_preview')}</button><button onclick="blSave(true).then(blSlides)">📱 ${t('bl_slides')}</button>
+    <button class="link" style="color:var(--bad)" onclick="blDelete()">${t('delete')}</button></div>
+  ${w.length || sim != null ? `<div class="card" style="border-left:4px solid var(--warn)"><h3 style="margin-top:0">⚠ ${t('bl_check')}</h3>
+    ${sim != null ? `<p class="small"><b>${t('bl_orig')}: ${Math.round((1 - sim) * 100)}%</b> ${sim > .35 ? `<span style="color:var(--bad)">${t('bl_too_close')}</span>` : `<span class="muted">${t('bl_orig_ok')}</span>`}</p>` : ''}
+    ${(r.ai?.similar_passages || []).length ? `<p class="small">${t('bl_passages')}:</p><ul class="small">${r.ai.similar_passages.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+    ${w.length ? `<ul class="small">${w.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>` : ''}
+  ${r.source ? `<div class="card"><h3 style="margin-top:0">📰 ${t('bl_source')}</h3><p class="small muted">${t('bl_source_hint')}</p>
+    <div class="field"><label>${t('bl_src_name')}</label><input id="bs_name" value="${esc(r.source.name || '')}"></div>
+    <div class="row" style="gap:8px"><div class="field" style="flex:1"><label>${t('bl_src_author')}</label><input id="bs_author" value="${esc(r.source.author || '')}"></div><div class="field" style="width:150px"><label>${t('date')}</label><input id="bs_date" type="date" value="${esc(r.source.date || '')}"></div></div>
+    <div class="field"><label>${t('bl_src_title')}</label><input id="bs_title" value="${esc(r.source.title || '')}"></div>
+    <p class="small"><a href="${esc(r.source.url)}" target="_blank" rel="noopener">${esc(r.source.url)} ↗</a></p></div>` : ''}
+  <div class="card"><h3 style="margin-top:0">${t('bl_article')}</h3>
+    <div class="field"><label>${t('bl_kind')}</label><select id="b_cat">${BL_KINDS.map(k => `<option value="${k}" ${k === r.category ? 'selected' : ''}>${esc(t('bl_k_' + k))}</option>`).join('')}</select></div>
+    <div class="field"><label>${t('bl_title')}</label><input id="b_title" value="${esc(r.title || '')}" maxlength="120"></div>
+    <div class="field"><label>${t('bl_excerpt')}</label><textarea id="b_excerpt" rows="2">${esc(r.excerpt || '')}</textarea></div>
+    <label>${t('bl_cover')}</label><div class="row" style="gap:6px;margin:4px 0 10px">${photos.map(ph => `<img src="${esc(urlCache[ph] || '')}" alt="" onclick="BLX.cover_path='${esc(ph)}';blRender()" style="width:58px;height:72px;object-fit:cover;border-radius:6px;cursor:pointer;outline:${ph === r.cover_path ? '3px solid var(--accent)' : '1px solid var(--line)'}">`).join('') || `<span class="small muted">${t('bl_no_photos')}</span>`}</div>
+    <details><summary class="small muted">SEO</summary><div class="field"><label>${t('bl_seo_title')}</label><input id="b_seo_t" value="${esc(r.seo_title || '')}" maxlength="70"></div><div class="field"><label>${t('bl_seo_desc')}</label><textarea id="b_seo_d" rows="2" maxlength="170">${esc(r.seo_desc || '')}</textarea></div></details></div>
+  <div class="card"><h3 style="margin-top:0">${t('bl_body')}</h3><div id="b_blocks">${r.body.map((b, i) => blBlock(b, i)).join('')}</div>
+    <div class="row" style="gap:6px;margin-top:8px"><select id="b_addt">${['p','h','list','tip','quote','table','products'].map(k => `<option value="${k}">${esc(t('bl_b_' + k))}</option>`).join('')}</select><button onclick="blAdd()">+ ${t('bl_add_block')}</button></div></div>
+  <div class="card"><h3 style="margin-top:0">🛍 ${t('bl_products')}</h3><p class="small muted">${t('bl_products_hint')}</p>
+    <div class="row" style="gap:6px">${r.product_ids.map(id => { const p = blProd(id); return p ? `<span class="pill">${esc(p.brand || '')} ${esc(p.name)} · ${eur(blPrice(p))}${p.sold_out ? ' · ' + t('sold_out') : ''} <button class="link small" onclick="BLX.product_ids=BLX.product_ids.filter(x=>x!==${id});blRender()">✕</button></span>` : ''; }).join('')}
+    <button class="small" onclick="blPickProducts(ids => { BLX.product_ids = ids; blRender(); }, BLX.product_ids)">+ ${t('bl_choose')}</button></div></div>
+  <div class="card"><h3 style="margin-top:0">📱 Instagram</h3><p class="small muted">${t('bl_ig_hint')}</p>
+    <div class="field"><label>${t('bl_caption')} <span class="small muted" id="b_capn">${(r.ig_caption || '').length}/2200</span></label><textarea id="b_caption" rows="7" oninput="$('#b_capn').textContent=this.value.length+'/2200'">${esc(r.ig_caption || '')}</textarea></div>
+    <button class="small" onclick="navigator.clipboard.writeText($('#b_caption').value).then(()=>toast(t('copied')))">📋 ${t('bl_copy_caption')}</button>
+    <h4>${t('bl_slides')} (${r.ig_slides.length})</h4><div id="b_slides">${r.ig_slides.map((s, i) => blSlideRow(s, i)).join('')}</div>
+    <div class="row" style="gap:6px;margin-top:8px"><button class="small" onclick="blAddSlide('text')">+ ${t('bl_s_text')}</button><button class="small" onclick="blAddSlide('product')">+ ${t('bl_s_product')}</button></div></div>
+  <div class="card"><label class="row" style="gap:8px;flex-wrap:nowrap;margin:0"><input type="checkbox" id="b_rev" style="width:20px;height:20px" ${r.reviewed ? 'checked' : ''}><span>${t('bl_reviewed_box')}</span></label>
+    <p class="small muted" style="margin-bottom:0">${t('bl_publish_later')}</p></div>`;
+}
+function blBlock(b, i){
+  const tools = `<span class="row" style="gap:2px"><button class="link small" onclick="blMove(${i},-1)">↑</button><button class="link small" onclick="blMove(${i},1)">↓</button><button class="link small" style="color:var(--bad)" onclick="blRead();BLX.body.splice(${i},1);blRender()">✕</button></span>`;
+  const head = `<div class="row spread small muted" style="margin-bottom:4px"><b>${esc(t('bl_b_' + b.t) || b.t)}</b>${tools}</div>`;
+  let inp;
+  if (b.t === 'list') inp = `<textarea data-bi="${i}" data-f="items" rows="${Math.max(3, (b.items || []).length + 1)}" placeholder="${t('bl_one_per_line')}">${esc((b.items || []).join('\n'))}</textarea>`;
+  else if (b.t === 'table') inp = `<textarea data-bi="${i}" data-f="rows" rows="${Math.max(3, (b.rows || []).length + 1)}" style="font-family:monospace;font-size:13px" placeholder="${t('bl_table_hint')}">${esc((b.rows || []).map(r => r.join(' | ')).join('\n'))}</textarea><p class="small muted" style="margin:2px 0 0">${t('bl_table_hint')}</p>`;
+  else if (b.t === 'products') inp = `<input data-bi="${i}" data-f="title" value="${esc(b.title || '')}" placeholder="Bli trendin"><div class="row" style="gap:6px;margin-top:6px">${(b.ids || []).map(id => { const p = blProd(id); return p ? `<span class="pill">${esc(p.brand || '')} ${esc(p.name)}</span>` : ''; }).join('')}<button class="small" onclick="blRead();blPickProducts(ids => { BLX.body[${i}].ids = ids; blRender(); }, BLX.body[${i}].ids || [])">✎ ${t('bl_choose')}</button></div>`;
+  else if (b.t === 'quote') inp = `<textarea data-bi="${i}" data-f="text" rows="2">${esc(b.text || '')}</textarea><input data-bi="${i}" data-f="cite" value="${esc(b.cite || '')}" placeholder="${t('bl_src_name')}" style="margin-top:4px">`;
+  else inp = b.t === 'h' ? `<input data-bi="${i}" data-f="text" value="${esc(b.text || '')}" style="font-weight:700">` : `<textarea data-bi="${i}" data-f="text" rows="${Math.min(12, Math.max(2, Math.ceil((b.text || '').length / 70)))}">${esc(b.text || '')}</textarea>`;
+  return `<div style="padding:10px 0;border-top:1px solid var(--line)">${head}${inp}</div>`;
+}
+function blSlideRow(s, i){
+  const p = s.kind === 'product' ? blProd(s.product_id) : null;
+  return `<div style="padding:8px 0;border-top:1px solid var(--line)"><div class="row spread small muted"><b>${i + 1}. ${esc(t('bl_s_' + s.kind))}</b><span class="row" style="gap:2px"><button class="link small" onclick="blSMove(${i},-1)">↑</button><button class="link small" onclick="blSMove(${i},1)">↓</button><button class="link small" style="color:var(--bad)" onclick="blRead();BLX.ig_slides.splice(${i},1);blRender()">✕</button></span></div>
+    ${s.kind === 'product' ? `<div class="row" style="gap:6px;margin:4px 0">${p ? `<span class="pill">${esc(p.brand || '')} ${esc(p.name)} · ${eur(blPrice(p))}</span>` : ''}<button class="small" onclick="blRead();blPickProducts(ids => { if (ids[0]) BLX.ig_slides[${i}].product_id = ids[0]; blRender(); }, [], 1)">✎</button></div>` : `<input data-si="${i}" data-f="title" value="${esc(s.title || '')}" placeholder="${t('bl_title')}" style="font-weight:700;margin-top:4px">`}
+    <textarea data-si="${i}" data-f="text" rows="2" style="margin-top:4px">${esc(s.text || '')}</textarea></div>`;
+}
+// read the form back into BLX
+function blRead(){
+  const v = id => $('#' + id)?.value;
+  if (!$('#b_title')) return;
+  BLX.title = v('b_title').trim(); BLX.excerpt = v('b_excerpt').trim() || null; BLX.category = v('b_cat');
+  BLX.seo_title = v('b_seo_t').trim() || null; BLX.seo_desc = v('b_seo_d').trim() || null;
+  BLX.ig_caption = v('b_caption'); BLX.reviewed = $('#b_rev').checked;
+  if (BLX.source) BLX.source = {...BLX.source, name: v('bs_name').trim(), author: v('bs_author').trim() || null, date: v('bs_date') || null, title: v('bs_title').trim()};
+  document.querySelectorAll('[data-bi]').forEach(el => { const b = BLX.body[+el.dataset.bi], f = el.dataset.f;
+    if (f === 'items') b.items = el.value.split('\n').map(x => x.trim()).filter(Boolean);
+    else if (f === 'rows') b.rows = el.value.split('\n').filter(x => x.trim()).map(x => x.split('|').map(c => c.trim()));
+    else b[f] = el.value; });
+  document.querySelectorAll('[data-si]').forEach(el => { BLX.ig_slides[+el.dataset.si][el.dataset.f] = el.value; });
+  const words = [BLX.title, BLX.excerpt, ...BLX.body.map(b => [b.text, ...(b.items || []), ...((b.rows || []).flat())].join(' '))].join(' ').split(/\s+/).filter(Boolean).length;
+  BLX.reading_min = Math.max(1, Math.round(words / 200));
+}
+async function blSave(quiet){
+  blRead();
+  const r = BLX;
+  check(await sb.from('blog_posts').update({title: r.title, excerpt: r.excerpt, category: r.category, seo_title: r.seo_title, seo_desc: r.seo_desc, body: r.body, cover_path: r.cover_path,
+    product_ids: r.product_ids, source: r.source, ig_caption: r.ig_caption, ig_slides: r.ig_slides, reviewed: r.reviewed, reading_min: r.reading_min}).eq('id', r.id));
+  if (!quiet){ toast(t('saved')); blRender(); }
+}
+async function blDelete(){ if (!confirmBox(t('bl_delete_q'))) return; check(await sb.from('blog_posts').delete().eq('id', BLX.id)); location.hash = '#/blog'; }
+function blMove(i, d){ blRead(); const j = i + d; if (j < 0 || j >= BLX.body.length) return; [BLX.body[i], BLX.body[j]] = [BLX.body[j], BLX.body[i]]; blRender(); }
+function blSMove(i, d){ blRead(); const j = i + d; if (j < 0 || j >= BLX.ig_slides.length) return; [BLX.ig_slides[i], BLX.ig_slides[j]] = [BLX.ig_slides[j], BLX.ig_slides[i]]; blRender(); }
+function blAdd(){ blRead(); const k = $('#b_addt').value; BLX.body.push(k === 'list' ? {t:k, items:[]} : k === 'table' ? {t:k, rows:[]} : k === 'products' ? {t:k, title:'Bli trendin', ids: BLX.product_ids.slice(0, 4)} : {t:k, text:''}); blRender(); }
+function blAddSlide(kind){ blRead(); const end = BLX.ig_slides.findIndex(s => s.kind === 'end'); const s = kind === 'product' ? {kind, product_id: BLX.product_ids[0], text:''} : {kind, title:'', text:''}; BLX.ig_slides.splice(end < 0 ? BLX.ig_slides.length : end, 0, s); blRender(); }
+function blPickProducts(cb, cur = [], max = 6){
+  blRead();
+  const sel = new Set(cur.map(Number));
+  const list = [...BLP].sort((a, b) => (a.sold_out - b.sold_out) || String(a.brand).localeCompare(String(b.brand)));
+  const bg = modal(`<h3>🛍 ${t('bl_choose')}</h3><input id="bpq" placeholder="${t('search')}…" style="margin-bottom:8px"><div id="bpl" style="max-height:55vh;overflow:auto">${list.map(p => `<label class="row bpr" data-s="${esc(norm((p.brand || '') + ' ' + p.name + ' ' + (p.category?.it || '')))}" style="flex-wrap:nowrap;gap:10px;padding:6px 0;border-top:1px solid var(--line);margin:0;font-weight:normal">
+    <input type="${max === 1 ? 'radio' : 'checkbox'}" name="bp" value="${p.id}" ${sel.has(p.id) ? 'checked' : ''} style="width:20px;height:20px;flex:none"><span class="small"><b>${esc(p.brand || '')}</b> ${esc(p.name)} · ${eur(blPrice(p))}${p.sold_out ? ` <span class="muted">· ${t('sold_out')}</span>` : ''}</span></label>`).join('')}</div>
+    <div class="row" style="justify-content:flex-end;gap:6px;margin-top:10px"><button onclick="this.closest('.modal-bg').remove()">${t('cancel')}</button><button class="primary" id="bpok">OK</button></div>`);
+  bg.querySelector('#bpq').oninput = e => { const q = norm(e.target.value); bg.querySelectorAll('.bpr').forEach(r => r.style.display = !q || r.dataset.s.includes(q) ? '' : 'none'); };
+  bg.querySelector('#bpok').onclick = async () => { const ids = [...bg.querySelectorAll('#bpl input:checked')].map(x => Number(x.value)).slice(0, max); bg.remove(); await signedUrls(ids.map(blProd).flatMap(p => p.photos.slice(0, 3))); cb(ids); };
+}
+
+// ---- web preview (same look as the shop) ----
+function blArticleHtml(r){
+  const U = urlCache, md = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  const prodCard = p => `<div class="bp-card">${p.photos[0] && U[p.photos[0]] ? `<img src="${esc(U[p.photos[0]])}" alt="">` : '<div class="bp-ni"></div>'}<div class="bp-br">${esc(p.brand || '')}</div><div>${esc(p.name)}</div><div><b>${eur(blPrice(p))}</b>${Number(p.list_price) > blPrice(p) ? ` <s>${eur(p.list_price)}</s>` : ''}</div></div>`;
+  const B = r.body.map(b => b.t === 'h' ? `<h2>${md(b.text || '')}</h2>` : b.t === 'p' ? `<p>${md(b.text || '')}</p>` : b.t === 'tip' ? `<div class="bp-tip">💡 ${md(b.text || '')}</div>`
+    : b.t === 'quote' ? `<blockquote>«${md(b.text || '')}»${b.cite ? `<cite>— ${esc(b.cite)}</cite>` : ''}</blockquote>` : b.t === 'list' ? `<ul>${(b.items || []).map(x => `<li>${md(x)}</li>`).join('')}</ul>`
+    : b.t === 'table' ? `<div class="bp-tw"><table>${(b.rows || []).map((row, i) => `<tr>${row.map(c => i ? `<td>${esc(c)}</td>` : `<th>${esc(c)}</th>`).join('')}</tr>`).join('')}</table></div>`
+    : b.t === 'products' ? `<h3>${esc(b.title || 'Bli trendin')}</h3><div class="bp-grid">${(b.ids || []).map(blProd).filter(Boolean).map(prodCard).join('')}</div>` : '').join('');
+  const date = new Date(r.published_at || Date.now()).toLocaleDateString('sq-AL', {day:'numeric', month:'long', year:'numeric'});
+  return `<style>.bp{font:16px/1.65 Inter,system-ui,sans-serif;color:#1d1a1a;max-width:720px;margin:0 auto;background:#fff;overflow-wrap:anywhere}.bp h1{font:400 34px/1.15 Jost,sans-serif;margin:10px 0}.bp h2{font:500 23px/1.25 Jost,sans-serif;margin:28px 0 8px}.bp h3{font:500 19px Jost,sans-serif;margin:26px 0 10px}
+  .bp .cv{width:100%;aspect-ratio:4/5;max-height:70vh;object-fit:cover;border-radius:8px;background:#f4efe9}.bp .kk{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#4c2f2a;font-weight:600}.bp .mt{color:#7a6e68;font-size:13px}
+  .bp-tip{background:#f4efe9;border-radius:8px;padding:12px 14px;margin:16px 0}.bp blockquote{border-left:3px solid #deb598;margin:18px 0;padding:4px 0 4px 16px;font:400 20px/1.4 Jost,sans-serif}.bp cite{display:block;font:13px Inter,sans-serif;color:#7a6e68;margin-top:6px}
+  .bp-tw{overflow-x:auto}.bp table{border-collapse:collapse;font-size:14px;min-width:100%}.bp th,.bp td{border-bottom:1px solid #e8dfd8;padding:7px 9px;text-align:left;white-space:nowrap}.bp th{background:#f4efe9}
+  .bp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}@media(min-width:600px){.bp-grid{grid-template-columns:repeat(3,1fr)}}.bp-card{font-size:13.5px;line-height:1.35}.bp-card img,.bp-ni{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:6px;background:#f4efe9;margin-bottom:6px}.bp-br{font-weight:700;font-size:12px}
+  .bp-src{margin-top:28px;padding:12px 14px;border:1px solid #e8dfd8;border-radius:8px;font-size:13.5px;color:#4a403c}</style>
+  <article class="bp">${r.cover_path && U[r.cover_path] ? `<img class="cv" src="${esc(U[r.cover_path])}" alt="">` : ''}
+  <div class="kk" style="margin-top:14px">${esc(BL_SQ[r.category] || '')}</div><h1>${esc(r.title)}</h1><div class="mt">${date} · ${r.reading_min || 1} min lexim</div>
+  ${r.excerpt ? `<p style="font-size:18px;color:#4a403c">${esc(r.excerpt)}</p>` : ''}${B}
+  ${r.source?.url ? `<div class="bp-src">📰 <b>Burimi:</b> ${esc(r.source.name || '')}${r.source.author ? ', ' + esc(r.source.author) : ''}${r.source.date ? ', ' + new Date(r.source.date).toLocaleDateString('sq-AL') : ''} — <a href="${esc(r.source.url)}" target="_blank" rel="noopener nofollow">“${esc(r.source.title || 'artikulli origjinal')}”</a>. Artikull i shkruar nga Modus Vestendi, i frymëzuar nga ky burim.</div>` : ''}</article>`;
+}
+function blPreview(){
+  const bg = modal(`<div class="row spread" style="margin-bottom:8px"><b>👁 ${t('bl_preview')}</b><button onclick="this.closest('.modal-bg').remove()">✕</button></div>${blArticleHtml(BLX)}`);
+  bg.querySelector('.modal').style.maxWidth = '760px';
+}
+
+// ---- Instagram slides: 1080x1350 images drawn here, downloaded or shared by hand (nothing is posted automatically) ----
+const SL = {w:1080, h:1350, bg:'#f4efe9', ink:'#2b1d17', acc:'#4c2f2a', tan:'#deb598', sale:'#c8102e'};
+function blWrap(ctx, text, x, y, maxW, lh, maxLines = 99){
+  const words = String(text || '').split(/\s+/).filter(Boolean); let line = '', n = 0;
+  for (let i = 0; i < words.length; i++){
+    const test = line ? line + ' ' + words[i] : words[i];
+    if (ctx.measureText(test).width > maxW && line){ if (n === maxLines - 1){ ctx.fillText(line + '…', x, y); return y + lh; } ctx.fillText(line, x, y); y += lh; n++; line = words[i]; } else line = test;
+  }
+  if (line) { ctx.fillText(line, x, y); y += lh; }
+  return y;
+}
+function blLines(ctx, text, maxW){ const words = String(text || '').split(/\s+/).filter(Boolean), out = []; let line = ''; for (const w of words){ const t2 = line ? line + ' ' + w : w; if (ctx.measureText(t2).width > maxW && line){ out.push(line); line = w; } else line = t2; } if (line) out.push(line); return out; }
+function blImg(url){ return new Promise(res => { if (!url) return res(null); const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => res(null); im.src = url; }); }
+function blCover(ctx, im, x, y, w, h){ if (!im) { ctx.fillStyle = '#e8dfd8'; ctx.fillRect(x, y, w, h); return; } const s = Math.max(w / im.width, h / im.height), iw = im.width * s, ih = im.height * s; ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip(); ctx.drawImage(im, x + (w - iw) / 2, y + (h - ih) / 2, iw, ih); ctx.restore(); }
+async function blDrawSlide(s, i, n){
+  const c = document.createElement('canvas'); c.width = SL.w; c.height = SL.h; const x = c.getContext('2d');
+  const brand = (dark) => { x.fillStyle = dark ? '#fff' : SL.acc; x.font = '500 30px Jost, sans-serif'; x.letterSpacing = '8px'; x.fillText('MODUS VESTENDI', 80, 110); x.letterSpacing = '0px';
+    x.font = '400 28px Jost, sans-serif'; x.textAlign = 'right'; x.fillText(`${i + 1}/${n}`, SL.w - 80, 110); x.textAlign = 'left'; };
+  if (s.kind === 'cover'){
+    blCover(x, await blImg(urlCache[BLX.cover_path]), 0, 0, SL.w, SL.h);
+    const g = x.createLinearGradient(0, SL.h * .35, 0, SL.h); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(20,12,10,.82)'); x.fillStyle = g; x.fillRect(0, 0, SL.w, SL.h);
+    const g2 = x.createLinearGradient(0, 0, 0, 260); g2.addColorStop(0, 'rgba(20,12,10,.45)'); g2.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g2; x.fillRect(0, 0, SL.w, 260); brand(true);
+    x.fillStyle = SL.tan; x.font = '600 30px Inter, sans-serif'; x.letterSpacing = '6px'; x.fillText((BL_SQ[BLX.category] || '').toUpperCase(), 80, 930); x.letterSpacing = '0px';
+    x.fillStyle = '#fff'; x.font = '500 76px Jost, sans-serif'; let y = blWrap(x, s.title || BLX.title, 80, 1020, SL.w - 160, 84, 3);
+    x.font = '400 36px Inter, sans-serif'; x.fillStyle = 'rgba(255,255,255,.9)'; blWrap(x, s.text, 80, y + 14, SL.w - 160, 48, 2);
+    x.font = '500 30px Inter, sans-serif'; x.textAlign = 'right'; x.fillText('Rrëshqitni →', SL.w - 80, SL.h - 60); x.textAlign = 'left';
+  } else if (s.kind === 'product'){
+    const p = blProd(s.product_id);
+    x.fillStyle = SL.bg; x.fillRect(0, 0, SL.w, SL.h); brand(false);
+    blCover(x, await blImg(p && urlCache[p.photos[0]]), 80, 150, SL.w - 160, 850);
+    x.fillStyle = SL.ink; x.font = '700 30px Inter, sans-serif'; x.letterSpacing = '4px'; x.fillText(String(p?.brand || '').toUpperCase(), 80, 1070); x.letterSpacing = '0px';
+    x.font = '400 46px Jost, sans-serif'; blWrap(x, p?.name || '', 80, 1128, SL.w - 420, 52, 2);
+    if (p){ const pr = blPrice(p), sale = Number(p.list_price) > pr + .5; x.textAlign = 'right'; x.font = '600 54px Inter, sans-serif'; x.fillStyle = sale ? SL.sale : SL.ink; x.fillText(eur(pr), SL.w - 80, 1078);
+      if (sale){ x.font = '400 34px Inter, sans-serif'; x.fillStyle = '#8a7a72'; const o = eur(p.list_price), wv = x.measureText(o).width; x.fillText(o, SL.w - 80, 1126); x.fillRect(SL.w - 80 - wv, 1114, wv, 3); } x.textAlign = 'left'; }
+    x.fillStyle = '#4a403c'; x.font = '400 34px Inter, sans-serif'; blWrap(x, s.text, 80, 1230, SL.w - 160, 44, 2);
+  } else if (s.kind === 'end'){
+    x.fillStyle = SL.acc; x.fillRect(0, 0, SL.w, SL.h); brand(true);
+    x.fillStyle = '#fff'; x.font = '500 80px Jost, sans-serif'; let y = blWrap(x, s.title, 80, 520, SL.w - 160, 90, 3);
+    x.font = '400 40px Inter, sans-serif'; x.fillStyle = 'rgba(255,255,255,.88)'; y = blWrap(x, s.text, 80, y + 30, SL.w - 160, 54, 4);
+    x.fillStyle = SL.tan; x.font = '600 38px Inter, sans-serif'; x.fillText('shop.modusvestendi.com', 80, Math.max(y + 70, 1060));
+    if (BLX.source?.name){ x.fillStyle = 'rgba(255,255,255,.7)'; x.font = '400 28px Inter, sans-serif'; blWrap(x, `Frymëzuar nga: ${BLX.source.name}${BLX.source.title ? ' — “' + BLX.source.title + '”' : ''}`, 80, SL.h - 110, SL.w - 160, 36, 2); }
+  } else {
+    x.fillStyle = SL.bg; x.fillRect(0, 0, SL.w, SL.h); brand(false);
+    // number, title and text as one block, centred vertically
+    x.font = '500 80px Jost, sans-serif'; const tl = blLines(x, s.title, SL.w - 160).slice(0, 3);
+    x.font = '400 50px Inter, sans-serif'; const bl = blLines(x, s.text, SL.w - 160).slice(0, 9);
+    const hgt = 200 + tl.length * 92 + 40 + bl.length * 70; let y = Math.max(260, (SL.h - hgt) / 2 + 150);
+    x.fillStyle = SL.tan; x.font = '300 190px Jost, sans-serif'; x.fillText(String(i).padStart(2, '0'), 70, y); y += 120;
+    x.fillStyle = SL.ink; x.font = '500 80px Jost, sans-serif'; tl.forEach(l => { x.fillText(l, 80, y); y += 92; });
+    y += 30; x.fillStyle = '#3a302c'; x.font = '400 50px Inter, sans-serif'; bl.forEach(l => { x.fillText(l, 80, y); y += 70; });
+    x.fillStyle = SL.acc; x.fillRect(80, SL.h - 120, 90, 4); x.font = '400 28px Inter, sans-serif'; x.textAlign = 'right'; x.fillText(i < n - 1 ? '→' : '', SL.w - 80, SL.h - 108); x.textAlign = 'left';
+  }
+  return c;
+}
+async function blSlides(){
+  await (document.fonts?.ready || Promise.resolve());
+  try { await Promise.all(['500 70px Jost', '300 190px Jost', '400 40px Inter', '600 40px Inter'].map(f => document.fonts.load(f))); } catch (e) {}
+  await signedUrls([BLX.cover_path, ...BLX.ig_slides.filter(s => s.kind === 'product').map(s => blProd(s.product_id)?.photos?.[0])].filter(Boolean));
+  const n = BLX.ig_slides.length, cs = [];
+  for (let i = 0; i < n; i++) cs.push(await blDrawSlide(BLX.ig_slides[i], i, n));
+  const urls = cs.map(c => { try { return c.toDataURL('image/jpeg', .9); } catch (e) { return null; } });
+  const bg = modal(`<div class="row spread"><b>📱 ${t('bl_slides')} · 1080×1350</b><button onclick="this.closest('.modal-bg').remove()">✕</button></div>
+    <p class="small muted">${t('bl_slides_hint')}</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px">${urls.map((u, i) => u ? `<a href="${u}" download="mv-${BLX.slug || BLX.id}-${i + 1}.jpg"><img src="${u}" alt="" style="width:100%;border-radius:6px;border:1px solid var(--line)"></a>` : `<div class="small" style="color:var(--bad)">${t('bl_img_err')}</div>`).join('')}</div>
+    <div class="row" style="gap:6px;margin-top:12px"><button class="primary" id="bl_share">📤 ${t('bl_share')}</button><button id="bl_dl">⬇ ${t('bl_download_all')}</button><button onclick="navigator.clipboard.writeText(BLX.ig_caption||'').then(()=>toast(t('copied')))">📋 ${t('bl_copy_caption')}</button></div>`);
+  bg.querySelector('.modal').style.maxWidth = '820px';
+  const files = async () => Promise.all(cs.map((c, i) => new Promise(res => c.toBlob(b => res(new File([b], `mv-${BLX.id}-${i + 1}.jpg`, {type:'image/jpeg'})), 'image/jpeg', .9))));
+  bg.querySelector('#bl_dl').onclick = async () => { for (const [i, u] of urls.entries()){ if (!u) continue; const a = document.createElement('a'); a.href = u; a.download = `mv-${BLX.id}-${i + 1}.jpg`; document.body.appendChild(a); a.click(); a.remove(); await new Promise(r => setTimeout(r, 350)); } };
+  bg.querySelector('#bl_share').onclick = async () => { try { const f = await files(); if (navigator.canShare?.({files: f})) { try { await navigator.clipboard.writeText(BLX.ig_caption || ''); toast(t('bl_caption_copied')); } catch (e) {} await navigator.share({files: f}); } else bg.querySelector('#bl_dl').click(); } catch (e) { if (e.name !== 'AbortError') toast(e.message, true); } };
+}
+
 async function viewTrends(main){
   const [P, M] = await Promise.all([loadPeople(), stockModels()]);
   window._people = P; window._stockM = M;
