@@ -359,6 +359,11 @@ const T = {
   bl_delete_q:['Eliminare questo articolo?','Delete this article?','Ta fshij artikullin?'],
   bl_slides_hint:['Tocca un\'immagine per scaricarla. Dal telefono «Condividi» apre direttamente Instagram (la didascalia viene copiata, incollala).','Tap an image to download it. On the phone «Share» opens Instagram directly (the caption is copied: paste it).','Prekni për ta shkarkuar.'],
   bl_share:['Condividi su Instagram','Share to Instagram','Shpërnda'], bl_download_all:['Scarica tutte','Download all','Shkarko të gjitha'], bl_img_err:['Immagine non disponibile','Image unavailable','Imazhi mungon'],
+  bl_publish:['Pubblica sul sito','Publish on the website','Publiko në faqe'], bl_publish_hint:['Serve la spunta «Ho riletto». Il link funziona subito; la pagina per Google e le anteprime WhatsApp/Facebook si aggiornano entro 30 minuti. Poi pubblicate voi le slide su Instagram.','Needs the «reviewed» tick. The link works right away; the Google page and WhatsApp/Facebook previews update within 30 minutes.','Duhet shenja «E kam rilexuar».'],
+  bl_publish_q:['Pubblicare l\'articolo sul sito? Da quel momento l\'indirizzo non cambia più.','Publish the article? The address will not change after this.','Ta publikoj artikullin?'], bl_published_ok:['Pubblicato sul sito ✓','Published ✓','U publikua ✓'],
+  bl_unpublish:['Ritira dal sito','Unpublish','Hiqe nga faqja'], bl_unpublish_q:['Togliere l\'articolo dal sito? Torna in bozza.','Remove from the website? It goes back to draft.','Ta heq nga faqja?'],
+  bl_online:['Online','Online','Online'], bl_copy_link:['Copia link','Copy link','Kopjo linkun'], bl_need_review:['spunta «Ho riletto l\'articolo»','tick «I reviewed it»','shënoni «E kam rilexuar»'],
+  bl_need_text:['manca il testo','text missing','mungon teksti'], bl_need_source:['manca la fonte','source missing','mungon burimi'],
   bl_link:['Link dell\'articolo sul sito','Article link on the website','Linku i artikullit'], bl_caption_copied:['Didascalia copiata: incollala su Instagram','Caption copied: paste it in Instagram','Përshkrimi u kopjua'],
   web_order:['🛍 Nuovo ordine dal sito','🛍 New website order','🛍 Porosi e re nga faqja'], show_on_site:['Mostra nel negozio online','Show in the online shop','Shfaq në dyqanin online'], share_link:['Condividi link','Share link','Ndaj linkun'], online_shop:['Negozio online','Online shop','Dyqani online'], link_copied:['Link copiato','Link copied','Linku u kopjua'], site_hint:['Visibili sul sito solo le taglie disponibili. Gli ordini arrivano come prenotazioni di 48 ore.','Only available sizes are shown. Orders arrive as 48-hour reservations.','Shfaqen vetëm masat në dispozicion. Porositë vijnë si rezervime 48 orë.'], sold_no_cost:['venduto senza costo','sold without cost','shitur pa kosto'], edit_line:['Correggi pezzo o prezzo','Fix item or price','Korrigjo copën ose çmimin'],
   order_part_cost:['{n} pezzi senza costo d\'acquisto','{n} item(s) without purchase cost','{n} copë pa kosto blerjeje'],
@@ -2537,7 +2542,9 @@ function blRender(main = $('#main')){
     <h4>${t('bl_slides')} (${r.ig_slides.length})</h4><div id="b_slides">${r.ig_slides.map((s, i) => blSlideRow(s, i)).join('')}</div>
     <div class="row" style="gap:6px;margin-top:8px"><button class="small" onclick="blAddSlide('text')">+ ${t('bl_s_text')}</button><button class="small" onclick="blAddSlide('product')">+ ${t('bl_s_product')}</button></div></div>
   <div class="card"><label class="row" style="gap:8px;flex-wrap:nowrap;margin:0"><input type="checkbox" id="b_rev" style="width:20px;height:20px" ${r.reviewed ? 'checked' : ''}><span>${t('bl_reviewed_box')}</span></label>
-    <p class="small muted" style="margin-bottom:0">${t('bl_publish_later')}</p></div>`;
+    ${r.status === 'pubblicato' ? `<p class="small" style="margin:10px 0 6px">🌐 ${t('bl_online')}: <a href="${esc(blUrl(r))}" target="_blank" rel="noopener">${esc(blUrl(r).replace('https://', ''))}</a> · ${fdate(r.published_at)}</p>
+      <div class="row" style="gap:6px"><button class="small" onclick="navigator.clipboard.writeText('${esc(blUrl(r))}').then(()=>toast(t('copied')))">🔗 ${t('bl_copy_link')}</button><button class="small" onclick="blUnpublish()">${t('bl_unpublish')}</button></div>`
+    : `<div class="row" style="gap:6px;margin-top:10px"><button class="primary" onclick="blPublish()">🌐 ${t('bl_publish')}</button></div><p class="small muted" style="margin-bottom:0">${t('bl_publish_hint')}</p>`}</div>`;
 }
 function blBlock(b, i){
   const tools = `<span class="row" style="gap:2px"><button class="link small" onclick="blMove(${i},-1)">↑</button><button class="link small" onclick="blMove(${i},1)">↓</button><button class="link small" style="color:var(--bad)" onclick="blRead();BLX.body.splice(${i},1);blRender()">✕</button></span>`;
@@ -2583,6 +2590,19 @@ async function blSave(quiet){
     product_ids: r.product_ids, source: r.source, ig_caption: r.ig_caption, ig_slides: r.ig_slides, reviewed: r.reviewed, reading_min: r.reading_min, slug: r.slug}).eq('id', r.id));
   if (!quiet){ toast(t('saved')); blRender(); }
 }
+async function blPublish(){
+  await blSave(true);
+  const r = BLX, miss = [];
+  if (!r.reviewed) miss.push(t('bl_need_review'));
+  if (r.similarity != null && r.similarity > .35) miss.push(t('bl_too_close'));
+  if (!r.title || !r.body.length) miss.push(t('bl_need_text'));
+  if (r.category === 'trend' && !r.source?.url) miss.push(t('bl_need_source'));
+  if (miss.length){ toast('⚠ ' + miss.join(' · '), true); return; }
+  if (!confirmBox(t('bl_publish_q'))) return;
+  check(await sb.from('blog_posts').update({status: 'pubblicato', published_at: r.published_at || new Date().toISOString()}).eq('id', r.id));
+  toast(t('bl_published_ok')); route();
+}
+async function blUnpublish(){ if (!confirmBox(t('bl_unpublish_q'))) return; check(await sb.from('blog_posts').update({status: 'bozza'}).eq('id', BLX.id)); toast(t('saved')); route(); }
 async function blDelete(){ if (!confirmBox(t('bl_delete_q'))) return; check(await sb.from('blog_posts').delete().eq('id', BLX.id)); location.hash = '#/blog'; }
 function blMove(i, d){ blRead(); const j = i + d; if (j < 0 || j >= BLX.body.length) return; [BLX.body[i], BLX.body[j]] = [BLX.body[j], BLX.body[i]]; blRender(); }
 function blSMove(i, d){ blRead(); const j = i + d; if (j < 0 || j >= BLX.ig_slides.length) return; [BLX.ig_slides[i], BLX.ig_slides[j]] = [BLX.ig_slides[j], BLX.ig_slides[i]]; blRender(); }
