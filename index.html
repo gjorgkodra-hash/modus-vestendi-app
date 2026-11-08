@@ -364,6 +364,10 @@ const T = {
   bl_unpublish:['Ritira dal sito','Unpublish','Hiqe nga faqja'], bl_unpublish_q:['Togliere l\'articolo dal sito? Torna in bozza.','Remove from the website? It goes back to draft.','Ta heq nga faqja?'],
   bl_online:['Online','Online','Online'], bl_copy_link:['Copia link','Copy link','Kopjo linkun'], bl_need_review:['spunta «Ho riletto l\'articolo»','tick «I reviewed it»','shënoni «E kam rilexuar»'],
   bl_need_text:['manca il testo','text missing','mungon teksti'], bl_need_source:['manca la fonte','source missing','mungon burimi'],
+  wl_btn:['Benvenuto','Welcome','Mirëseardhje'], wl_title:['Email di benvenuto','Welcome email','Email mirëseardhjeje'], wl_to:['A','To','Për'], wl_sent:['inviata il','sent on','dërguar më'],
+  wl_send:['Invia','Send','Dërgo'], wl_resend:['Invia di nuovo','Send again','Dërgo përsëri'], wl_done:['Email di benvenuto inviata','Welcome email sent','U dërgua'],
+  oc_has:['La cliente ha un codice attivo','The customer has an active code','Klientja ka një kod aktiv'], oc_one:['su 1 capo, il più caro','on 1 item, the most expensive','për 1 produkt'], oc_apply:['Applica sconto','Apply discount','Apliko zbritjen'],
+  oc_remove:['Togli il codice sconto','Remove discount code','Hiq kodin'], oc_remove_q:['Togliere lo sconto del codice da questo ordine? Il codice torna valido.','Remove the code discount? The code becomes valid again.','Ta heq zbritjen?'], oc_used:['Codice già usato','Code already used','Kodi është përdorur'],
   bl_link:['Link dell\'articolo sul sito','Article link on the website','Linku i artikullit'], bl_caption_copied:['Didascalia copiata: incollala su Instagram','Caption copied: paste it in Instagram','Përshkrimi u kopjua'],
   web_order:['🛍 Nuovo ordine dal sito','🛍 New website order','🛍 Porosi e re nga faqja'], show_on_site:['Mostra nel negozio online','Show in the online shop','Shfaq në dyqanin online'], share_link:['Condividi link','Share link','Ndaj linkun'], online_shop:['Negozio online','Online shop','Dyqani online'], link_copied:['Link copiato','Link copied','Linku u kopjua'], site_hint:['Visibili sul sito solo le taglie disponibili. Gli ordini arrivano come prenotazioni di 48 ore.','Only available sizes are shown. Orders arrive as 48-hour reservations.','Shfaqen vetëm masat në dispozicion. Porositë vijnë si rezervime 48 orë.'], sold_no_cost:['venduto senza costo','sold without cost','shitur pa kosto'], edit_line:['Correggi pezzo o prezzo','Fix item or price','Korrigjo copën ose çmimin'],
   order_part_cost:['{n} pezzi senza costo d\'acquisto','{n} item(s) without purchase cost','{n} copë pa kosto blerjeje'],
@@ -1519,11 +1523,23 @@ function exportNewsletter(){
 }
 async function loadShopAccounts(){
   const as = check(await sb.from('shop_accounts').select('id,name,phone,email,instagram,city,created_at,last_login,customer_id,seen_at').order('id', {ascending:false}));
+  const ws = check(await sb.from('welcome_sent').select('email,sent_at')); const WS = Object.fromEntries(ws.map(w => [w.email, w.sent_at]));
+  window._ws = WS;
   const unseen = as.filter(a => !a.seen_at).map(a => a.id);
   if (unseen.length) sb.from('shop_accounts').update({seen_at: new Date().toISOString()}).in('id', unseen).then(() => {});
   $('#accbody').innerHTML = `<p class="muted">${as.length} ${t('sa_n')}</p><div class="table-wrap"><table><tr><th>${t('date')}</th><th>${t('name')}</th><th>${t('phone')}</th><th>Email</th><th>Instagram</th><th>${t('sa_last')}</th><th></th></tr>
     ${as.map(a => `<tr${a.seen_at ? '' : ' style="background:var(--accent-soft)"'}><td>${a.seen_at ? '' : '<span class="pill warn">NEW</span> '}${fdate(a.created_at)}</td><td>${a.customer_id ? `<a href="#/cliente/${a.customer_id}">${esc(a.name)}</a>` : esc(a.name)}</td><td>${esc(a.phone)}</td><td>${esc(a.email || '')}</td><td>${a.instagram ? '@' + esc(a.instagram) : ''}</td><td>${a.last_login ? fdate(a.last_login) : ''}</td>
-    <td><button class="small" onclick="resetShopPw(${a.id}, ${esc(JSON.stringify(a.name))})">🔑 ${t('sa_reset')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>`;
+    <td style="white-space:nowrap">${a.email ? `<button class="small" onclick="welcomePreview(${esc(JSON.stringify(a.email))})" title="${WS[(a.email || '').toLowerCase()] ? t('wl_sent') + ' ' + fdate(WS[a.email.toLowerCase()]) : ''}">✉️ ${WS[(a.email || '').toLowerCase()] ? '✓ ' + t('wl_btn') : t('wl_btn')}</button> ` : ''}<button class="small" onclick="resetShopPw(${a.id}, ${esc(JSON.stringify(a.name))})">🔑 ${t('sa_reset')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>`;
+}
+async function welcomePreview(email){
+  const {data: html} = await sb.rpc('welcome_preview', {p_email: email});
+  const sent = (window._ws || {})[email.toLowerCase()];
+  const bg = modal(`<div class="row spread"><b>✉️ ${t('wl_title')}</b><button onclick="this.closest('.modal-bg').remove()">✕</button></div>
+    <p class="small muted">${t('wl_to')}: <b>${esc(email)}</b>${sent ? ` · ✓ ${t('wl_sent')} ${fdate(sent)}` : ''}</p>
+    <div style="border:1px solid var(--line);border-radius:10px;padding:14px;background:#fff;max-height:55vh;overflow:auto">${html || ''}</div>
+    <div class="row" style="justify-content:flex-end;gap:6px;margin-top:12px"><button onclick="this.closest('.modal-bg').remove()">${t('cancel')}</button><button class="primary" id="wlgo">📤 ${sent ? t('wl_resend') : t('wl_send')}</button></div>`);
+  bg.querySelector('.modal').style.maxWidth = '640px';
+  bg.querySelector('#wlgo').onclick = async () => { check(await sb.rpc('staff_send_welcome', {p_email: email})); bg.remove(); toast(t('wl_done')); loadShopAccounts(); };
 }
 async function resetShopPw(id, name){
   if (!confirm(`${t('sa_reset')} · ${name}?\n${t('sa_reset_hint')}`)) return;
@@ -1846,6 +1862,11 @@ async function viewOrder(main, id){
   const od = check(o), tt = check(tot); window._order = od; od._due = tt.to_collect; window._ships = check(ships);
   const mainPhoto = l => { const ps = l.variants.models.photos || []; return (ps.find(p => p.is_main) || ps[0])?.path; };
   await signedUrls(od.order_lines.map(mainPhoto));
+  let nlCode = null, nlUsed = null;
+  if (['admin','vendite'].includes(S.profile.role)){
+    const u = await sb.from('newsletter').select('code,discount_pct').eq('order_id', id).maybeSingle(); nlUsed = u.data;
+    if (!nlUsed && od.customer_id){ const c = await sb.rpc('customer_active_code', {p_customer: od.customer_id}); nlCode = c.data; }
+  }
   let marg = null;
   if (can.admin()){ const r = await sb.from('v_order_margins').select('*').eq('order_id', id).maybeSingle(); marg = r.data; }
   let noCost = [];
@@ -1871,7 +1892,9 @@ async function viewOrder(main, id){
     <div class="small muted">${esc([l.variants.size, l.variants.color].filter(Boolean).join(' · '))} · ${l.qty} × ${eur(l.unit_price)}</div>
     ${['spedito', 'consegnato', 'confermato'].includes(od.status) ? `<button class="link small" onclick="returnLine(${l.id})">${t('return_item')}</button>` : ''}</div>
     <div class="right"><b>${eur(l.qty * l.unit_price)}</b></div></div>`; }).join('')}
-  ${Number(od.discount) ? `<div class="row spread small" style="padding-top:8px"><span>${t('discount')}</span><span>− ${eur(od.discount)}</span></div>` : ''}
+  ${Number(od.discount) ? `<div class="row spread small" style="padding-top:8px"><span>${t('discount')}${nlUsed ? ` <span class="pill">🎁 ${esc(nlUsed.code)}</span>` : ''}</span><span>− ${eur(od.discount)}</span></div>` : ''}
+  ${!nlUsed && nlCode && !['annullato','reso'].includes(od.status) ? `<div class="row spread" style="padding:10px 12px;margin-top:8px;background:var(--accent-soft);border-radius:10px;gap:8px"><span class="small">🎁 ${t('oc_has')} <b>${esc(nlCode.code)}</b> (−${nlCode.pct}% ${t('oc_one')})</span><button class="small primary" onclick="orderCode(${id}, ${esc(JSON.stringify(nlCode.code))})">${t('oc_apply')}</button></div>` : ''}
+  ${nlUsed && !['annullato','reso'].includes(od.status) ? `<p class="small" style="margin:4px 0 0;text-align:right"><button class="link small" onclick="orderCodeRemove(${id})">${t('oc_remove')}</button></p>` : ''}
   ${od.shipping_fee != null ? `<div class="row spread small" style="padding-top:8px"><span>${t('ship_fee')}</span><span>${Number(od.shipping_fee) ? eur(od.shipping_fee) : t('ship_free')}</span></div>` : ''}
   <div class="row spread" style="padding-top:8px"><b>${t('total')}</b><b style="font-size:20px">${eur(tt.total)}</b></div>
   ${marg ? `<p class="small muted">${t('goods_cost')} ${eur(marg.goods_cost)} · ${t('shipping_cost')} ${eur(marg.shipping_cost)} · <b>${t('margin')} ${eur(marg.margin)}</b></p>` : ''}
@@ -2076,6 +2099,12 @@ async function editOrder(id){
     delete v.discount_pct; v.discount = v.discount || 0; if (v.shipping_fee === '' || v.shipping_fee === undefined) v.shipping_fee = null; v.fx_rate = v.fx_rate || 1; check(await sb.from('orders').update(v).eq('id', id)); route(); }});
 }
 async function undoDelivery(id){ if (!confirmBox(t('undo_deliv_q'))) return; check(await sb.rpc('annulla_consegna', {p_order_id: id})); toast(t('saved')); route(); }
+async function orderCode(id, code){
+  const {data, error} = await sb.rpc('order_apply_code', {p_order: id, p_code: code});
+  if (error){ toast(/code_used/.test(error.message) ? t('oc_used') : error.message, true); return; }
+  toast(`🎁 −${eur(data)}`); route();
+}
+async function orderCodeRemove(id){ if (!confirmBox(t('oc_remove_q'))) return; check(await sb.rpc('order_remove_code', {p_order: id})); toast(t('saved')); route(); }
 async function cancelOrder(id){ if (!confirmBox()) return; check(await sb.rpc('annulla_ordine', {p_order_id: id})); route(); }
 function addPayment(oid){
   form({title:t('payments'), fields:[
