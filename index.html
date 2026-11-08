@@ -395,6 +395,7 @@ const T = {
   reports:['Dashboard','Dashboard','Dashboard'], settings:['Impostazioni','Settings','Cilësimet'], logout:['Esci','Log out','Dil'],
   login:['Accedi','Log in','Hyr'], signup:['Registrati','Sign up','Regjistrohu'], email:['Email','Email','Email'], password:['Password','Password','Fjalëkalimi'],
   name:['Nome','Name','Emri'], save:['Salva','Save','Ruaj'], cancel:['Annulla','Cancel','Anulo'], add:['Aggiungi','Add','Shto'], edit:['Modifica','Edit','Ndrysho'],
+  ord_q:['Cliente, @instagram, telefono o n° ordine','Search customer, @instagram, phone or order no.','Kërko klient, @instagram, telefon ose nr. porosie'], ord_from:['Dal','From','Nga'], ord_to:['Al','To','Deri'], ord_reset:['Azzera','Clear','Pastro'], ord_count:['ordini','orders','porosi'],
   delete:['Elimina','Delete','Fshi'], search:['Cerca…','Search…','Kërko…'], brand:['Marca','Brand','Marka'], category:['Categoria','Category','Kategoria'],
   season:['Stagione','Season','Sezoni'], description:['Descrizione','Description','Përshkrimi'], list_price:['Prezzo di listino','List price','Çmimi i listës'],
   sale_price:['Prezzo di vendita','Sale price','Çmimi i shitjes'], purchase_price:['Prezzo d\'acquisto','Purchase price','Çmimi i blerjes'],
@@ -1688,14 +1689,39 @@ async function analyzeDM(cid){
 
 // ====== Ordini ======
 let orderFilter = '';
+let orderQ = '', orderFrom = '', orderTo = '';
 async function viewOrders(main){
-  const os = check(await sb.from('orders').select('id,order_no,order_date,status,currency,customers(full_name,country)').order('created_at', {ascending:false}).limit(300));
+  let q = sb.from('orders').select('id,order_no,order_date,status,currency,customers(full_name,country,instagram,phone)').order('created_at', {ascending:false}).limit(1000);
+  if (orderFrom) q = q.gte('order_date', orderFrom);
+  if (orderTo) q = q.lte('order_date', orderTo);
+  const os = check(await q);
   const tots = check(await sb.from('v_order_totals').select('*').in('order_id', os.map(o => o.id).concat([0])));
   const T2 = Object.fromEntries(tots.map(x => [x.order_id, x]));
   main.innerHTML = `<div class="row spread"><h1>${t('orders')}</h1><div class="row"><button onclick="exportOrdersXlsx(this)">⬇ Excel</button><button class="primary" onclick="newOrder()">+ ${t('new_order')}</button></div></div>
   <div class="chips" style="margin-bottom:12px"><button class="${orderFilter ? '' : 'primary'}" onclick="orderFilter='';route()">${t('all')}</button>${opts('order_status').filter(([k]) => k !== 'bozza').map(([k, l]) => `<button class="${orderFilter === k ? 'primary' : ''}" onclick="orderFilter='${k}';route()">${l}</button>`).join('')}</div>
-  <div class="card"><div class="table-wrap"><table><tr><th>${t('order')}</th><th>${t('date')}</th><th>${t('customer')}</th><th class="right">${t('total')}</th><th class="right">${t('to_collect')}</th><th>${t('status')}</th></tr>
-  ${os.filter(o => orderFilter ? o.status === orderFilter : o.status !== 'annullato').map(o => `<tr class="click" onclick="location.hash='#/ordine/${o.id}'"><td>${esc(o.order_no)}</td><td>${fdate(o.order_date)}</td><td>${esc(o.customers?.full_name)} <span class="muted small">${esc(o.customers?.country || '')}</span></td><td class="right">${eur(T2[o.id]?.total)}</td><td class="right">${Number(T2[o.id]?.to_collect) ? eur(T2[o.id].to_collect) : ''}</td><td>${statusPill('order_status', o.status)}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">${t('no_data')}</td></tr>`}</table></div></div>`;
+  <div class="field" style="margin-bottom:8px"><input id="oq" type="search" placeholder="🔍 ${t('ord_q')}" value="${esc(orderQ)}" autocomplete="off"></div>
+  <div class="row" style="gap:8px;margin-bottom:12px;flex-wrap:nowrap;align-items:flex-end">
+    <div class="field" style="flex:1;min-width:0;margin:0"><label>${t('ord_from')}</label><input id="ofr" type="date" value="${orderFrom}"></div>
+    <div class="field" style="flex:1;min-width:0;margin:0"><label>${t('ord_to')}</label><input id="oto" type="date" value="${orderTo}"></div>
+    ${orderQ || orderFrom || orderTo ? `<button title="${t('ord_reset')}" style="padding:10px 12px;flex:none" onclick="orderQ='';orderFrom='';orderTo='';route()">✕</button>` : ''}</div>
+  <div id="ocount" class="small muted" style="margin:-4px 0 8px"></div>
+  <div class="card"><div class="table-wrap"><table><thead><tr><th>${t('order')}</th><th>${t('date')}</th><th>${t('customer')}</th><th class="right">${t('total')}</th><th class="right">${t('to_collect')}</th><th>${t('status')}</th></tr></thead><tbody id="orows"></tbody></table></div></div>`;
+  const norm = x => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[@\s+]/g, '');
+  const draw = () => {
+    const words = String(orderQ).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).map(norm).filter(Boolean);
+    const list = os.filter(o => orderFilter ? o.status === orderFilter : o.status !== 'annullato').filter(o => {
+      if (!words.length) return true;
+      const hay = norm([o.order_no, o.customers?.full_name, o.customers?.instagram, o.customers?.phone].join(' '));
+      return words.every(w => hay.includes(w));
+    });
+    main.querySelector('#orows').innerHTML = list.map(o => `<tr class="click" onclick="location.hash='#/ordine/${o.id}'"><td>${esc(o.order_no)}</td><td>${fdate(o.order_date)}</td><td>${esc(o.customers?.full_name)} <span class="muted small">${esc(o.customers?.country || '')}</span></td><td class="right">${eur(T2[o.id]?.total)}</td><td class="right">${Number(T2[o.id]?.to_collect) ? eur(T2[o.id].to_collect) : ''}</td><td>${statusPill('order_status', o.status)}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">${t('no_data')}</td></tr>`;
+    const sum = list.reduce((a, o) => a + Number(T2[o.id]?.total || 0), 0);
+    main.querySelector('#ocount').textContent = (orderQ || orderFrom || orderTo) ? `${list.length} ${t('ord_count')} · ${eur(sum)}` : '';
+  };
+  draw();
+  main.querySelector('#oq').oninput = e => { orderQ = e.target.value; draw(); };
+  main.querySelector('#ofr').onchange = e => { orderFrom = e.target.value; route(); };
+  main.querySelector('#oto').onchange = e => { orderTo = e.target.value; route(); };
 }
 // ---- scelta cliente: cerca tra gli esistenti o crea nuovo ----
 const custLabel = c => c.full_name + (c.instagram ? ' @' + c.instagram : '') + (c.phone ? ' · ' + c.phone : '');
