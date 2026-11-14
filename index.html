@@ -416,6 +416,8 @@ const T = {
   check_email:['Controlla la tua email per confermare l\'account, poi accedi.','Check your email to confirm the account, then log in.','Kontrolloni email-in për të konfirmuar llogarinë, pastaj hyni.'],
   new_model:['Nuovo articolo','New item','Artikull i ri'], add_variant:['Aggiungi variante','Add variant','Shto variant'], add_photo:['Aggiungi foto','Add photo','Shto foto'],
   set_main:['Principale','Main','Kryesore'], instagram:['Instagram','Instagram','Instagram'], trips:['Viaggi','Trips','Udhëtimet'], trip:['Viaggio','Trip','Udhëtimi'],
+  inc_short:['in arrivo','on the way','në ardhje'], inc_hint:['📦 Prenotazione su un pezzo ancora in arrivo: quando arriva e lo registri come ricevuto, conferma l\'ordine.','📦 Reservation on a piece still on the way: once it arrives and you mark it received, confirm the order.','📦 Rezervim për një copë ende në ardhje: kur të mbërrijë dhe ta shënosh si të marrë, konfirmo porosinë.'],
+  inc_only_reserve:['Pezzo ancora in arrivo: per ora puoi solo prenotarlo','Piece still on the way: you can only reserve it for now','Copa është ende në ardhje: tani mund vetëm ta rezervosh'], inc_wait:['in arrivo, previsto','on the way, expected','në ardhje, pritet'], inc_arrived:['arrivato: puoi confermare','arrived: you can confirm','mbërriti: mund të konfirmosh'],
   website:['Sito','Website','Faqja'], pl_ship:['Spedizione standard (€)','Standard shipping (€)','Dërgesa standarde (€)'], pl_free:['Spedizione gratis sopra (€)','Free shipping over (€)','Dërgesë falas mbi (€)'],
   pl_dmin:['Consegna: giorni min','Delivery: min days','Dorëzimi: ditë min'], pl_dmax:['Consegna: giorni max','Delivery: max days','Dorëzimi: ditë max'], pl_ret:['Giorni per il reso','Days to return','Ditë për kthim'],
   pl_sec:['Spedizione e tempi (piattaforme online)','Shipping and timing (online platforms)','Dërgesa dhe kohët (platforma online)'], pl_sec_hint:['Usati per proporre costo di spedizione e data di arrivo nei nuovi acquisti.','Used to suggest shipping cost and arrival date on new purchases.','Përdoren për të sugjeruar koston e dërgesës dhe datën e mbërritjes.'],
@@ -1793,9 +1795,14 @@ async function openOrderSheet({modelId, variantId, customerId, mode, color} = {}
     sb.from('variants').select('id,sku,size,color,color_hex,sale_price,model_id,models(name,brand_id,archived,list_price)').then(check),
     sb.from('v_variant_stock').select('*').then(check)
   ]);
-  const avail = Object.fromEntries(st.map(x => [x.variant_id, x.available]));
-  const pool = vs.filter(v => !v.models?.archived && avail[v.id] > 0).sort((a, b) => vLabel(a).localeCompare(vLabel(b)));
-  const pickLabel = v => `${vLabel(v)} · ${avail[v.id]} ${t('available')}${v.sale_price ? ' · ' + eur(v.sale_price) : ''}`;
+  const avail = Object.fromEntries(st.map(x => [x.variant_id, Math.max(0, x.available)]));
+  // pieces still on the way from a purchase (Privalia, …): they can be reserved, not sold yet
+  const inc = Object.fromEntries(st.map(x => [x.variant_id, Math.max(0, Math.min(x.incoming || 0, (x.incoming || 0) + Math.min(0, x.available)))]));
+  const incOn = Object.fromEntries(st.map(x => [x.variant_id, x.incoming_on]));
+  const capR = id => (avail[id] || 0) + (inc[id] || 0);
+  const incTxt = id => inc[id] ? `📦 ${inc[id]} ${t('inc_short')}${incOn[id] ? ' ' + fdate(incOn[id]) : ''}` : '';
+  const pool = vs.filter(v => !v.models?.archived && capR(v.id) > 0).sort((a, b) => vLabel(a).localeCompare(vLabel(b)));
+  const pickLabel = v => `${vLabel(v)} · ${[avail[v.id] ? `${avail[v.id]} ${t('available')}` : '', incTxt(v.id)].filter(Boolean).join(' · ')}${v.sale_price ? ' · ' + eur(v.sale_price) : ''}`;
   const lines = [];
   const addLine = v => { if (!v || lines.some(l => l.v.id === v.id)) return; lines.push({v, qty: 1, price: v.sale_price ?? v.models?.list_price ?? ''}); };
   if (variantId) addLine(pool.find(v => v.id === variantId));
@@ -1833,12 +1840,19 @@ async function openOrderSheet({modelId, variantId, customerId, mode, color} = {}
   const draw = () => {
     const inColor = v => color == null || (v.color || '').trim().toLowerCase() === color.toLowerCase();
     const chipModel = modelId && pool.filter(v => v.model_id === modelId && inColor(v)).length > 1 ? modelId : null;
-    $m('#os_sizes').innerHTML = chipModel ? `<label>${t('pick_size')}</label>${colorGroups(pool.filter(v => v.model_id === chipModel && inColor(v))).map(([col, vs, hex]) => `<div class="small row" style="margin:4px 0 2px;gap:6px">${swatch(col, hex, 14)}<b>${esc(col || t('no_color'))}</b></div><div class="chips" style="margin-bottom:8px">${vs.map(v => `<button type="button" class="${lines.some(l => l.v.id === v.id) ? 'primary' : ''}" data-addv="${v.id}">${esc(v.size || t('one_size'))} · ${avail[v.id]}</button>`).join('')}</div>`).join('')}` : '';
+    $m('#os_sizes').innerHTML = chipModel ? `<label>${t('pick_size')}</label>${colorGroups(pool.filter(v => v.model_id === chipModel && inColor(v))).map(([col, vs, hex]) => `<div class="small row" style="margin:4px 0 2px;gap:6px">${swatch(col, hex, 14)}<b>${esc(col || t('no_color'))}</b></div><div class="chips" style="margin-bottom:8px">${vs.map(v => `<button type="button" class="${lines.some(l => l.v.id === v.id) ? 'primary' : ''}" data-addv="${v.id}">${esc(v.size || t('one_size'))} · ${avail[v.id] || ''}${inc[v.id] ? '📦' : ''}</button>`).join('')}</div>`).join('')}` : '';
     $m('#os_lines').innerHTML = lines.map((l, i) => `<div class="card" style="padding:10px 12px;margin-bottom:8px;box-shadow:none">
       <div class="row spread"><b style="min-width:0">${esc(brandName(l.v.models?.brand_id))} ${esc(l.v.models?.name)}</b><button type="button" class="link" data-rm="${i}">✕</button></div>
-      <div style="margin-top:6px"><label>${t('size')}</label><select data-sz="${i}">${siblings(l.v).concat(siblings(l.v).some(x => x.id === l.v.id) ? [] : [l.v]).map(x => `<option value="${x.id}" ${x.id === l.v.id ? 'selected' : ''}>${esc(szName(x))} · ${avail[x.id] ?? 0} ${t('available')}</option>`).join('')}</select></div>
+      <div style="margin-top:6px"><label>${t('size')}</label><select data-sz="${i}">${siblings(l.v).concat(siblings(l.v).some(x => x.id === l.v.id) ? [] : [l.v]).map(x => `<option value="${x.id}" ${x.id === l.v.id ? 'selected' : ''}>${esc(szName(x))} · ${avail[x.id] ?? 0} ${t('available')}${inc[x.id] ? ' · ' + incTxt(x.id) : ''}</option>`).join('')}</select></div>
       <div class="row" style="flex-wrap:nowrap;margin-top:6px"><div style="flex:1"><label>${t('sold_price')}</label><input type="number" step="any" data-pr="${i}" value="${esc(l.price)}"></div>
-      <div style="width:90px"><label>${t('qty')}</label><input type="number" min="1" max="${avail[l.v.id]}" data-q="${i}" value="${l.qty}"><div class="small muted">${t('max')} ${avail[l.v.id]}</div></div></div></div>`).join('') || `<p class="small muted">${t('no_items_yet')}</p>`;
+      <div style="width:90px"><label>${t('qty')}</label><input type="number" min="1" max="${capR(l.v.id)}" data-q="${i}" value="${l.qty}"><div class="small muted">${t('max')} ${capR(l.v.id)}</div></div></div>
+      ${(Number(l.qty) || 1) > (avail[l.v.id] || 0) ? `<div class="small" style="color:var(--warn);margin-top:4px">${incTxt(l.v.id)}</div>` : ''}</div>`).join('') || `<p class="small muted">${t('no_items_yet')}</p>`;
+    const needInc = lines.filter(l => (Number(l.qty) || 1) > (avail[l.v.id] || 0));
+    if (needInc.length){
+      $m('#os_lines').insertAdjacentHTML('beforeend', `<div class="help small">${t('inc_hint')}</div>`);
+      const u = $m('#os_until');
+      if (u && !u.dataset.touched){ const last = needInc.map(l => incOn[l.v.id]).filter(Boolean).sort().pop(); const d = last ? new Date(last + 'T18:00:00') : new Date(Date.now() + 14 * 864e5); d.setDate(d.getDate() + 3); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); u.value = d.toISOString().slice(0, 16); }
+    }
     showTot();
   };
   const subtotal = () => lines.reduce((a, l) => a + (Number(l.price) || 0) * (Number(l.qty) || 0), 0);
@@ -1856,6 +1870,8 @@ async function openOrderSheet({modelId, variantId, customerId, mode, color} = {}
   });
   m.addEventListener('change', e => {
     if (e.target.id === 'os_dt') showTot();
+    if (e.target.id === 'os_until') e.target.dataset.touched = '1';
+    if (e.target.dataset.q != null) draw();
     if (e.target.dataset.sz != null){ const i = Number(e.target.dataset.sz); const nv = pool.find(v => v.id === Number(e.target.value)); if (nv && !lines.some((l, j) => j !== i && l.v.id === nv.id)){ lines[i].v = nv; if (nv.sale_price) lines[i].price = nv.sale_price; } draw(); }
   });
   $m('#os_pick').addEventListener('change', e => { const v = pool.find(x => pickLabel(x) === e.target.value); if (v){ addLine(v); e.target.value = ''; draw(); } });
@@ -1881,8 +1897,9 @@ async function openOrderSheet({modelId, variantId, customerId, mode, color} = {}
     if (!typed) return toast(t('customer') + '?', true);
     if (!lines.length) return toast(t('no_items_yet'), true);
     if (lines.some(l => l.price === '' || l.price == null)) return toast(t('sold_price') + '?', true);
-    const over = lines.find(l => (Number(l.qty) || 1) > (avail[l.v.id] || 0));
-    if (over) return toast(`${t('max_avail')}: ${vLabel(over.v)} · ${avail[over.v.id] || 0}`, true);
+    const over = lines.find(l => (Number(l.qty) || 1) > capR(l.v.id));
+    if (over) return toast(`${t('max_avail')}: ${vLabel(over.v)} · ${capR(over.v.id)}`, true);
+    if (b.dataset.mode === 'confermato' && lines.some(l => (Number(l.qty) || 1) > (avail[l.v.id] || 0))) return toast(t('inc_only_reserve'), true);
     m.querySelectorAll('button').forEach(x => x.disabled = true);
     try {
       let c = chosen || cs.find(x => x.full_name.toLowerCase() === typed.toLowerCase());
@@ -1954,6 +1971,8 @@ async function viewOrder(main, id){
   if (can.admin()){ const vc = check(await sb.from('variant_costs').select('variant_id,purchase_price').in('variant_id', od.order_lines.map(l => l.variants.id).concat([0]))); const ok = new Set(vc.filter(x => x.purchase_price != null).map(x => x.variant_id)); noCost = od.order_lines.filter(l => !ok.has(l.variants.id)); }
   const cu = od.customers;
   const [fbk, wl] = await Promise.all([sb.from('order_feedback').select('*').eq('order_id', id).maybeSingle().then(r => r.data), sb.from('wishlist').select('*').eq('order_id', id).then(check)]);
+  const incS = od.status === 'riservato' ? Object.fromEntries(check(await sb.from('v_variant_stock').select('variant_id,incoming,incoming_on').in('variant_id', od.order_lines.map(l => l.variants.id).concat([0]))).map(x => [x.variant_id, x])) : {};
+  const incLine = l => { if (od.status !== 'riservato') return ''; const x = incS[l.variants.id]; if (Number(l.variants.qty) >= l.qty) return ''; return `<div class="small" style="color:var(--warn)">📦 ${t('inc_wait')} ${x?.incoming_on ? fdate(x.incoming_on) : '—'}</div>`; };
   main.innerHTML = `<p><a href="#/ordini">← ${t('orders')}</a></p>
   <div class="row spread"><div><h1>${esc(od.order_no)}</h1><div class="muted small">${fdate(od.order_date)} · ${esc(ev('channel', od.channel))}</div></div>
   <div class="row">${statusPill('order_status', od.status)}<button onclick="editOrder(${id})">${t('edit')}</button></div></div>
@@ -1969,7 +1988,7 @@ async function viewOrder(main, id){
   <div class="card"><h3>${t('items')}</h3>
   ${od.order_lines.map(l => { const ph = mainPhoto(l); return `<div class="row" style="flex-wrap:nowrap;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)">
     <a href="#/articolo/${l.variants.models.id}" style="flex:none;width:56px;height:74px;border-radius:8px;background:var(--accent-soft) center/cover;${ph && urlCache[ph] ? `background-image:url('${urlCache[ph]}')` : ''}"></a>
-    <div style="flex:1;min-width:0"><a href="#/articolo/${l.variants.models.id}"><b>${esc(brandName(l.variants.models.brand_id))} ${esc(l.variants.models.name)}</b></a>
+    <div style="flex:1;min-width:0"><a href="#/articolo/${l.variants.models.id}"><b>${esc(brandName(l.variants.models.brand_id))} ${esc(l.variants.models.name)}</b></a>${incLine(l)}
     <div class="small muted">${esc([l.variants.size, l.variants.color].filter(Boolean).join(' · '))} · ${l.qty} × ${eur(l.unit_price)}</div>
     ${['spedito', 'consegnato', 'confermato'].includes(od.status) ? `<button class="link small" onclick="returnLine(${l.id})">${t('return_item')}</button>` : ''}</div>
     <div class="right"><b>${eur(l.qty * l.unit_price)}</b></div></div>`; }).join('')}
