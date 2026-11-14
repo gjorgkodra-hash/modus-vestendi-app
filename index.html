@@ -416,6 +416,13 @@ const T = {
   check_email:['Controlla la tua email per confermare l\'account, poi accedi.','Check your email to confirm the account, then log in.','Kontrolloni email-in për të konfirmuar llogarinë, pastaj hyni.'],
   new_model:['Nuovo articolo','New item','Artikull i ri'], add_variant:['Aggiungi variante','Add variant','Shto variant'], add_photo:['Aggiungi foto','Add photo','Shto foto'],
   set_main:['Principale','Main','Kryesore'], instagram:['Instagram','Instagram','Instagram'], trips:['Viaggi','Trips','Udhëtimet'], trip:['Viaggio','Trip','Udhëtimi'],
+  website:['Sito','Website','Faqja'], pl_ship:['Spedizione standard (€)','Standard shipping (€)','Dërgesa standarde (€)'], pl_free:['Spedizione gratis sopra (€)','Free shipping over (€)','Dërgesë falas mbi (€)'],
+  pl_dmin:['Consegna: giorni min','Delivery: min days','Dorëzimi: ditë min'], pl_dmax:['Consegna: giorni max','Delivery: max days','Dorëzimi: ditë max'], pl_ret:['Giorni per il reso','Days to return','Ditë për kthim'],
+  pl_sec:['Spedizione e tempi (piattaforme online)','Shipping and timing (online platforms)','Dërgesa dhe kohët (platforma online)'], pl_sec_hint:['Usati per proporre costo di spedizione e data di arrivo nei nuovi acquisti.','Used to suggest shipping cost and arrival date on new purchases.','Përdoren për të sugjeruar koston e dërgesës dhe datën e mbërritjes.'],
+  order_ref:['N° ordine sulla piattaforma','Order no. on the platform','Nr. porosisë në platformë'], pl_ship_cost:['Costo spedizione (€)','Shipping cost (€)','Kosto dërgese (€)'],
+  pl_ship_hint:['Viene aggiunto ai costi dell\'acquisto e ripartito sui pezzi.','Added to the purchase costs and spread over the pieces.','Shtohet te kostot e blerjes dhe ndahet mbi copët.'],
+  pl_days:['giorni','days','ditë'], pl_avg:['media reale','real average','mesatarja reale'], pl_late:['In ritardo','Late','Me vonesë'], pl_arrived:['Arrivato in','Arrived in','Mbërriti në'],
+  pl_free_ok:['gratis sopra','free over','falas mbi'], pl_return_by:['Reso entro','Return by','Kthim deri më'],
   supplier:['Punto d\'acquisto','Store','Pika e blerjes'], suppliers:['Punti d\'acquisto','Stores','Pikat e blerjes'], new_purchase:['Nuovo acquisto','New purchase','Blerje e re'],
   lines:['Pezzi','Items','Artikujt'], costs:['Costi','Costs','Kostot'], receive:['Segna come ricevuto (carica magazzino)','Mark received (add to stock)','Shëno si të marrë (shto në magazinë)'],
   allocation:['Ripartizione','Allocation','Shpërndarja'], by_value:['in proporzione al prezzo','in proportion to price','në raport me çmimin'], by_pieces:['in parti uguali per pezzo','equally per piece','njëlloj për çdo copë'],
@@ -450,7 +457,7 @@ const E = {
   instagram_status:{non_pubblicato:['Non pubblicato','Not posted','Pa publikuar'],post:['Post','Post','Postim'],storia:['Storia','Story','Story'],highlight:['Highlight','Highlight','Highlight']},
   purchase_status:{da_ordinare:['Da ordinare','To order','Për t\'u porositur'],ordinato:['Ordinato','Ordered','Porositur'],in_arrivo:['In arrivo','Incoming','Në ardhje'],ricevuto:['Ricevuto','Received','Marrë']},
   cost_kind:{trasporto:['Trasporto','Transport','Transporti'],carburante:['Carburante','Fuel','Karburanti'],pedaggi:['Pedaggi','Tolls','Pagesat rrugore'],alloggio:['Alloggio','Accommodation','Akomodimi'],spedizione:['Spedizione','Shipping','Dërgesa'],dazi:['Dazi','Duties','Doganat'],altro:['Altro','Other','Tjetër']},
-  supplier_kind:{boutique:['Boutique','Boutique','Butik'],outlet:['Outlet','Outlet','Outlet'],online:['Online','Online','Online'],grossista:['Grossista','Wholesaler','Shumicë'],altro:['Altro','Other','Tjetër']},
+  supplier_kind:{boutique:['Boutique','Boutique','Butik'],outlet:['Outlet','Outlet','Outlet'],online:['Online','Online','Online'],vendite_private:['Vendite private online (Privalia, Saldi Privati…)','Online private sales (Privalia, Saldi Privati…)','Shitje private online (Privalia, Saldi Privati…)'],grossista:['Grossista','Wholesaler','Shumicë'],altro:['Altro','Other','Tjetër']},
   country:{AL:['Albania','Albania','Shqipëri'],XK:['Kosovo','Kosovo','Kosovë'],MK:['Macedonia del Nord','North Macedonia','Maqedoni e Veriut'],UK:['Regno Unito','UK','Mbretëri e Bashkuar'],IT:['Italia','Italy','Itali'],ES:['Spagna','Spain','Spanjë'],altro:['Altro','Other','Tjetër']},
   currency:{EUR:['EUR','EUR','EUR'],ALL:['Lek (ALL)','Lek (ALL)','Lek (ALL)'],MKD:['Denar (MKD)','Denar (MKD)','Denar (MKD)'],GBP:['Sterlina (GBP)','Pound (GBP)','Paund (GBP)']},
   source:{sito:['Sito web','Website','Faqja web'],instagram_organico:['Instagram organico','Instagram organic','Instagram organik'],instagram_ads:['Instagram ads','Instagram ads','Reklama në Instagram'],passaparola:['Passaparola','Word of mouth','Nga goja në gojë'],facebook:['Facebook','Facebook','Facebook'],altro:['Altro','Other','Tjetër']},
@@ -1275,6 +1282,7 @@ function reserveVariant(vid){ return sellFromModel(vid, 'riservato'); }
 
 // ====== Acquisti ======
 async function viewPurchases(main){
+  window._purchStats = check(await sb.from('purchases').select('supplier_id,buy_mode,purchase_date,received_on'));
   const ps = check(await sb.from('purchases').select('*,suppliers(name),trips(title),purchase_lines(id,qty,unit_price,allocated_unit_cost,item_label,variant_id,variants(qty,model_id))').order('purchase_date', {ascending:false}));
   const hist = ps.flatMap(p => p.purchase_lines.map(l => ({...l, p})));
   const credits = check(await sb.from('store_credits').select('*,suppliers(name)').order('id', {ascending:false}));
@@ -1292,7 +1300,7 @@ async function viewPurchases(main){
   ${ps.map(p => { const q = p.purchase_lines.reduce((a, l) => a + l.qty, 0), tot = p.purchase_lines.reduce((a, l) => a + l.qty * l.unit_price, 0);
     return `<tr class="click" data-q="${esc(norm([p.id, fdate(p.purchase_date), p.suppliers?.name, p.trips?.title, ...p.purchase_lines.map(l => l.item_label)].join(' ')))}" onclick="location.hash='#/acquisto/${p.id}'"><td>${p.id}</td><td>${fdate(p.purchase_date)}</td><td>${esc(p.suppliers?.name)}</td><td>${esc(p.trips?.title)}</td><td class="right">${q}</td><td class="right">${eur(tot)}</td><td>${p.status === 'ricevuto' && p.buy_mode !== 'online' ? `<span class="pill good">${t('collected')}</span>` : statusPill('purchase_status', p.status)}</td></tr>`; }).join('') || `<tr><td colspan="7" class="empty">${t('no_data')}</td></tr>`}</table></div></details>
   <div class="card"><div class="row spread"><h3>${t('trips')}</h3><button onclick="editTrip()">+ ${t('add')}</button></div><table>${S.trips.map(tr => `<tr><td>${esc(tr.title)}</td><td>${esc(tr.destination || '')}</td><td>${fdate(tr.start_date)}</td><td class="right"><button class="link" onclick="tripCosts(${tr.id})">${t('costs')}</button><button class="link" onclick="editTrip(${tr.id})">${t('edit')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>
-  <div class="card"><div class="row spread"><h3>${t('suppliers')}</h3><button onclick="editSupplier()">+ ${t('add')}</button></div><table>${S.suppliers.map(s => `<tr><td>${esc(s.name)}</td><td>${esc(s.city || '')} ${esc(s.country || '')}</td><td>${esc(ev('supplier_kind', s.kind))}</td><td class="right"><button class="link" onclick="editSupplier(${s.id})">${t('edit')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>`;
+  <div class="card"><div class="row spread"><h3>${t('suppliers')}</h3><button onclick="editSupplier()">+ ${t('add')}</button></div><table>${S.suppliers.map(s => `<tr><td>${s.website ? `<a href="${esc(s.website)}" target="_blank" rel="noopener">${esc(s.name)}</a>` : esc(s.name)}${isOnlineKind(s.kind) ? `<div class="small muted">${esc(supplierShipInfo(s)) || '—'}</div>` : ''}</td><td>${esc(s.city || '')} ${esc(s.country || '')}</td><td>${esc(ev('supplier_kind', s.kind))}</td><td class="right"><button class="link" onclick="editSupplier(${s.id})">${t('edit')}</button></td></tr>`).join('') || `<tr><td class="empty">${t('no_data')}</td></tr>`}</table></div>`;
 }
 function editTrip(id){
   const tr = id ? S.trips.find(x => x.id === id) : {};
@@ -1301,15 +1309,39 @@ function editTrip(id){
 }
 function editSupplier(id){
   const s = id ? S.suppliers.find(x => x.id === id) : {};
-  form({title:t('supplier'), fields:[{name:'name', label:t('name'), required:true},{name:'city', label:t('city')},{name:'country', label:t('country')},{name:'kind', label:t('kind'), type:'select', options:opts('supplier_kind')},{name:'notes', label:t('notes'), type:'textarea'}],
-    values:s, onSubmit: async v => { if (id) check(await sb.from('suppliers').update(v).eq('id', id)); else check(await sb.from('suppliers').insert(v)); await loadRefs(); route(); }});
+  const m = form({title:t('supplier'), fields:[{name:'name', label:t('name'), required:true},{name:'kind', label:t('kind'), type:'select', options:opts('supplier_kind')},{name:'city', label:t('city')},{name:'country', label:t('country')},
+    {name:'website', label:t('website')},
+    {name:'pl_h', type:'heading', label:t('pl_sec'), hint:t('pl_sec_hint')},
+    {name:'ship_cost', label:t('pl_ship'), type:'number'},{name:'free_ship_over', label:t('pl_free'), type:'number'},
+    {name:'ship_days_min', label:t('pl_dmin'), type:'number'},{name:'ship_days_max', label:t('pl_dmax'), type:'number'},{name:'return_days', label:t('pl_ret'), type:'number'},
+    {name:'notes', label:t('notes'), type:'textarea'}],
+    values:s, onSubmit: async v => { ['ship_days_min','ship_days_max','return_days'].forEach(k => { if (v[k] != null) v[k] = Math.round(v[k]); }); if (id) check(await sb.from('suppliers').update(v).eq('id', id)); else check(await sb.from('suppliers').insert(v)); await loadRefs(); route(); }});
+  const kind = m.querySelector('[name=kind]'), onl = ['website','ship_cost','free_ship_over','ship_days_min','ship_days_max','return_days'];
+  const sync = () => { const on = isOnlineKind(kind.value); onl.forEach(n => m.querySelector(`[name=${n}]`).closest('.field').classList.toggle('hide', !on)); const h = [...m.querySelectorAll('form h3')].find(x => x.textContent === t('pl_sec')); if (h){ h.classList.toggle('hide', !on); h.nextElementSibling?.tagName === 'P' && h.nextElementSibling.classList.toggle('hide', !on); } };
+  kind.addEventListener('change', sync); sync();
 }
 function buyModeToggle(m){
   const sel = m.querySelector('[name=buy_mode]');
-  const sync = () => ['carrier_name','tracking_no','expected_on','status'].forEach(n => { const el = m.querySelector(`[name=${n}]`); if (el) el.closest('.field').classList.toggle('hide', sel.value !== 'online'); });
+  const sync = () => ['order_ref','ship_cost','carrier_name','tracking_no','expected_on','status'].forEach(n => { const el = m.querySelector(`[name=${n}]`); if (el) el.closest('.field').classList.toggle('hide', sel.value !== 'online'); });
   sel.addEventListener('change', sync); sync();
 }
+const isOnlineKind = k => k === 'online' || k === 'vendite_private';
+const addDays = (d, n) => { const x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+const daysBetween = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5);
+function supplierStats(id){
+  const ps = (window._purchStats || []).filter(p => p.supplier_id === id && p.buy_mode === 'online' && p.received_on && p.purchase_date);
+  if (!ps.length) return null;
+  return {n: ps.length, avg: Math.round(ps.reduce((a, p) => a + daysBetween(p.purchase_date, p.received_on), 0) / ps.length)};
+}
+function supplierShipInfo(s){
+  if (!s) return '';
+  const st = supplierStats(s.id);
+  return [s.ship_cost != null ? `🚚 ${eur(s.ship_cost)}` : '', s.free_ship_over != null ? `${t('pl_free_ok')} ${eur(s.free_ship_over)}` : '',
+    s.ship_days_min || s.ship_days_max ? `⏱ ${[s.ship_days_min, s.ship_days_max].filter(x => x != null).join('–')} ${t('pl_days')}` : '',
+    st ? `${t('pl_avg')} ${st.avg} ${t('pl_days')} (${st.n})` : '', s.return_days ? `↩ ${s.return_days} ${t('pl_days')}` : ''].filter(Boolean).join(' · ');
+}
 const onlineFields = () => [
+  {name:'order_ref', label:t('order_ref')},
   {name:'carrier_name', label:t('carrier')},
   {name:'tracking_no', label:t('tracking')},
   {name:'expected_on', label:t('expected_on'), type:'date'}];
@@ -1323,15 +1355,37 @@ function newPurchase(){
     {name:'new_trip', label:`${t('trip')}: ${t('or_new')}`},
     {name:'purchase_date', label:t('date'), type:'date', value:today()},
     ...onlineFields(),
+    {name:'ship_cost', label:t('pl_ship_cost'), type:'number'},
     {name:'notes', label:t('notes'), type:'textarea'}
   ], onSubmit: async v => {
+    const shipCost = v.ship_cost; delete v.ship_cost;
     if (v.new_supplier){ const n = check(await sb.from('suppliers').insert({name: v.new_supplier}).select().single()); v.supplier_id = n.id; }
     if (v.new_trip){ const n = check(await sb.from('trips').insert({title: v.new_trip, start_date: v.purchase_date}).select().single()); v.trip_id = n.id; }
     delete v.new_supplier; delete v.new_trip;
     if (v.buy_mode === 'negozio'){ v.status = 'ricevuto'; v.carrier_name = v.tracking_no = v.expected_on = null; }
     else v.status = v.tracking_no ? 'in_arrivo' : 'ordinato';
-    const p = check(await sb.from('purchases').insert(v).select().single()); await loadRefs(); location.hash = '#/acquisto/' + p.id; }});
+    const p = check(await sb.from('purchases').insert(v).select().single());
+    if (v.buy_mode === 'online' && shipCost > 0) check(await sb.from('purchase_costs').insert({purchase_id: p.id, kind:'spedizione', amount: shipCost, allocation:'pezzi', cost_date: v.purchase_date, notes: S.suppliers.find(s => s.id == v.supplier_id)?.name || null}));
+    await loadRefs(); location.hash = '#/acquisto/' + p.id; }});
   buyModeToggle(m);
+  // online platform: pre-fill shipping cost and arrival date from the platform's settings
+  const q = n => m.querySelector(`[name=${n}]`);
+  const info = document.createElement('div'); info.className = 'small muted'; info.style.margin = '-6px 0 10px'; q('supplier_id').closest('.field').after(info);
+  q('ship_cost').closest('.field').insertAdjacentHTML('beforeend', `<div class="small muted">${t('pl_ship_hint')}</div>`);
+  let auto = {};
+  const fill = (force) => {
+    const s = S.suppliers.find(x => x.id == q('supplier_id').value);
+    info.textContent = s && isOnlineKind(s.kind) ? supplierShipInfo(s) : '';
+    if (!s) return;
+    if (isOnlineKind(s.kind) && force && q('buy_mode').value !== 'online'){ q('buy_mode').value = 'online'; q('buy_mode').dispatchEvent(new Event('change')); }
+    if (q('buy_mode').value !== 'online') return;
+    if (s.ship_cost != null && (force || q('ship_cost').value === '' || q('ship_cost').value === auto.ship)){ q('ship_cost').value = auto.ship = String(s.ship_cost); }
+    const st = supplierStats(s.id), days = s.ship_days_max ?? st?.avg;
+    if (days != null && q('purchase_date').value && (force || !q('expected_on').value || q('expected_on').value === auto.exp)){ q('expected_on').value = auto.exp = addDays(q('purchase_date').value, days); }
+  };
+  q('supplier_id').addEventListener('change', () => fill(true));
+  q('purchase_date').addEventListener('change', () => fill(false));
+  q('buy_mode').addEventListener('change', () => fill(false));
 }
 async function allVariants(){
   return check(await sb.from('variants').select('id,sku,size,color,color_hex,qty,sale_price,model_id,models(name,brand_id,archived)'));
@@ -1345,8 +1399,9 @@ async function viewPurchase(main, id){
   main.innerHTML = `<p><a href="#/acquisti">← ${t('purchases')}</a></p>
   <div class="row spread"><div><h1>${t('purchases')} #${p.id}</h1><div class="muted">${fdate(p.purchase_date)} · ${esc(p.suppliers?.name || '')} ${p.trips ? '· ' + esc(p.trips.title) : ''}</div></div>
   <div class="row"><span class="pill grey">${p.buy_mode === 'online' ? t('bm_online_short') : t('bm_store_short')}</span>${p.status === 'ricevuto' && p.buy_mode !== 'online' ? `<span class="pill good">${t('collected')}</span>` : statusPill('purchase_status', p.status)}<button onclick="editPurchaseStatus(${p.id})">${t('edit')}</button></div></div>
-  ${p.buy_mode === 'online' && p.status !== 'ricevuto' ? `<div class="help"><b>${t('arrival')}</b>${p.expected_on ? ` · ${t('expected_on')} ${fdate(p.expected_on)}` : ''}<div class="small" style="margin-top:4px">${esc(p.carrier_name || '')} ${p.tracking_no ? `· ${esc(p.tracking_no)} <button class="link" onclick="navigator.clipboard.writeText('${esc(p.tracking_no)}').then(()=>toast('OK'))">⧉</button>` : `· <span class="muted">${t('no_tracking')}</span>`}</div>
+  ${p.buy_mode === 'online' && p.status !== 'ricevuto' ? `<div class="help"><b>${t('arrival')}</b>${p.order_ref ? ` · ${t('order_ref')}: ${esc(p.order_ref)}` : ''}${p.expected_on ? ` · ${t('expected_on')} ${fdate(p.expected_on)}` : ''}${p.expected_on && p.expected_on < today() ? ` <span class="pill bad">${t('pl_late')} ${daysBetween(p.expected_on, today())} ${t('pl_days')}</span>` : ''}<div class="small" style="margin-top:4px">${esc(p.carrier_name || '')} ${p.tracking_no ? `· ${esc(p.tracking_no)} <button class="link" onclick="navigator.clipboard.writeText('${esc(p.tracking_no)}').then(()=>toast('OK'))">⧉</button>` : `· <span class="muted">${t('no_tracking')}</span>`}</div>
     <div class="row" style="margin-top:8px">${p.tracking_no ? `<a class="btn" href="https://t.17track.net/en#nums=${encodeURIComponent(p.tracking_no)}" target="_blank" rel="noopener">${t('track')} ↗</a>` : ''}<button class="primary" onclick="receivePurchase(${p.id})">${t('receive')}</button></div></div>` : ''}
+  ${p.buy_mode === 'online' && p.status === 'ricevuto' && p.received_on ? (() => { const sup = S.suppliers.find(x => x.id === p.supplier_id); const rb = sup?.return_days ? addDays(p.received_on, sup.return_days) : null; return `<div class="help small">${p.order_ref ? `${t('order_ref')}: <b>${esc(p.order_ref)}</b> · ` : ''}${t('pl_arrived')} <b>${daysBetween(p.purchase_date, p.received_on)} ${t('pl_days')}</b> (${fdate(p.received_on)})${p.expected_on && p.received_on > p.expected_on ? ` · <span style="color:var(--bad)">${t('pl_late')} ${daysBetween(p.expected_on, p.received_on)} ${t('pl_days')}</span>` : ''}${rb ? ` · ${t('pl_return_by')} <b${rb < today() ? '' : ' style="color:var(--good)"'}>${fdate(rb)}</b>` : ''}</div>`; })() : ''}
   <div class="card"><div class="row spread"><h3>${t('lines')}</h3><button class="primary" onclick="addPurchaseLine(${p.id})">+ ${t('add_line')}</button></div>
   ${p.status === 'ricevuto' ? `<p class="small muted" style="margin:0 0 6px">${t('received_add_hint')}</p>` : ''}
   ${p.purchase_lines.map(l => `<div class="row" style="flex-wrap:nowrap;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)">
