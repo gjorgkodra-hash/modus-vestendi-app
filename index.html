@@ -205,6 +205,13 @@ const T = {
   rs_pill:['Taglia','Size','Masa'], rs_back:['Tornata disponibile','Back in stock','U kthye'], rs_title:['Taglia richiesta tornata disponibile','Requested size is back','Masa e kërkuar u kthye'],
   rs_asked_by:['Richiesta da','Requested by','Kërkuar nga'], rs_back_on:['tornata il','back on','u kthye më'], rs_emailed:['email automatica inviata','automatic email sent','email automatik u dërgua'],
   rs_no_email:['ha lasciato solo il telefono: contattala tu','left only a phone number: contact them','la vetëm telefonin: kontaktojeni ju'], rs_msg_hint:['Messaggio pronto (si apre già scritto su WhatsApp/email):','Ready message (opens pre-filled in WhatsApp/email):','Mesazh i gatshëm (hapet i shkruar në WhatsApp/email):'],
+  pr_btn:['Proponi alternative','Suggest alternatives','Propozo alternativa'], pr_title:['Proposta di alternative','Alternatives proposal','Propozim alternativash'],
+  pr_hint:['Scegli capi dal catalogo (anche non pubblicati), dalle story di Instagram o foto dal telefono di pezzi fuori inventario. La cliente riceve un\'email con foto e prezzi e un link a una pagina con tutte le proposte.','Pick items from the catalogue (also unpublished), from Instagram stories or phone photos of items not in stock. The customer gets an email with photos and prices and a link to a page with all proposals.','Zgjidh modele nga katalogu, nga story-t ose foto nga telefoni.'],
+  pr_intro:['Messaggio (in albanese)','Message (Albanian)','Mesazhi'], pr_add_cat:['Dal catalogo','From catalogue','Nga katalogu'], pr_add_story:['Dalle story','From stories','Nga story-t'], pr_add_photo:['Foto dal telefono','Phone photo','Foto nga telefoni'],
+  pr_items:['Capi proposti','Proposed items','Modelet'], pr_none:['Nessun capo ancora: aggiungine almeno uno.','No items yet: add at least one.','Asnjë model.'], pr_title_f:['Nome del capo','Item name','Emri'], pr_note:['Nota (taglie, colore…)','Note (sizes, colour…)','Shënim'],
+  pr_preview:['Anteprima email','Email preview','Parapamje'], pr_send:['Invia email','Send email','Dërgo email'], pr_copy:['Copia link (WhatsApp/DM)','Copy link (WhatsApp/DM)','Kopjo linkun'], pr_sent:['Email inviata (copia a info@)','Email sent (copy to info@)','Email-i u dërgua'],
+  pr_send_q:['Inviare la proposta a','Send the proposal to','Ta dërgoj te'], pr_no_email:['Manca l\'email della cliente: puoi copiare il link e mandarlo su WhatsApp o Instagram.','Customer email missing: copy the link and send it on WhatsApp or Instagram.','Mungon email-i.'],
+  pr_story_none:['Nessuna story con foto negli ultimi 60 giorni','No stories with photos in the last 60 days','Asnjë story'], pr_not_in_shop:['non sul sito','not on the website','jo në faqe'],
   rs_close:['Chiudi richiesta','Close request','Mbyll kërkesën'], rs_done:['Contattato','Contacted','Kontaktuar'], rs_card:['Avvisi taglia dal sito','Size alerts from the website','Njoftime mase nga faqja'],
   rs_trends:['Taglie esaurite richieste dal sito','Sold-out sizes requested on the website','Masa të shitura të kërkuara në faqe'], rs_trends_hint:['Clienti che hanno chiesto di essere avvisati: ti dice cosa ricomprare.','Shoppers who asked to be notified: tells you what to restock.','Klientë që kërkuan njoftim: tregon çfarë të blini sërish.'],
   same_cost_q:['Stesso prezzo d\'acquisto ({p}) anche per le altre taglie/colori di questo prodotto che non hanno ancora un costo?','Use the same purchase price ({p}) for the other sizes/colours of this product that have no cost yet?','I njëjti çmim blerjeje ({p}) edhe për masat/ngjyrat e tjera të këtij produkti që nuk kanë ende kosto?'],
@@ -1660,7 +1667,7 @@ async function viewCustomer(main, id){
   if (['admin','vendite'].includes(S.profile.role)) setTimeout(() => custIgCard(cu).then(h => { const el = $('#cust_ig'); if (el) el.innerHTML = h; }).catch(e => console.error(e)), 0);
   main.innerHTML = `<p><a href="#/clienti">← ${t('customers')}</a></p>
   <div class="row spread"><div><h1>${esc(cu.full_name)}</h1><div class="row small muted">${cu.instagram ? `<a href="https://instagram.com/${esc(cu.instagram)}" target="_blank" rel="noopener">@${esc(cu.instagram)}</a>` : ''}${cu.phone ? `<a href="tel:${esc(cu.phone)}">${esc(cu.phone)}</a> · <a href="https://wa.me/${esc(cu.phone.replace(/\D/g, ''))}" target="_blank" rel="noopener">WhatsApp</a>` : ''}<span>${esc(ev('country', cu.country))}</span><span>${esc(ev('source', cu.source))}</span>${cu.privacy_consent ? '<span class="pill good">GDPR ✓</span>' : '<span class="pill warn">GDPR —</span>'}</div></div>
-  <div class="row"><button onclick="editCustomer(${id})">${t('edit')}</button><button class="primary" onclick="newOrder(${id})">+ ${t('new_order')}</button></div></div>
+  <div class="row"><button onclick="editCustomer(${id})">${t('edit')}</button><button onclick="proposalNew({customerId:${id}})">✉️ ${t('pr_btn')}</button><button class="primary" onclick="newOrder(${id})">+ ${t('new_order')}</button></div></div>
   <div class="grid g4" style="margin:12px 0"><div class="card kpi"><div class="v">${orders.length}</div><div class="l">${t('orders')}</div></div><div class="card kpi"><div class="v">${eur(spent)}</div><div class="l">${t('total')}</div></div></div>
   ${cu.notes ? `<div class="card">${esc(cu.notes)}</div>` : ''}
   <div id="cust_ig"></div>
@@ -2474,7 +2481,97 @@ async function restockOpen(id){
     <p class="small muted" style="margin:0">${t('rs_asked_by')} <b style="color:var(--ink)">${esc(r.name || '—')}</b> · ${fdate(r.created_at)}${r.available_at ? ` · ${t('rs_back_on')} ${fdate(r.available_at)}` : ''}<br>${r.emailed_at ? `✉ ${t('rs_emailed')}` : r.email ? '' : `⚠ ${t('rs_no_email')}`}</p>
     ${rsContact(r)}
     <p class="small muted" style="margin:10px 0 4px">${t('rs_msg_hint')}</p><div class="small" style="background:var(--accent-soft);padding:8px 10px;border-radius:8px">${esc(rsMsg(r))}</div>
-    <div class="row" style="justify-content:flex-end;gap:6px;margin-top:12px"><button onclick="restockSet(${r.id},'chiusa')">${t('rs_close')}</button><button class="primary" onclick="restockSet(${r.id},'contattato')">✓ ${t('rs_done')}</button></div>`);
+    <div class="row" style="justify-content:flex-end;gap:6px;margin-top:12px"><button onclick="this.closest('.modal-bg').remove();proposalNew({restockId:${r.id}})">✉️ ${t('pr_btn')}</button><button onclick="restockSet(${r.id},'chiusa')">${t('rs_close')}</button><button class="primary" onclick="restockSet(${r.id},'contattato')">✓ ${t('rs_done')}</button></div>`);
+}
+// ---- Proposals: email a customer alternatives from the catalogue, Instagram stories or phone photos of items not in stock ----
+let PR = null;
+const PR_YEAR = 60 * 60 * 24 * 365;
+async function prSign(paths){ const out = {}; const ps = [...new Set(paths.filter(Boolean))]; if (ps.length){ const {data} = await sb.storage.from('foto').createSignedUrls(ps, PR_YEAR); (data || []).forEach(d => { if (d.signedUrl) out[d.path] = d.signedUrl; }); } return out; }
+async function proposalNew(o = {}){
+  let name = '', email = '', phone = '', item = '', size = '';
+  if (o.restockId){ const r = check(await sb.from('restock_requests').select('name,email,phone,customer_id,size,color,models(name,brand_id),variants(size)').eq('id', o.restockId).single()); name = r.name || ''; email = r.email || ''; phone = r.phone || ''; o.customerId = o.customerId || r.customer_id; item = `${brandName(r.models?.brand_id)} ${r.models?.name || ''}`.trim(); size = r.size || r.variants?.size || ''; }
+  if (o.customerId && (!name || !email)){ const c = check(await sb.from('customers').select('full_name,email,phone').eq('id', o.customerId).single()); name = name || c.full_name || ''; email = email || c.email || ''; phone = phone || c.phone || ''; }
+  const first = (name || '').trim().split(/\s+/)[0] || '';
+  const intro = `Përshëndetje${first ? ' ' + first : ''},\n\n` + (item ? `faleminderit për interesin për ${item}${size ? ' në masën ' + size : ''}. Do t’ju njoftojmë sapo të kthehet në dispozicion. Ndërkohë kemi përzgjedhur për ju disa modele të ngjashme që mund t’ju pëlqejnë:` : `kemi përzgjedhur për ju disa modele që mund t’ju pëlqejnë:`);
+  PR = {id: null, token: null, restock_id: o.restockId || null, customer_id: o.customerId || null, name, email, phone, intro, items: []};
+  prOpen();
+}
+function prRead(){ const m = document.querySelector('#pr_box'); if (!m) return; PR.name = m.querySelector('#pr_name').value.trim(); PR.email = m.querySelector('#pr_email').value.trim(); PR.intro = m.querySelector('#pr_intro').value;
+  m.querySelectorAll('[data-pri]').forEach(row => { const it = PR.items[row.dataset.pri]; if (!it) return; it.title = row.querySelector('[data-f=title]').value.trim(); it.note = row.querySelector('[data-f=note]').value.trim(); const pr = row.querySelector('[data-f=price]'); if (pr) it.price = pr.value === '' ? null : Number(pr.value); it.brand = row.querySelector('[data-f=brand]').value.trim(); }); }
+function prOpen(){
+  document.querySelector('#pr_box')?.closest('.modal-bg')?.remove();
+  const bg = modal(`<div id="pr_box"><div class="row spread" style="flex-wrap:nowrap"><h3 style="margin:0">✉️ ${t('pr_title')}</h3><button class="small" onclick="this.closest('.modal-bg').remove()">✕</button></div>
+    <p class="small muted">${t('pr_hint')}</p>
+    <div class="grid g2"><div class="field"><label>${t('name')}</label><input id="pr_name" value="${esc(PR.name)}"></div><div class="field"><label>Email</label><input id="pr_email" type="email" value="${esc(PR.email)}"></div></div>
+    <div class="field"><label>${t('pr_intro')}</label><textarea id="pr_intro" rows="5">${esc(PR.intro)}</textarea></div>
+    <h4 style="margin:12px 0 6px">${t('pr_items')} (${PR.items.length})</h4>
+    <div id="pr_items">${PR.items.length ? PR.items.map((it, i) => `<div data-pri="${i}" class="row" style="flex-wrap:nowrap;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)">${thumbImg(it.img, 64)}
+      <div style="flex:1;min-width:0;display:grid;gap:4px"><div class="row" style="gap:4px;flex-wrap:nowrap"><input data-f="brand" placeholder="Brand" value="${esc(it.brand || '')}" style="flex:1;min-width:0"><input data-f="price" type="number" inputmode="decimal" placeholder="€" value="${it.price ?? ''}" style="width:80px;flex:none"></div>
+        <input data-f="title" placeholder="${t('pr_title_f')}" value="${esc(it.title || '')}"><input data-f="note" placeholder="${t('pr_note')}" value="${esc(it.note || '')}">
+        <div class="small muted">${it.kind === 'model' ? `🛍 #${it.model_id}${it.in_shop ? '' : ' · ' + t('pr_not_in_shop')}` : it.kind === 'story' ? '📱 Story' : '📷'}</div></div>
+      <button class="small" onclick="prRead();PR.items.splice(${i},1);prOpen()">✕</button></div>`).join('') : `<p class="small muted">${t('pr_none')}</p>`}</div>
+    <div class="row" style="gap:6px;margin-top:8px"><button class="small" onclick="prRead();prPickModels()">🛍 ${t('pr_add_cat')}</button><button class="small" onclick="prRead();prPickStories()">📱 ${t('pr_add_story')}</button>
+      <label class="btn small" style="margin:0">📷 ${t('pr_add_photo')}<input type="file" accept="image/*" multiple style="display:none" onchange="prRead();prAddPhotos(this.files)"></label></div>
+    ${PR.email ? '' : `<p class="small" style="color:var(--warn);margin-top:10px">${t('pr_no_email')}</p>`}
+    <div class="row" style="justify-content:flex-end;gap:6px;margin-top:14px;flex-wrap:wrap"><button onclick="prCopy()">🔗 ${t('pr_copy')}</button><button onclick="prPreview()">👁 ${t('pr_preview')}</button><button class="primary" onclick="prSend()">✉️ ${t('pr_send')}</button></div></div>`);
+  return bg;
+}
+async function prPickModels(){
+  const [ms, st] = await Promise.all([sb.from('models').select('id,name,brand_id,published,list_price,photos(path,is_main,sort),variants(id,size,sale_price)').eq('archived', false).then(check), sb.from('v_variant_stock').select('variant_id,available,incoming').then(check)]);
+  const S2 = Object.fromEntries(st.map(x => [x.variant_id, x]));
+  const list = ms.map(m => { const ph = (m.photos || []).sort((a, b) => (b.is_main - a.is_main) || (a.sort - b.sort))[0]?.path; const av = (m.variants || []).filter(v => (S2[v.id]?.available || 0) + (S2[v.id]?.incoming || 0) > 0);
+    return {m, ph, av, price: av.length ? Math.min(...av.map(v => Number(v.sale_price) || Infinity)) : Number(m.list_price) || null, sizes: [...new Set(av.map(v => v.size).filter(Boolean))].join(', ')}; })
+    .filter(x => x.av.length).sort((a, b) => brandName(a.m.brand_id).localeCompare(brandName(b.m.brand_id)));
+  await signedUrls(list.map(x => x.ph));
+  const have = new Set(PR.items.filter(i => i.kind === 'model').map(i => i.model_id));
+  const bg = modal(`<h3>🛍 ${t('pr_add_cat')}</h3><input id="prq" placeholder="${t('search')}" style="margin-bottom:8px"><div id="prl" style="max-height:55vh;overflow:auto">${list.map((x, i) => `<label class="row prr" data-s="${esc(norm(brandName(x.m.brand_id) + ' ' + x.m.name))}" style="flex-wrap:nowrap;gap:10px;padding:6px 0;border-top:1px solid var(--line);margin:0;font-weight:400">
+    <input type="checkbox" value="${i}" ${have.has(x.m.id) ? 'checked disabled' : ''} style="width:20px;height:20px;flex:none">${thumbImg(urlCache[x.ph])}<span class="small"><b>${esc(brandName(x.m.brand_id))}</b> ${esc(x.m.name)} · ${x.price ? eur(x.price) : ''} · ${esc(x.sizes)}${x.m.published ? '' : ` <span class="muted">· ${t('pr_not_in_shop')}</span>`}</span></label>`).join('')}</div>
+    <div class="row" style="justify-content:flex-end;gap:6px;margin-top:10px"><button onclick="this.closest('.modal-bg').remove()">${t('cancel')}</button><button class="primary" id="prok">OK</button></div>`);
+  bg.querySelector('#prq').oninput = e => { const q = norm(e.target.value); bg.querySelectorAll('.prr').forEach(r => r.style.display = !q || r.dataset.s.includes(q) ? '' : 'none'); };
+  bg.querySelector('#prok').onclick = async () => { const pick = [...bg.querySelectorAll('#prl input:checked:not(:disabled)')].map(x => list[Number(x.value)]); bg.remove();
+    const U = await prSign(pick.map(x => x.ph));
+    pick.forEach(x => PR.items.push({kind: 'model', model_id: x.m.id, brand: brandName(x.m.brand_id), title: x.m.name, price: x.price, note: x.sizes ? 'Masat: ' + x.sizes : '', img: U[x.ph] || null, path: x.ph || null, in_shop: x.m.published}));
+    prOpen(); };
+}
+async function prPickStories(){
+  const ss = check(await sb.from('ig_stories').select('id,ts,image_path,ai,model_id').not('image_path', 'is', null).gte('ts', new Date(Date.now() - 60 * 864e5).toISOString()).order('ts', {ascending: false}).limit(60));
+  await signedUrls(ss.map(x => x.image_path));
+  const bg = modal(`<h3>📱 ${t('pr_add_story')}</h3>${ss.length ? `<div id="psl" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:60vh;overflow:auto">${ss.map((x, i) => `<label style="position:relative;margin:0;cursor:pointer"><img src="${esc(urlCache[x.image_path] || '')}" alt="" style="width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:8px;display:block;background:var(--accent-soft)"><input type="checkbox" value="${i}" style="position:absolute;top:6px;right:6px;width:22px;height:22px"><span class="small" style="position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.55);color:#fff;border-radius:4px;padding:0 4px">${fdate(x.ts)}${x.ai?.price ? ' · ' + eur(x.ai.price) : ''}</span></label>`).join('')}</div>` : `<p class="small muted">${t('pr_story_none')}</p>`}
+    <div class="row" style="justify-content:flex-end;gap:6px;margin-top:10px"><button onclick="this.closest('.modal-bg').remove()">${t('cancel')}</button><button class="primary" id="psok">OK</button></div>`);
+  bg.querySelector('#psok').onclick = async () => { const pick = [...bg.querySelectorAll('#psl input:checked')].map(x => ss[Number(x.value)]); bg.remove();
+    const U = await prSign(pick.map(x => x.image_path));
+    pick.forEach(x => PR.items.push({kind: x.model_id ? 'model' : 'story', model_id: x.model_id || undefined, story_id: x.id, brand: x.ai?.brand || '', title: x.ai?.name || '', price: x.ai?.price ?? null, note: (x.ai?.sizes || []).length ? 'Masat: ' + x.ai.sizes.join(', ') : '', img: U[x.image_path] || null, path: x.image_path}));
+    prOpen(); };
+}
+async function prAddPhotos(files){
+  if (!files?.length) return; toast(t('uploading'));
+  const paths = [];
+  for (const [i, f] of [...files].entries()){ const path = `proposte/${Date.now()}_${i}.jpg`; check(await sb.storage.from('foto').upload(path, await resizeImage(f), {contentType: 'image/jpeg'})); paths.push(path); }
+  const U = await prSign(paths);
+  paths.forEach(p => PR.items.push({kind: 'photo', brand: '', title: '', price: null, note: '', img: U[p] || null, path: p}));
+  prOpen();
+}
+async function prSave(){
+  prRead();
+  if (!PR.items.length) { toast(t('pr_none'), true); return false; }
+  const row = {name: PR.name || null, email: PR.email || null, phone: PR.phone || null, intro: PR.intro, items: PR.items, restock_id: PR.restock_id, customer_id: PR.customer_id};
+  const r = PR.id ? check(await sb.from('proposals').update(row).eq('id', PR.id).select('id,token').single()) : check(await sb.from('proposals').insert(row).select('id,token').single());
+  PR.id = r.id; PR.token = r.token; return true;
+}
+const prUrl = () => `https://shop.modusvestendi.com/#/oferta/${PR.token}`;
+async function prCopy(){ if (!(await prSave())) return; const u = prUrl(); try { await navigator.clipboard.writeText(`${PR.intro}\n\n${u}`); toast(t('copied')); } catch (e) { prompt('Link', u); } }
+async function prPreview(){
+  if (!(await prSave())) return;
+  const {data, error} = await sb.rpc('proposal_preview', {p_id: PR.id}); if (error) return toast(error.message, true);
+  const bg = modal(`<div class="row spread"><h3 style="margin:0">👁 ${t('pr_preview')}</h3><button class="small" onclick="this.closest('.modal-bg').remove()">✕</button></div><p class="small muted">✉️ Disa propozime për ju nga Modus Vestendi</p><iframe style="width:100%;height:65vh;border:1px solid var(--line);border-radius:8px;background:#fff"></iframe>`);
+  bg.querySelector('iframe').srcdoc = data;
+}
+async function prSend(){
+  if (!(await prSave())) return;
+  if (!PR.email) return toast(t('pr_no_email'), true);
+  if (!confirm(`${t('pr_send_q')} ${PR.email}?`)) return;
+  const {error} = await sb.rpc('staff_send_proposal', {p_id: PR.id}); if (error) return toast(error.message, true);
+  document.querySelectorAll('.modal-bg').forEach(x => x.remove()); toast(t('pr_sent'));
 }
 async function restockSet(id, st){
   check(await sb.from('restock_requests').update({status: st, handled_at: new Date().toISOString()}).eq('id', id));
@@ -2487,7 +2584,7 @@ async function restockCard(m){
   return `<details class="card fold"><summary><h3 style="display:inline">🔔 ${t('rs_card')}</h3> <span class="pill warn">${R.length}</span> <span class="small muted">${Object.entries(by).map(([k, n]) => `${esc(k)} ×${n}`).join(' · ')}</span></summary>
     ${R.map(r => `<div style="padding:8px 0;border-top:1px solid var(--line)"><div class="row spread" style="flex-wrap:nowrap"><span><b>${esc(r.name || '—')}</b> · ${esc(rsSz(r))}</span><span class="pill ${r.status === 'disponibile' ? 'bad' : ''}">${esc(rsSt(r.status))}</span></div>
       <div class="small muted">${fdate(r.created_at)}${r.emailed_at ? ' · ✉ ' + t('rs_emailed') : ''}</div>${rsContact(r)}
-      <div class="row" style="justify-content:flex-end;gap:6px;margin-top:4px"><button class="small" onclick="restockSet(${r.id},'chiusa')">${t('rs_close')}</button>${r.status === 'disponibile' ? `<button class="small primary" onclick="restockSet(${r.id},'contattato')">✓ ${t('rs_done')}</button>` : ''}</div></div>`).join('')}</details>`;
+      <div class="row" style="justify-content:flex-end;gap:6px;margin-top:4px"><button class="small" onclick="proposalNew({restockId:${r.id}})">✉️ ${t('pr_btn')}</button><button class="small" onclick="restockSet(${r.id},'chiusa')">${t('rs_close')}</button>${r.status === 'disponibile' ? `<button class="small primary" onclick="restockSet(${r.id},'contattato')">✓ ${t('rs_done')}</button>` : ''}</div></div>`).join('')}</details>`;
 }
 async function restockTrends(){
   const R = check(await sb.from('restock_requests').select('model_id,status,size,color,variants(size,color),models(name,brand_id)').in('status', ['attesa', 'disponibile']));
