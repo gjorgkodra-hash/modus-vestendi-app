@@ -205,6 +205,11 @@ const T = {
   rs_pill:['Taglia','Size','Masa'], rs_back:['Tornata disponibile','Back in stock','U kthye'], rs_title:['Taglia richiesta tornata disponibile','Requested size is back','Masa e kërkuar u kthye'],
   rs_asked_by:['Richiesta da','Requested by','Kërkuar nga'], rs_back_on:['tornata il','back on','u kthye më'], rs_emailed:['email automatica inviata','automatic email sent','email automatik u dërgua'],
   rs_no_email:['ha lasciato solo il telefono: contattala tu','left only a phone number: contact them','la vetëm telefonin: kontaktojeni ju'], rs_msg_hint:['Messaggio pronto (si apre già scritto su WhatsApp/email):','Ready message (opens pre-filled in WhatsApp/email):','Mesazh i gatshëm (hapet i shkruar në WhatsApp/email):'],
+  fd_t:['Fidelity','Fidelity','Fidelity'], fd_pts:['punti','points','pikë'], fd_next:['mancano {n} punti per il buono','{n} points to the voucher','mungojnë {n} pikë'], fd_redeem:['Crea buono','Create voucher','Krijo kupon'],
+  fd_adjust:['Aggiungi / togli punti','Add / remove points','Shto / hiq pikë'], fd_adj_q:['Punti da aggiungere (negativo per togliere)','Points to add (negative to remove)','Pikë'], fd_adj_note:['Motivo','Reason','Arsyeja'],
+  fd_codes:['Buoni','Vouchers','Kuponë'], fd_used:['usato','used','përdorur'], fd_until:['fino al','until','deri më'], fd_hist:['Movimenti','History','Lëvizjet'], fd_redeem_q:['Creare un buono da','Create a voucher of','Krijo kupon'], fd_created:['Buono creato','Voucher created','Kuponi u krijua'],
+  fd_k_ordine:['Ordine','Order','Porosi'], fd_k_storno:['Reso/annullo','Return/cancel','Kthim'], fd_k_bonus:['Bonus','Bonus','Bonus'], fd_k_manuale:['Correzione','Correction','Korrigjim'], fd_k_riscatto:['Buono','Voucher','Kupon'], fd_k_rimborso:['Riaccredito','Refund','Rikthim'], fd_k_scadenza:['Scaduti','Expired','Skaduan'],
+  oc_fid:['buono Fidelity','Fidelity voucher','kupon Fidelity'],
   pr_btn:['Proponi alternative','Suggest alternatives','Propozo alternativa'], pr_title:['Proposta di alternative','Alternatives proposal','Propozim alternativash'],
   pr_hint:['Scegli capi dal catalogo (anche non pubblicati), dalle story di Instagram o foto dal telefono di pezzi fuori inventario. La cliente riceve un\'email con foto e prezzi e un link a una pagina con tutte le proposte.','Pick items from the catalogue (also unpublished), from Instagram stories or phone photos of items not in stock. The customer gets an email with photos and prices and a link to a page with all proposals.','Zgjidh modele nga katalogu, nga story-t ose foto nga telefoni.'],
   pr_intro:['Messaggio (in albanese)','Message (Albanian)','Mesazhi'], pr_add_cat:['Dal catalogo','From catalogue','Nga katalogu'], pr_add_story:['Dalle story','From stories','Nga story-t'], pr_add_photo:['Foto dal telefono','Phone photo','Foto nga telefoni'],
@@ -1664,13 +1669,15 @@ async function viewCustomer(main, id){
   const meas = check(ms)[0]; window._meas = meas;
   const orders = check(os).filter(o => o.status !== 'annullato');
   const spent = orders.reduce((a, o) => a + o.order_lines.reduce((b, l) => b + l.qty * l.unit_price, 0), 0);
+  if (['admin','vendite'].includes(S.profile.role)) setTimeout(() => fdCard(id), 0);
   if (['admin','vendite'].includes(S.profile.role)) setTimeout(() => custIgCard(cu).then(h => { const el = $('#cust_ig'); if (el) el.innerHTML = h; }).catch(e => console.error(e)), 0);
   main.innerHTML = `<p><a href="#/clienti">← ${t('customers')}</a></p>
   <div class="row spread"><div><h1>${esc(cu.full_name)}</h1><div class="row small muted">${cu.instagram ? `<a href="https://instagram.com/${esc(cu.instagram)}" target="_blank" rel="noopener">@${esc(cu.instagram)}</a>` : ''}${cu.phone ? `<a href="tel:${esc(cu.phone)}">${esc(cu.phone)}</a> · <a href="https://wa.me/${esc(cu.phone.replace(/\D/g, ''))}" target="_blank" rel="noopener">WhatsApp</a>` : ''}<span>${esc(ev('country', cu.country))}</span><span>${esc(ev('source', cu.source))}</span>${cu.privacy_consent ? '<span class="pill good">GDPR ✓</span>' : '<span class="pill warn">GDPR —</span>'}</div></div>
   <div class="row"><button onclick="editCustomer(${id})">${t('edit')}</button><button onclick="proposalNew({customerId:${id}})">✉️ ${t('pr_btn')}</button><button class="primary" onclick="newOrder(${id})">+ ${t('new_order')}</button></div></div>
-  <div class="grid g4" style="margin:12px 0"><div class="card kpi"><div class="v">${orders.length}</div><div class="l">${t('orders')}</div></div><div class="card kpi"><div class="v">${eur(spent)}</div><div class="l">${t('total')}</div></div></div>
+  <div class="grid g4" style="margin:12px 0"><div class="card kpi"><div class="v">${orders.length}</div><div class="l">${t('orders')}</div></div><div class="card kpi"><div class="v">${eur(spent)}</div><div class="l">${t('total')}</div></div><div class="card kpi"><div class="v" id="fd_kpi">…</div><div class="l">⭐ ${t('fd_t')}</div></div></div>
   ${cu.notes ? `<div class="card">${esc(cu.notes)}</div>` : ''}
   <div id="cust_ig"></div>
+  <div id="cust_fd"></div>
   <div class="grid g2">
   <div class="card"><div class="row spread"><h3>${t('measurements')}</h3><button onclick="editMeasurements(${id})">${meas ? t('edit') : '+ ' + t('add')}</button></div>
   ${meas ? `<table class="small"><tr><td>${t('bust')}</td><td>${meas.bust_cm ?? ''}</td></tr><tr><td>${t('waist')}</td><td>${meas.waist_cm ?? ''}</td></tr><tr><td>${t('hips')}</td><td>${meas.hips_cm ?? ''}</td></tr><tr><td>${t('height')}</td><td>${meas.height_cm ?? ''}</td></tr><tr><td>${t('weight')}</td><td>${meas.weight_kg ?? ''}</td></tr><tr><td>${t('shoe')}</td><td>${esc(meas.shoe_size || '')}</td></tr><tr><td>${t('usual_size')}</td><td>${esc(meas.usual_size || '')}</td></tr>
@@ -1971,6 +1978,7 @@ async function viewOrder(main, id){
   let nlCode = null, nlUsed = null;
   if (['admin','vendite'].includes(S.profile.role)){
     const u = await sb.from('newsletter').select('code,discount_pct').eq('order_id', id).maybeSingle(); nlUsed = u.data;
+    if (!nlUsed){ const f = await sb.from('loyalty_codes').select('code,amount').eq('order_id', id).maybeSingle(); nlUsed = f.data; }
     if (!nlUsed && od.customer_id){ const c = await sb.rpc('customer_active_code', {p_customer: od.customer_id}); nlCode = c.data; }
   }
   let marg = null;
@@ -2001,7 +2009,7 @@ async function viewOrder(main, id){
     ${['spedito', 'consegnato', 'confermato'].includes(od.status) ? `<button class="link small" onclick="returnLine(${l.id})">${t('return_item')}</button>` : ''}</div>
     <div class="right"><b>${eur(l.qty * l.unit_price)}</b></div></div>`; }).join('')}
   ${Number(od.discount) ? `<div class="row spread small" style="padding-top:8px"><span>${t('discount')}${nlUsed ? ` <span class="pill">🎁 ${esc(nlUsed.code)}</span>` : ''}</span><span>− ${eur(od.discount)}</span></div>` : ''}
-  ${!nlUsed && nlCode && !['annullato','reso'].includes(od.status) ? `<div class="row spread" style="padding:10px 12px;margin-top:8px;background:var(--accent-soft);border-radius:10px;gap:8px"><span class="small">🎁 ${t('oc_has')} <b>${esc(nlCode.code)}</b> (−${nlCode.pct}% ${t('oc_one')})</span><button class="small primary" onclick="orderCode(${id}, ${esc(JSON.stringify(nlCode.code))})">${t('oc_apply')}</button></div>` : ''}
+  ${!nlUsed && nlCode && !['annullato','reso'].includes(od.status) ? `<div class="row spread" style="padding:10px 12px;margin-top:8px;background:var(--accent-soft);border-radius:10px;gap:8px"><span class="small">🎁 ${t('oc_has')} <b>${esc(nlCode.code)}</b> (${nlCode.amount ? `−${eur(nlCode.amount)} · ${t('oc_fid')}` : `−${nlCode.pct}% ${t('oc_one')}`})</span><button class="small primary" onclick="orderCode(${id}, ${esc(JSON.stringify(nlCode.code))})">${t('oc_apply')}</button></div>` : ''}
   ${nlUsed && !['annullato','reso'].includes(od.status) ? `<p class="small" style="margin:4px 0 0;text-align:right"><button class="link small" onclick="orderCodeRemove(${id})">${t('oc_remove')}</button></p>` : ''}
   ${od.shipping_fee != null ? `<div class="row spread small" style="padding-top:8px"><span>${t('ship_fee')}</span><span>${Number(od.shipping_fee) ? eur(od.shipping_fee) : t('ship_free')}</span></div>` : ''}
   <div class="row spread" style="padding-top:8px"><b>${t('total')}</b><b style="font-size:20px">${eur(tt.total)}</b></div>
@@ -2209,7 +2217,7 @@ async function editOrder(id){
 async function undoDelivery(id){ if (!confirmBox(t('undo_deliv_q'))) return; check(await sb.rpc('annulla_consegna', {p_order_id: id})); toast(t('saved')); route(); }
 async function orderCode(id, code){
   const {data, error} = await sb.rpc('order_apply_code', {p_order: id, p_code: code});
-  if (error){ toast(/code_used/.test(error.message) ? t('oc_used') : error.message, true); return; }
+  if (error){ toast(/code_used/.test(error.message) ? t('oc_used') : /code_not_yours/.test(error.message) ? t('oc_fid') + ': cliente diverso' : /code_expired/.test(error.message) ? t('oc_fid') + ': scaduto' : /code_already_on_order/.test(error.message) ? 'Un solo codice per ordine' : error.message, true); return; }
   toast(`🎁 −${eur(data)}`); route();
 }
 async function orderCodeRemove(id){ if (!confirmBox(t('oc_remove_q'))) return; check(await sb.rpc('order_remove_code', {p_order: id})); toast(t('saved')); route(); }
@@ -2482,6 +2490,27 @@ async function restockOpen(id){
     ${rsContact(r)}
     <p class="small muted" style="margin:10px 0 4px">${t('rs_msg_hint')}</p><div class="small" style="background:var(--accent-soft);padding:8px 10px;border-radius:8px">${esc(rsMsg(r))}</div>
     <div class="row" style="justify-content:flex-end;gap:6px;margin-top:12px"><button onclick="this.closest('.modal-bg').remove();proposalNew({restockId:${r.id}})">✉️ ${t('pr_btn')}</button><button onclick="restockSet(${r.id},'chiusa')">${t('rs_close')}</button><button class="primary" onclick="restockSet(${r.id},'contattato')">✓ ${t('rs_done')}</button></div>`);
+}
+// ---- Fidelity: points, vouchers and history on the customer page ----
+async function fdCard(id){
+  const {data: F, error} = await sb.rpc('staff_loyalty', {p_customer: id}); if (error) return;
+  const k = $('#fd_kpi'); if (k) k.textContent = `${F.balance} ${t('fd_pts')}`;
+  const el = $('#cust_fd'); if (!el) return;
+  const rw = F.rewards || [], next = rw.find(r => r.points > F.balance);
+  el.innerHTML = `<div class="card"><div class="row spread"><h3>⭐ ${t('fd_t')} · ${F.balance} ${t('fd_pts')}</h3>${S.profile.role === 'admin' ? `<button class="small" onclick="fdAdjust(${id})">${t('fd_adjust')}</button>` : ''}</div>
+    ${next ? `<p class="small muted" style="margin:0 0 8px">${t('fd_next').replace('{n}', next.points - F.balance)} ${eur(next.amount)}</p>` : ''}
+    <div class="row" style="gap:6px">${rw.map(r => `<button class="small ${F.balance >= r.points ? 'primary' : ''}" ${F.balance >= r.points ? '' : 'disabled'} onclick="fdRedeemStaff(${id}, ${r.points}, ${r.amount})">${t('fd_redeem')} ${eur(r.amount)} · ${r.points}</button>`).join('')}</div>
+    ${(F.codes || []).length ? `<h4 style="margin:12px 0 4px">${t('fd_codes')}</h4>${F.codes.map(c => `<div class="small">${c.used_at ? '<s>' : '<b>'}${esc(c.code)}${c.used_at ? '</s>' : '</b>'} · ${eur(c.amount)} · ${c.used_at ? t('fd_used') + ' ' + fdate(c.used_at) : t('fd_until') + ' ' + fdate(c.expires_at)}</div>`).join('')}` : ''}
+    ${(F.history || []).length ? `<details style="margin-top:10px"><summary class="small">${t('fd_hist')} (${F.history.length})</summary>${F.history.map(h => `<div class="row spread small" style="padding:4px 0;border-top:1px solid var(--line);flex-wrap:nowrap"><span>${t('fd_k_' + h.kind)}${h.note ? ' · ' + esc(h.note) : ''} <span class="muted">${fdate(h.at)}</span></span><b style="color:${h.points > 0 ? 'var(--good)' : 'var(--bad)'}">${h.points > 0 ? '+' : ''}${h.points}</b></div>`).join('')}</details>` : ''}</div>`;
+}
+async function fdRedeemStaff(id, points, amount){
+  if (!confirmBox(`${t('fd_redeem_q')} ${eur(amount)} (−${points} ${t('fd_pts')})?`)) return;
+  const {data, error} = await sb.rpc('staff_loyalty_redeem', {p_customer: id, p_points: points}); if (error) return toast(error.message, true);
+  toast(`🎁 ${t('fd_created')}: ${data.code}`); fdCard(id);
+}
+function fdAdjust(id){
+  form({title: t('fd_adjust'), fields: [{name: 'points', label: t('fd_adj_q'), type: 'number', required: true}, {name: 'note', label: t('fd_adj_note')}],
+    onSubmit: async v => { const {error} = await sb.rpc('staff_loyalty_adjust', {p_customer: id, p_points: Math.round(v.points), p_note: v.note || null}); if (error) return toast(error.message, true); fdCard(id); }});
 }
 // ---- Proposals: email a customer alternatives from the catalogue, Instagram stories or phone photos of items not in stock ----
 let PR = null;
